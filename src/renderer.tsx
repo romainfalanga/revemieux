@@ -7,7 +7,7 @@ export function renderApp(): string {
   <meta name="theme-color" content="#0f0a1e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>DreamScape — Journal de Rêves Lucides</title>
+  <title>Rêve Mieux — Journal de Rêves Lucides</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -42,7 +42,6 @@ export function renderApp(): string {
 </head>
 <body class="bg-night-950 text-gray-100 font-sans min-h-screen overflow-x-hidden">
   <div id="app">
-    <!-- Loading screen -->
     <div id="loading-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-night-950">
       <div class="text-center">
         <div class="relative w-20 h-20 mx-auto mb-6">
@@ -50,7 +49,7 @@ export function renderApp(): string {
           <div class="absolute inset-2 rounded-full border-2 border-dream-300/40 animate-pulse"></div>
           <div class="absolute inset-0 flex items-center justify-center text-4xl">🌙</div>
         </div>
-        <h2 class="text-xl font-display font-semibold text-dream-200 mb-2">DreamScape</h2>
+        <h2 class="text-xl font-display font-semibold text-dream-200 mb-2">Rêve Mieux</h2>
         <p class="text-sm text-gray-400">Chargement de votre univers onirique...</p>
       </div>
     </div>

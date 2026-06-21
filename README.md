@@ -1,7 +1,7 @@
-# 🌙 DreamScape — Journal & Cartographie des Rêves Lucides
+# 🌙 Rêve Mieux — Journal & Cartographie des Rêves Lucides
 
 ## Vision du Projet
-DreamScape est une plateforme web complète dédiée à l'optimisation du rappel des rêves et à la pratique des rêves lucides. Basée sur la recherche scientifique en sommeil, elle encourage la tenue d'un journal de rêves — pratique qui renforce significativement le rappel onirique — tout en offrant une cartographie intelligente permettant d'explorer visuellement l'univers de ses rêves.
+Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappel des rêves et à la pratique des rêves lucides. Basée sur la recherche scientifique en sommeil, elle encourage la tenue d'un journal de rêves — pratique qui renforce significativement le rappel onirique — tout en offrant une cartographie intelligente permettant d'explorer visuellement l'univers de ses rêves.
 
 ## Fonctionnalités Implémentées
 
@@ -15,12 +15,13 @@ DreamScape est une plateforme web complète dédiée à l'optimisation du rappel
 - **Dictée vocale** (Web Speech API — Chrome/Edge)
 - Horodatage, classement chronologique, recherche textuelle
 - Filtrage par type de rêve
+- **Liaison aux séries** directement depuis le formulaire de création/édition
 
 ### Catégorisation Riche
 - **Types de rêves** : normal, lucide, cauchemar, récurrent, hypnagogique, faux éveil
 - **Émotions** avec intensité (1-5) : joie, peur, anxiété, émerveillement, tristesse, colère, confusion, paix, excitation, amour, nostalgie
-- **Tags multi-catégories** : personnes, lieux, thèmes, symboles, tags personnalisés
-- **Niveaux** : lucidité (0-5), clarté du souvenir (1-5), qualité du sommeil (1-5)
+- **Tags multi-catégories** : personnes, lieux, thèmes, symboles, tags personnalisés — sélection par catégories avec emojis
+- **Niveaux** : lucidité (0-5), clarté du souvenir (1-5)
 
 ### Cartographie Interactive (D3.js)
 - **Graphe force-directed** où chaque rêve est un nœud et chaque relation un lien
@@ -31,6 +32,7 @@ DreamScape est une plateforme web complète dédiée à l'optimisation du rappel
 
 ### Séries de Rêves & Incubation
 - Regroupement de rêves en séries narratives ordonnées
+- **Création de rêve directement depuis une série** (pré-lié)
 - **Mode Incubation** : résumé du dernier épisode + formulation d'intention pré-sommeil
 - Basé sur la technique d'incubation (Barrett, 1993 — ~50% de succès)
 
@@ -47,7 +49,7 @@ DreamScape est une plateforme web complète dédiée à l'optimisation du rappel
 - **Bases scientifiques documentées** avec références (Schredl, LaBerge, Stumbrys, Barrett, Tholey)
 
 ## URLs
-- **Application** : https://3000-ip4genhubkepdxwhkrbh9-d0b9e1e2.sandbox.novita.ai
+- **Application** : (sandbox URL — voir GetServiceUrl)
 
 ## Architecture Technique
 
