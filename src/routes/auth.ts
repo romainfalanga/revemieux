@@ -80,10 +80,15 @@ export const authRoutes = new Hono<{ Bindings: Bindings }>()
 
 // Inscription
 authRoutes.post('/register', async (c) => {
-  const { email, username, password, displayName } = await c.req.json()
+  const body = await c.req.json()
+  const email = body.email
+  const password = body.password
+  const displayName = body.displayName
+  // Auto-generate username from email if not provided
+  const username = body.username || (email ? email.split('@')[0] : '')
   
   if (!email || !username || !password) {
-    return c.json({ error: 'Email, nom d\'utilisateur et mot de passe requis' }, 400)
+    return c.json({ error: 'Email et mot de passe requis' }, 400)
   }
   if (password.length < 6) {
     return c.json({ error: 'Le mot de passe doit faire au moins 6 caractères' }, 400)

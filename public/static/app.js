@@ -90,6 +90,9 @@ window.showAuthTab = function(mode) {
   document.getElementById('tab-login').className = `flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === 'login' ? 'bg-dream-600 text-white' : 'text-gray-400 hover:text-white'}`;
   document.getElementById('tab-register').className = `flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === 'register' ? 'bg-dream-600 text-white' : 'text-gray-400 hover:text-white'}`;
   document.getElementById('register-fields').classList.toggle('hidden', mode === 'login');
+  // Toggle required on username field based on mode
+  const usernameField = document.querySelector('input[name="username"]');
+  if (usernameField) usernameField.required = (mode === 'register');
   document.getElementById('auth-btn').textContent = mode === 'login' ? 'Se connecter' : "S'inscrire";
 };
 
@@ -103,7 +106,9 @@ window.handleAuth = async function(e) {
     if (authMode === 'login') {
       data = await api('/auth/login', { method: 'POST', body: JSON.stringify({ login: form.get('login'), password: form.get('password') }) });
     } else {
-      data = await api('/auth/register', { method: 'POST', body: JSON.stringify({ email: form.get('login'), username: form.get('username'), password: form.get('password'), displayName: form.get('displayName') })});
+      const email = form.get('login');
+      const username = form.get('username') || email.split('@')[0];
+      data = await api('/auth/register', { method: 'POST', body: JSON.stringify({ email, username, password: form.get('password'), displayName: form.get('displayName') || username })});
     }
     state.token = data.token; state.user = data.user;
     localStorage.setItem('ds_token', data.token);
