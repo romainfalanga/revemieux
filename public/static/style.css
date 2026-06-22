@@ -167,11 +167,12 @@ html, body {
   width: 100%;
   max-width: 600px;
 }
-/* When modal uses flex layout (editors), disable outer scroll — inner div handles it */
-.modal-content:has(> .flex.flex-col) {
+/* When modal uses flex layout (editors), become a flex container with fixed height */
+.modal-content.modal-flex {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  height: 90vh;
 }
 /* On mobile, reduce modal height to account for the fixed bottom nav (~60px + safe area) */
 @media (max-width: 639px) {
@@ -185,7 +186,8 @@ html, body {
     border-bottom-right-radius: 0;
     margin-bottom: 0;
   }
-  .modal-content:has(> .flex.flex-col) {
+  .modal-content.modal-flex {
+    height: calc(90vh - 4.5rem);
     max-height: calc(90vh - 4.5rem);
   }
 }

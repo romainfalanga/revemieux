@@ -497,8 +497,7 @@ window.openDreamEditor = async function(id) {
   window._allTags = allTags;
 
   showModal(`
-    <div class="flex flex-col" style="height:100%;">
-      <div class="flex items-center justify-between p-4 sm:px-6 sm:pt-6 pb-2 shrink-0 border-b border-dream-700/20">
+      <div class="shrink-0 flex items-center justify-between p-4 sm:px-6 sm:pt-6 pb-2 border-b border-dream-700/20">
         <h2 class="text-lg font-display font-bold text-dream-100">${dream ? 'Modifier le rêve' : '🌙 Nouveau rêve'}</h2>
         <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
       </div>
@@ -669,8 +668,7 @@ window.openDreamEditor = async function(id) {
           <i class="fas fa-save mr-2"></i>${dream ? 'Enregistrer' : 'Enregistrer ce rêve'}
         </button>
       </div>
-    </div>
-  `, '650px');
+  `, '650px', true);
 };
 
 // ========== Phase Editor Helper ==========
@@ -1849,9 +1847,9 @@ function playTLRRefrain() {
 })()
 
 // ========== MODAL & TOAST ==========
-function showModal(content, maxWidth) {
+function showModal(content, maxWidth, flex) {
   const container = document.getElementById('modal-container');
-  container.innerHTML = `<div class="modal-overlay animate-fadeIn" onclick="if(event.target===this) closeModal()"><div class="modal-content animate-slideUp" style="${maxWidth ? 'max-width:' + maxWidth : ''}">${content}</div></div>`;
+  container.innerHTML = `<div class="modal-overlay animate-fadeIn" onclick="if(event.target===this) closeModal()"><div class="modal-content${flex ? ' modal-flex' : ''} animate-slideUp" style="${maxWidth ? 'max-width:' + maxWidth : ''}">${content}</div></div>`;
 }
 window.closeModal = function() { document.getElementById('modal-container').innerHTML = ''; };
 function showToast(msg) { const t = document.createElement('div'); t.className = 'fixed bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-50 glass px-5 py-2.5 rounded-xl text-xs text-dream-200 animate-slideUp max-w-[90vw] text-center'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 4000); }
