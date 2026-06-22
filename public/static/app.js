@@ -117,7 +117,7 @@ function renderApp() {
   document.getElementById('loading-screen')?.remove();
   const app = document.getElementById('app');
   app.innerHTML = `
-    <div class="min-h-screen min-h-[100dvh] flex flex-col">
+    <div class="app-shell">
       <!-- Header -->
       <header class="glass sticky top-0 z-30 px-3 sm:px-4 py-2.5 sm:py-3 shrink-0">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
@@ -129,7 +129,6 @@ function renderApp() {
             <button onclick="navigate('journal')" data-nav="journal" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-book-open mr-1"></i>Journal</button>
             <button onclick="navigate('map')" data-nav="map" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-project-diagram mr-1"></i>Carte</button>
             <button onclick="navigate('series')" data-nav="series" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-layer-group mr-1"></i>Séries</button>
-            <button onclick="navigate('stats')" data-nav="stats" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-chart-line mr-1"></i>Stats</button>
             <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-eye mr-1"></i>Lucidité</button>
           </nav>
           <div class="flex items-center gap-2 shrink-0">
@@ -139,11 +138,11 @@ function renderApp() {
         </div>
       </header>
 
-      <!-- Main Content — grows and scrolls, padding-bottom for mobile nav -->
+      <!-- Main Content -->
       <main id="main-content" class="flex-1 overflow-y-auto max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 sm:pb-6"></main>
 
-      <!-- Mobile Bottom Nav — truly fixed to screen bottom -->
-      <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-dream-700/20 mobile-bottom-nav" id="main-nav-mobile">
+      <!-- Mobile Bottom Nav -->
+      <nav class="sm:hidden mobile-bottom-nav" id="main-nav-mobile">
         <div class="flex justify-around items-end py-1.5 px-1">
           <button onclick="navigate('journal')" data-nav="journal" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
             <i class="fas fa-book-open text-base"></i><span>Journal</span>
@@ -159,8 +158,8 @@ function renderApp() {
           <button onclick="navigate('series')" data-nav="series" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
             <i class="fas fa-layer-group text-base"></i><span>Séries</span>
           </button>
-          <button onclick="navigate('stats')" data-nav="stats" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
-            <i class="fas fa-chart-line text-base"></i><span>Stats</span>
+          <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
+            <i class="fas fa-eye text-base"></i><span>Lucidité</span>
           </button>
         </div>
       </nav>
@@ -188,7 +187,6 @@ window.navigate = function(view) {
     case 'journal': renderJournal(); break;
     case 'map': renderMap(); break;
     case 'series': renderSeries(); break;
-    case 'stats': renderStats(); break;
     case 'lucidity': renderLucidity(); break;
   }
 };
@@ -302,9 +300,36 @@ function renderDreamDetailModal(d) {
       <h2 class="text-xl font-display font-bold text-dream-100 mb-2">${escapeHtml(d.title)}</h2>
       <p class="text-xs text-gray-400 mb-4"><i class="far fa-calendar mr-1"></i>${dateStr}</p>
       <div class="mb-5"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(d.content)}</p></div>
-      ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions</h4><div class="flex flex-wrap gap-1.5">${d.emotions.map(e => `<span class="flex items-center gap-1 px-2 py-1 rounded-full bg-dream-800/30 text-xs">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${e.emotion}</span> <span class="text-[9px] text-gray-500">${e.intensity}/5</span></span>`).join('')}</div></div>` : ''}
+
+      ${d.phases?.length ? `
+      <div class="mb-5">
+        <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-route mr-1"></i>Étapes du rêve</h4>
+        <div class="space-y-2">
+          ${d.phases.map((p, i) => `
+            <div class="p-3 rounded-lg bg-night-900/40 border-l-2 border-dream-500/40">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="w-5 h-5 rounded-full bg-dream-600/30 text-dream-300 text-[10px] flex items-center justify-center font-bold shrink-0">${i + 1}</span>
+                <span class="text-xs font-semibold text-dream-200">${escapeHtml(p.title || 'Étape ' + (i + 1))}</span>
+              </div>
+              <p class="text-xs text-gray-300 leading-relaxed ml-7 whitespace-pre-wrap">${escapeHtml(p.content)}</p>
+              ${p.emotions?.length ? `<div class="flex flex-wrap gap-1 ml-7 mt-1.5">${p.emotions.map(e => `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/30">${emotionEmojis[e.emotion] || ''} ${e.emotion}</span>`).join('')}</div>` : ''}
+              ${p.interpretations?.length ? `<div class="ml-7 mt-1.5">${p.interpretations.map(interp => `<p class="text-[10px] text-amber-300/80 italic"><i class="fas fa-lightbulb mr-1 text-amber-400/60"></i>${escapeHtml(interp.content)}</p>`).join('')}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>` : ''}
+
+      ${d.interpretations?.length ? `
+      <div class="mb-4">
+        <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-lightbulb mr-1"></i>Interprétations</h4>
+        <div class="space-y-1.5">
+          ${d.interpretations.map(interp => `<div class="p-2.5 rounded-lg bg-amber-900/10 border border-amber-500/10"><p class="text-xs text-amber-200/90 italic">${escapeHtml(interp.content)}</p></div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions globales</h4><div class="flex flex-wrap gap-1.5">${d.emotions.map(e => `<span class="flex items-center gap-1 px-2 py-1 rounded-full bg-dream-800/30 text-xs">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${e.emotion}</span> <span class="text-[9px] text-gray-500">${e.intensity}/5</span></span>`).join('')}</div></div>` : ''}
       ${d.tags?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Tags</h4><div class="flex flex-wrap gap-1.5">${d.tags.map(t => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)}</span>`).join('')}</div></div>` : ''}
-      ${d.connections?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Connexions</h4><div class="space-y-1">${d.connections.map(c => `<div class="flex items-center gap-2 p-2 rounded-lg bg-night-900/40 cursor-pointer hover:bg-night-900/60" onclick="closeModal(); setTimeout(() => openDreamDetail(${c.connected_dream_id}), 300)"><i class="fas fa-link text-dream-400 text-xs"></i><span class="text-xs text-dream-200">${escapeHtml(c.connected_dream_title)}</span><span class="text-[9px] text-gray-500 capitalize">${c.connection_type}</span></div>`).join('')}</div></div>` : ''}
+      ${d.connections?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Connexions</h4><div class="space-y-1">${d.connections.map(cn => `<div class="flex items-center gap-2 p-2 rounded-lg bg-night-900/40 cursor-pointer hover:bg-night-900/60" onclick="closeModal(); setTimeout(() => openDreamDetail(${cn.connected_dream_id}), 300)"><i class="fas fa-link text-dream-400 text-xs"></i><span class="text-xs text-dream-200">${escapeHtml(cn.connected_dream_title)}</span><span class="text-[9px] text-gray-500 capitalize">${cn.connection_type}</span></div>`).join('')}</div></div>` : ''}
       ${d.series?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Séries</h4><div class="flex flex-wrap gap-1.5">${d.series.map(s => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${s.color}20; color:${s.color}">${escapeHtml(s.name)}</span>`).join('')}</div></div>` : ''}
       <div class="flex gap-2 pt-3 border-t border-dream-700/20">
         <button onclick="closeModal(); openDreamEditor(${d.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
@@ -324,6 +349,18 @@ const DREAM_TYPES = [
   { value: 'false_awakening', icon: '🪞', label: 'Faux éveil' }
 ];
 
+const EMOTION_LIST = ['joy', 'fear', 'anxiety', 'wonder', 'sadness', 'anger', 'confusion', 'peace', 'excitement', 'love', 'nostalgia'];
+const EMOTION_EMOJIS = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
+const EMOTION_LABELS = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveil.', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
+const TAG_CATEGORIES = [
+  { value: 'custom', icon: '🏷️', label: 'Tag' },
+  { value: 'person', icon: '👤', label: 'Personne' },
+  { value: 'place', icon: '📍', label: 'Lieu' },
+  { value: 'theme', icon: '🎭', label: 'Thème' },
+  { value: 'symbol', icon: '🔮', label: 'Symbole' }
+];
+const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', theme: '#ec4899', symbol: '#06b6d4' };
+
 window.openDreamEditor = async function(id) {
   let dream = null;
   let allTags = [], allSeries = [];
@@ -331,18 +368,27 @@ window.openDreamEditor = async function(id) {
   try { allSeries = (await api('/series')).series; } catch {}
   if (id) { try { dream = await api(`/dreams/${id}`); } catch {} }
 
-  const emotionList = ['joy', 'fear', 'anxiety', 'wonder', 'sadness', 'anger', 'confusion', 'peace', 'excitement', 'love', 'nostalgia'];
-  const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
-  const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
-
   const selectedEmotions = dream?.emotions?.reduce((acc, e) => { acc[e.emotion] = e.intensity; return acc; }, {}) || {};
   const selectedTags = dream?.tags || [];
   const dreamSeriesIds = dream?.series?.map(s => s.id) || [];
   const currentType = dream?.dream_type || 'normal';
+  const existingPhases = dream?.phases || [];
+  const existingInterpretations = dream?.interpretations || [];
 
-  window._editorState = { emotions: selectedEmotions, tags: [...selectedTags], dream, seriesIds: [...dreamSeriesIds], dreamType: currentType, tagCategory: 'custom' };
-
-  // Store allTags for the tag picker
+  window._editorState = {
+    emotions: selectedEmotions,
+    tags: [...selectedTags],
+    dream,
+    seriesIds: [...dreamSeriesIds],
+    dreamType: currentType,
+    phases: existingPhases.map(p => ({
+      title: p.title || '',
+      content: p.content,
+      emotions: p.emotions?.reduce((acc, e) => { acc[e.emotion] = e.intensity; return acc; }, {}) || {},
+      interpretations: p.interpretations?.map(i => i.content) || []
+    })),
+    interpretations: existingInterpretations.map(i => i.content)
+  };
   window._allTags = allTags;
 
   showModal(`
@@ -355,7 +401,7 @@ window.openDreamEditor = async function(id) {
         <input type="text" name="title" value="${dream ? escapeHtml(dream.title) : ''}" placeholder="Titre du rêve..." required
           class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white font-medium placeholder-gray-500 focus:border-dream-400 focus:outline-none text-sm">
         <div class="relative mb-3">
-          <textarea name="content" rows="4" placeholder="Décrivez votre rêve en détail..." required
+          <textarea name="content" rows="3" placeholder="Récit global du rêve..." required
             class="w-full px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none">${dream ? escapeHtml(dream.content) : ''}</textarea>
           <button type="button" onclick="toggleVoiceRecording()" id="voice-btn" class="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-dream-600/30 text-dream-300 hover:bg-dream-600/50 transition-all flex items-center justify-center text-sm" title="Dictée vocale">
             <i class="fas fa-microphone"></i>
@@ -369,7 +415,7 @@ window.openDreamEditor = async function(id) {
             class="w-full px-3 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-sm">
         </div>
 
-        <!-- Type de rêve — BOUTONS au lieu de select -->
+        <!-- Type de rêve — BOUTONS -->
         <div class="mb-3">
           <label class="text-[10px] text-gray-400 mb-1.5 block">Type de rêve</label>
           <div class="grid grid-cols-3 gap-1.5" id="dream-type-picker">
@@ -397,6 +443,36 @@ window.openDreamEditor = async function(id) {
           </div>
         </div>
 
+        <!-- ========== PHASES / ÉTAPES DU RÊVE ========== -->
+        <div class="mb-3 border border-dream-700/15 rounded-lg p-3 bg-night-900/20">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] text-gray-400 font-semibold uppercase"><i class="fas fa-route mr-1"></i>Étapes du rêve</label>
+            <button type="button" onclick="addPhase()" class="text-[10px] px-2 py-1 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all"><i class="fas fa-plus mr-1"></i>Ajouter</button>
+          </div>
+          <p class="text-[9px] text-gray-500 mb-2">Découpez votre rêve en scènes avec émotions et interprétations pour chacune.</p>
+          <div id="phases-container" class="space-y-2">
+            ${window._editorState.phases.length ? window._editorState.phases.map((p, i) => renderPhaseEditor(i, p)).join('') : '<p id="no-phases-msg" class="text-[10px] text-gray-600 italic text-center py-2">Aucune étape ajoutée</p>'}
+          </div>
+        </div>
+
+        <!-- ========== INTERPRÉTATIONS GLOBALES ========== -->
+        <div class="mb-3 border border-amber-700/15 rounded-lg p-3 bg-amber-900/5">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] text-gray-400 font-semibold uppercase"><i class="fas fa-lightbulb mr-1 text-amber-400/60"></i>Interprétations du rêve</label>
+            <button type="button" onclick="addGlobalInterpretation()" class="text-[10px] px-2 py-1 bg-amber-600/20 text-amber-300 rounded-lg hover:bg-amber-600/30 transition-all"><i class="fas fa-plus mr-1"></i>Ajouter</button>
+          </div>
+          <div id="interpretations-container" class="space-y-1.5">
+            ${window._editorState.interpretations.length ? window._editorState.interpretations.map((interp, i) => `
+              <div class="flex gap-1.5 items-start" id="global-interp-${i}">
+                <textarea rows="2" placeholder="Votre interprétation..."
+                  class="interp-global-input flex-1 px-3 py-1.5 bg-night-900/60 border border-amber-700/20 rounded-lg text-white text-xs placeholder-gray-500 focus:border-amber-400 focus:outline-none resize-none"
+                  oninput="updateGlobalInterpretation(${i}, this.value)">${escapeHtml(interp)}</textarea>
+                <button type="button" onclick="removeGlobalInterpretation(${i})" class="text-gray-500 hover:text-red-400 p-1 shrink-0"><i class="fas fa-times text-xs"></i></button>
+              </div>
+            `).join('') : ''}
+          </div>
+        </div>
+
         <!-- Séries -->
         ${allSeries.length > 0 ? `
         <div class="mb-3">
@@ -414,14 +490,14 @@ window.openDreamEditor = async function(id) {
           </div>
         </div>` : ''}
 
-        <!-- Emotions -->
+        <!-- Emotions globales -->
         <div class="mb-3">
-          <label class="text-[10px] text-gray-400 mb-1.5 block">Émotions ressenties</label>
+          <label class="text-[10px] text-gray-400 mb-1.5 block">Émotions globales du rêve</label>
           <div class="flex flex-wrap gap-1.5" id="emotions-picker">
-            ${emotionList.map(em => `
+            ${EMOTION_LIST.map(em => `
               <button type="button" onclick="toggleEmotion('${em}')" id="em-${em}"
                 class="emotion-btn px-2 py-1 rounded-full text-xs border transition-all ${selectedEmotions[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}">
-                ${emotionEmojis[em]} ${emotionLabels[em]}
+                ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}
               </button>
             `).join('')}
           </div>
@@ -430,37 +506,30 @@ window.openDreamEditor = async function(id) {
         <!-- Tags -->
         <div class="mb-4">
           <label class="text-[10px] text-gray-400 mb-1.5 block">Tags</label>
-          <!-- Selected tags display -->
           <div id="selected-tags" class="flex flex-wrap gap-1.5 mb-2 min-h-[24px]">
             ${selectedTags.length ? selectedTags.map(t => renderTagChip(t)).join('') : '<span class="text-[10px] text-gray-600 italic">Aucun tag</span>'}
           </div>
-          <!-- Existing tags to pick from -->
-          <div id="existing-tags-picker" class="mb-2">
-            ${allTags.length ? `
-              <div class="flex flex-wrap gap-1 p-2 bg-night-900/30 rounded-lg border border-dream-700/10 max-h-28 overflow-y-auto">
-                ${allTags.map(t => `
-                  <button type="button" onclick="pickExistingTag(${t.id})"
-                    id="pick-tag-${t.id}"
-                    class="existing-tag-btn px-2 py-0.5 rounded-full text-[10px] transition-all cursor-pointer ${selectedTags.find(st => st.name === t.name) ? 'opacity-40 pointer-events-none' : 'hover:scale-105'}"
-                    style="background:${t.color}15; color:${t.color}; border: 1px solid ${t.color}30"
-                    ${selectedTags.find(st => st.name === t.name) ? 'disabled' : ''}>
-                    ${escapeHtml(t.name)}
-                  </button>
-                `).join('')}
-              </div>
-            ` : ''}
-          </div>
-          <!-- Create new tag -->
+          ${allTags.length ? `
+          <div class="mb-2">
+            <span class="text-[9px] text-gray-500 mb-1 block">Tags existants :</span>
+            <div class="flex flex-wrap gap-1 p-2 bg-night-900/30 rounded-lg border border-dream-700/10 max-h-28 overflow-y-auto">
+              ${allTags.map(t => `
+                <button type="button" onclick="pickExistingTag(${t.id})"
+                  id="pick-tag-${t.id}"
+                  class="existing-tag-btn px-2 py-0.5 rounded-full text-[10px] transition-all cursor-pointer ${selectedTags.find(st => st.name === t.name) ? 'opacity-40 pointer-events-none' : 'hover:scale-105'}"
+                  style="background:${t.color}15; color:${t.color}; border: 1px solid ${t.color}30"
+                  ${selectedTags.find(st => st.name === t.name) ? 'disabled' : ''}>
+                  ${TAG_CATEGORIES.find(c => c.value === t.category)?.icon || '🏷️'} ${escapeHtml(t.name)}
+                </button>
+              `).join('')}
+            </div>
+          </div>` : ''}
           <div class="flex gap-1.5 items-center">
             <input type="text" id="tag-input" placeholder="Créer un tag..."
               class="flex-1 px-3 py-1.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none min-w-0"
               onkeydown="if(event.key==='Enter'){event.preventDefault(); addNewTag()}">
             <select id="tag-category-select" class="px-2 py-1.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-xs text-gray-300 focus:border-dream-400 focus:outline-none">
-              <option value="custom">🏷️</option>
-              <option value="person">👤</option>
-              <option value="place">📍</option>
-              <option value="theme">🎭</option>
-              <option value="symbol">🔮</option>
+              ${TAG_CATEGORIES.map(c => `<option value="${c.value}">${c.icon} ${c.label}</option>`).join('')}
             </select>
             <button type="button" onclick="addNewTag()" class="px-2.5 py-1.5 bg-dream-600/40 text-dream-300 rounded-lg hover:bg-dream-600/60 text-xs shrink-0"><i class="fas fa-plus"></i></button>
           </div>
@@ -472,7 +541,142 @@ window.openDreamEditor = async function(id) {
         </button>
       </form>
     </div>
-  `, '600px');
+  `, '650px');
+};
+
+// ========== Phase Editor Helper ==========
+function renderPhaseEditor(idx, phase) {
+  phase = phase || { title: '', content: '', emotions: {}, interpretations: [] };
+  return `
+    <div class="phase-item p-2.5 rounded-lg bg-night-900/30 border border-dream-700/10" id="phase-${idx}">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="w-5 h-5 rounded-full bg-dream-600/40 text-dream-300 text-[10px] flex items-center justify-center font-bold shrink-0">${idx + 1}</span>
+        <input type="text" placeholder="Titre de l'étape (optionnel)" value="${escapeHtml(phase.title || '')}"
+          class="flex-1 px-2 py-1 bg-night-900/60 border border-dream-700/20 rounded text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none"
+          oninput="updatePhase(${idx}, 'title', this.value)">
+        <button type="button" onclick="removePhase(${idx})" class="text-gray-500 hover:text-red-400 p-1 shrink-0"><i class="fas fa-times text-xs"></i></button>
+      </div>
+      <textarea rows="2" placeholder="Que se passe-t-il dans cette scène ?"
+        class="w-full px-2 py-1.5 bg-night-900/60 border border-dream-700/20 rounded text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none mb-2"
+        oninput="updatePhase(${idx}, 'content', this.value)">${escapeHtml(phase.content || '')}</textarea>
+      <div class="mb-1.5">
+        <span class="text-[9px] text-gray-500">Émotions :</span>
+        <div class="flex flex-wrap gap-1 mt-1">
+          ${EMOTION_LIST.map(em => `
+            <button type="button" onclick="togglePhaseEmotion(${idx}, '${em}')" id="phase-em-${idx}-${em}"
+              class="px-1.5 py-0.5 rounded-full text-[9px] border transition-all ${phase.emotions?.[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-500'}">
+              ${EMOTION_EMOJIS[em]}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] text-gray-500">Interprétations :</span>
+          <button type="button" onclick="addPhaseInterpretation(${idx})" class="text-[9px] text-amber-400/60 hover:text-amber-300"><i class="fas fa-plus mr-0.5"></i>Ajouter</button>
+        </div>
+        <div id="phase-interps-${idx}" class="space-y-1 mt-1">
+          ${(phase.interpretations || []).map((interp, j) => `
+            <div class="flex gap-1 items-start">
+              <input type="text" value="${escapeHtml(interp)}" placeholder="Interprétation..."
+                class="flex-1 px-2 py-1 bg-night-900/60 border border-amber-700/15 rounded text-white text-[10px] placeholder-gray-500 focus:border-amber-400 focus:outline-none"
+                oninput="updatePhaseInterpretation(${idx}, ${j}, this.value)">
+              <button type="button" onclick="removePhaseInterpretation(${idx}, ${j})" class="text-gray-500 hover:text-red-400 p-0.5"><i class="fas fa-times text-[9px]"></i></button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ========== Phase Management ==========
+window.addPhase = function() {
+  window._editorState.phases.push({ title: '', content: '', emotions: {}, interpretations: [] });
+  refreshPhasesUI();
+};
+
+window.removePhase = function(idx) {
+  window._editorState.phases.splice(idx, 1);
+  refreshPhasesUI();
+};
+
+window.updatePhase = function(idx, field, value) {
+  if (window._editorState.phases[idx]) window._editorState.phases[idx][field] = value;
+};
+
+window.togglePhaseEmotion = function(idx, em) {
+  const phase = window._editorState.phases[idx];
+  if (!phase) return;
+  if (!phase.emotions) phase.emotions = {};
+  if (phase.emotions[em]) delete phase.emotions[em]; else phase.emotions[em] = 3;
+  const btn = document.getElementById(`phase-em-${idx}-${em}`);
+  if (btn) {
+    const isSelected = !!phase.emotions[em];
+    btn.className = `px-1.5 py-0.5 rounded-full text-[9px] border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-500'}`;
+  }
+};
+
+window.addPhaseInterpretation = function(idx) {
+  const phase = window._editorState.phases[idx];
+  if (!phase) return;
+  if (!phase.interpretations) phase.interpretations = [];
+  phase.interpretations.push('');
+  refreshPhasesUI();
+};
+
+window.removePhaseInterpretation = function(idx, j) {
+  const phase = window._editorState.phases[idx];
+  if (!phase?.interpretations) return;
+  phase.interpretations.splice(j, 1);
+  refreshPhasesUI();
+};
+
+window.updatePhaseInterpretation = function(idx, j, value) {
+  const phase = window._editorState.phases[idx];
+  if (phase?.interpretations) phase.interpretations[j] = value;
+};
+
+function refreshPhasesUI() {
+  const container = document.getElementById('phases-container');
+  if (!container) return;
+  if (window._editorState.phases.length === 0) {
+    container.innerHTML = '<p id="no-phases-msg" class="text-[10px] text-gray-600 italic text-center py-2">Aucune étape ajoutée</p>';
+  } else {
+    container.innerHTML = window._editorState.phases.map((p, i) => renderPhaseEditor(i, p)).join('');
+  }
+}
+
+// ========== Global Interpretations ==========
+window.addGlobalInterpretation = function() {
+  window._editorState.interpretations.push('');
+  const container = document.getElementById('interpretations-container');
+  const i = window._editorState.interpretations.length - 1;
+  container.insertAdjacentHTML('beforeend', `
+    <div class="flex gap-1.5 items-start" id="global-interp-${i}">
+      <textarea rows="2" placeholder="Votre interprétation..."
+        class="interp-global-input flex-1 px-3 py-1.5 bg-night-900/60 border border-amber-700/20 rounded-lg text-white text-xs placeholder-gray-500 focus:border-amber-400 focus:outline-none resize-none"
+        oninput="updateGlobalInterpretation(${i}, this.value)"></textarea>
+      <button type="button" onclick="removeGlobalInterpretation(${i})" class="text-gray-500 hover:text-red-400 p-1 shrink-0"><i class="fas fa-times text-xs"></i></button>
+    </div>
+  `);
+};
+
+window.updateGlobalInterpretation = function(i, value) {
+  window._editorState.interpretations[i] = value;
+};
+
+window.removeGlobalInterpretation = function(i) {
+  window._editorState.interpretations.splice(i, 1);
+  // Re-render all
+  const container = document.getElementById('interpretations-container');
+  container.innerHTML = window._editorState.interpretations.map((interp, idx) => `
+    <div class="flex gap-1.5 items-start" id="global-interp-${idx}">
+      <textarea rows="2" placeholder="Votre interprétation..."
+        class="interp-global-input flex-1 px-3 py-1.5 bg-night-900/60 border border-amber-700/20 rounded-lg text-white text-xs placeholder-gray-500 focus:border-amber-400 focus:outline-none resize-none"
+        oninput="updateGlobalInterpretation(${idx}, this.value)">${escapeHtml(interp)}</textarea>
+      <button type="button" onclick="removeGlobalInterpretation(${idx})" class="text-gray-500 hover:text-red-400 p-1 shrink-0"><i class="fas fa-times text-xs"></i></button>
+    </div>
+  `).join('');
 };
 
 // Dream type selection
@@ -486,7 +690,8 @@ window.selectDreamType = function(type) {
 };
 
 function renderTagChip(t) {
-  return `<span class="tag-chip px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)} <i class="fas fa-times cursor-pointer text-[8px] opacity-50 hover:opacity-100" onclick="removeTag('${escapeHtml(t.name).replace(/'/g, "\\'")}')"></i></span>`;
+  const catIcon = TAG_CATEGORIES.find(c => c.value === t.category)?.icon || '🏷️';
+  return `<span class="tag-chip px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${catIcon} ${escapeHtml(t.name)} <i class="fas fa-times cursor-pointer text-[8px] opacity-50 hover:opacity-100" onclick="removeTag('${escapeHtml(t.name).replace(/'/g, "\\'")}')"></i></span>`;
 }
 
 window.toggleSeriesInEditor = function(seriesId) {
@@ -518,7 +723,6 @@ window.pickExistingTag = function(tagId) {
   if (!tag || window._editorState.tags.find(t => t.name === tag.name)) return;
   window._editorState.tags.push({ id: tag.id, name: tag.name, category: tag.category, color: tag.color });
   updateTagsDisplay();
-  // Dim the picked tag button
   const pickBtn = document.getElementById(`pick-tag-${tagId}`);
   if (pickBtn) { pickBtn.classList.add('opacity-40', 'pointer-events-none'); pickBtn.disabled = true; }
 };
@@ -530,8 +734,7 @@ window.addNewTag = function() {
   const name = input.value.trim();
   if (!name || window._editorState.tags.find(t => t.name === name)) { input.value = ''; return; }
   const category = catSelect.value || 'custom';
-  const colors = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', theme: '#ec4899', symbol: '#06b6d4' };
-  window._editorState.tags.push({ name, category, color: colors[category] || '#6366f1' });
+  window._editorState.tags.push({ name, category, color: TAG_COLORS[category] || '#6366f1' });
   input.value = '';
   updateTagsDisplay();
 };
@@ -539,7 +742,6 @@ window.addNewTag = function() {
 window.removeTag = function(name) {
   window._editorState.tags = window._editorState.tags.filter(t => t.name !== name);
   updateTagsDisplay();
-  // Re-enable the pick button if it exists
   const tag = (window._allTags || []).find(t => t.name === name);
   if (tag) {
     const pickBtn = document.getElementById(`pick-tag-${tag.id}`);
@@ -560,19 +762,35 @@ window.saveDream = async function(e, id) {
   const form = new FormData(e.target);
   const errEl = document.getElementById('save-error');
   errEl.classList.add('hidden');
+
+  // Build phases data from editor state
+  const phasesData = window._editorState.phases
+    .filter(p => p.content?.trim())
+    .map(p => ({
+      title: p.title || '',
+      content: p.content,
+      emotions: Object.entries(p.emotions || {}).map(([emotion, intensity]) => ({ emotion, intensity })),
+      interpretations: (p.interpretations || []).filter(i => i?.trim()).map(i => ({ content: i }))
+    }));
+
+  const interpData = window._editorState.interpretations
+    .filter(i => i?.trim())
+    .map(i => ({ content: i }));
+
   const body = {
     title: form.get('title'), content: form.get('content'), dreamDate: form.get('dreamDate'),
     dreamType: form.get('dreamType'), lucidityLevel: parseInt(form.get('lucidityLevel')),
     clarity: parseInt(form.get('clarity')), sleepQuality: 0,
     isFavorite: window._editorState.dream?.is_favorite || false,
     emotions: Object.entries(window._editorState.emotions).map(([emotion, intensity]) => ({ emotion, intensity })),
-    tags: window._editorState.tags
+    tags: window._editorState.tags,
+    phases: phasesData,
+    interpretations: interpData
   };
   try {
     let dreamId = id;
     if (id) { await api(`/dreams/${id}`, { method: 'PUT', body: JSON.stringify(body) }); }
     else { const res = await api('/dreams', { method: 'POST', body: JSON.stringify(body) }); dreamId = res.id; }
-    // Handle series assignments
     if (dreamId && window._editorState.seriesIds.length) {
       for (const sid of window._editorState.seriesIds) {
         try { await api(`/series/${sid}/dreams`, { method: 'POST', body: JSON.stringify({ dreamId }) }); } catch {}
@@ -709,7 +927,7 @@ async function renderSeries() {
         <div class="text-center py-12">
           <div class="text-5xl mb-4">📚</div>
           <h3 class="text-lg font-display font-semibold text-dream-200 mb-2">Aucune série</h3>
-          <p class="text-gray-400 mb-6 max-w-md mx-auto text-sm">Regroupez vos rêves en séries narratives pour suivre des trames qui se poursuivent de nuit en nuit.</p>
+          <p class="text-gray-400 mb-6 max-w-md mx-auto text-sm">Regroupez vos rêves en séries narratives.</p>
           <button onclick="openSeriesEditor()" class="px-6 py-3 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl font-medium"><i class="fas fa-plus mr-2"></i>Créer ma première série</button>
         </div>
       ` : `
@@ -733,7 +951,6 @@ async function renderSeries() {
     </div>`;
 }
 
-// Open dream editor pre-linked to a series
 window.openDreamEditorForSeries = async function(seriesId) {
   await openDreamEditor();
   window._editorState.seriesIds = [seriesId];
@@ -782,7 +999,6 @@ window.openSeriesDetail = async function(id) {
   } catch (err) { alert(err.message); }
 };
 
-// Move dream up/down in series order
 window.moveDreamInSeries = async function(seriesId, dreamId, direction) {
   try {
     const series = await api(`/series/${seriesId}`);
@@ -791,32 +1007,21 @@ window.moveDreamInSeries = async function(seriesId, dreamId, direction) {
     if (idx < 0) return;
     const newIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (newIdx < 0 || newIdx >= dreams.length) return;
-    // Swap
     const ids = dreams.map(d => d.id);
     [ids[idx], ids[newIdx]] = [ids[newIdx], ids[idx]];
     await api(`/series/${seriesId}/reorder`, { method: 'PUT', body: JSON.stringify({ dreamIds: ids }) });
-    // Refresh
-    closeModal();
-    openSeriesDetail(seriesId);
+    closeModal(); openSeriesDetail(seriesId);
   } catch (err) { alert(err.message); }
 };
 
-// Series editor — without incubation prompt, with dream selection
 window.openSeriesEditor = async function(series) {
   let allDreams = [];
   try { allDreams = (await api('/dreams?limit=100')).dreams; } catch {}
-
-  // If editing, get dreams in this series
   let seriesDreamIds = [];
   if (series?.id) {
-    try {
-      const detail = await api(`/series/${series.id}`);
-      seriesDreamIds = (detail.dreams || []).map(d => d.id);
-    } catch {}
+    try { const detail = await api(`/series/${series.id}`); seriesDreamIds = (detail.dreams || []).map(d => d.id); } catch {}
   }
-
   window._seriesEditorState = { selectedDreamIds: [...seriesDreamIds] };
-
   showModal(`
     <div class="p-4 sm:p-6">
       <div class="flex items-center justify-between mb-4">
@@ -826,10 +1031,7 @@ window.openSeriesEditor = async function(series) {
       <form onsubmit="saveSeries(event, ${series?.id || 'null'})">
         <input type="text" name="name" value="${series?.name || ''}" placeholder="Nom de la série" required class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none text-sm">
         <textarea name="description" rows="2" placeholder="Description (optionnel)" class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none text-sm">${series?.description || ''}</textarea>
-        <div class="mb-3">
-          <label class="text-xs text-gray-400 mb-1 block">Couleur</label>
-          <input type="color" name="color" value="${series?.color || '#8b5cf6'}" class="w-12 h-8 rounded cursor-pointer bg-transparent">
-        </div>
+        <div class="mb-3"><label class="text-xs text-gray-400 mb-1 block">Couleur</label><input type="color" name="color" value="${series?.color || '#8b5cf6'}" class="w-12 h-8 rounded cursor-pointer bg-transparent"></div>
         ${allDreams.length ? `
         <div class="mb-4">
           <label class="text-xs text-gray-400 mb-2 block">Sélectionner des rêves</label>
@@ -837,10 +1039,7 @@ window.openSeriesEditor = async function(series) {
             ${allDreams.map(d => `
               <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-night-900/40 cursor-pointer transition-all">
                 <input type="checkbox" value="${d.id}" class="series-dream-checkbox accent-dream-400" onchange="toggleDreamInSeriesEditor(${d.id})" ${seriesDreamIds.includes(d.id) ? 'checked' : ''}>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-medium text-dream-200 truncate">${escapeHtml(d.title)}</p>
-                  <p class="text-[10px] text-gray-500">${d.dream_date} • ${d.dream_type}</p>
-                </div>
+                <div class="flex-1 min-w-0"><p class="text-xs font-medium text-dream-200 truncate">${escapeHtml(d.title)}</p><p class="text-[10px] text-gray-500">${d.dream_date} • ${d.dream_type}</p></div>
               </label>
             `).join('')}
           </div>
@@ -863,18 +1062,12 @@ window.saveSeries = async function(e, id) {
   const body = { name: form.get('name'), description: form.get('description'), color: form.get('color') };
   try {
     let seriesId = id;
-    if (id) {
-      await api(`/series/${id}`, { method: 'PUT', body: JSON.stringify(body) });
-    } else {
-      const res = await api('/series', { method: 'POST', body: JSON.stringify(body) });
-      seriesId = res.id;
-    }
-    // Add selected dreams to series
+    if (id) { await api(`/series/${id}`, { method: 'PUT', body: JSON.stringify(body) }); }
+    else { const res = await api('/series', { method: 'POST', body: JSON.stringify(body) }); seriesId = res.id; }
     if (seriesId && window._seriesEditorState?.selectedDreamIds.length) {
       for (const dreamId of window._seriesEditorState.selectedDreamIds) {
         try { await api(`/series/${seriesId}/dreams`, { method: 'POST', body: JSON.stringify({ dreamId }) }); } catch {}
       }
-      // Set order
       try { await api(`/series/${seriesId}/reorder`, { method: 'PUT', body: JSON.stringify({ dreamIds: window._seriesEditorState.selectedDreamIds }) }); } catch {}
     }
     closeModal(); renderSeries();
@@ -907,77 +1100,26 @@ window.startIncubation = async function(seriesId) {
   try { const data = await api(`/series/${seriesId}`); series = data; if (data.dreams?.length) lastDream = data.dreams[data.dreams.length - 1]; } catch (err) { alert(err.message); return; }
   showModal(`
     <div class="incubation-bg p-4 sm:p-6 rounded-xl">
-      <div class="text-center mb-5"><div class="text-4xl mb-3 animate-float">🌙</div><h2 class="text-xl font-display font-bold text-dream-100">Mode Incubation</h2><p class="text-xs text-gray-400 mt-1">Préparez votre esprit pour la nuit</p></div>
-      <div class="glass rounded-xl p-3 mb-4">
-        <h3 class="text-xs font-semibold text-dream-300 mb-2"><i class="fas fa-layer-group mr-1"></i>${escapeHtml(series.name)}</h3>
-        ${lastDream ? `<div class="p-2 rounded-lg bg-night-900/40"><p class="text-[10px] font-semibold text-dream-200 mb-1">📖 Dernier épisode: ${escapeHtml(lastDream.title)}</p><p class="text-[10px] text-gray-400 line-clamp-4">${escapeHtml(lastDream.content)}</p></div>` : ''}
-      </div>
-      <div class="glass rounded-xl p-3 mb-4">
-        <h3 class="text-xs font-semibold text-dream-300 mb-2"><i class="fas fa-moon mr-1"></i>Votre intention</h3>
-        <textarea id="incubation-intent" rows="3" placeholder="Formulez votre intention..." class="w-full px-3 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none">${series.incubation_prompt || ''}</textarea>
-      </div>
-      <div class="glass rounded-xl p-3 mb-4">
-        <h3 class="text-xs font-semibold text-amber-300 mb-2"><i class="fas fa-lightbulb mr-1"></i>Technique</h3>
-        <ol class="text-[10px] text-gray-300 space-y-1"><li>1. <strong>Relisez</strong> le dernier épisode</li><li>2. <strong>Visualisez</strong> la scène finale</li><li>3. <strong>Répétez</strong> votre intention</li><li>4. <strong>Endormez-vous</strong> en gardant cette image</li></ol>
-        <p class="text-[9px] text-gray-500 mt-2 italic">Barrett (Harvard, 1993) — ~50% de succès.</p>
-      </div>
-      <button onclick="saveIncubation(${seriesId})" class="w-full py-3 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl font-semibold text-sm">🌙 Bonne nuit</button>
+      <div class="text-center mb-5"><div class="text-4xl mb-3 animate-float">🌙</div><h2 class="text-xl font-display font-bold text-dream-100">Mode Incubation</h2><p class="text-xs text-gray-400 mt-1">Série : ${escapeHtml(series.name)}</p></div>
+      ${lastDream ? `<div class="glass-light rounded-lg p-3 mb-4"><p class="text-[10px] text-gray-400 mb-1">Dernier rêve :</p><p class="text-xs text-dream-200 font-medium">${escapeHtml(lastDream.title)}</p><p class="text-[10px] text-gray-400 mt-1 line-clamp-3">${escapeHtml(lastDream.content?.substring(0, 200))}</p></div>` : ''}
+      <form onsubmit="saveIncubation(event, ${seriesId})">
+        <textarea name="intent" rows="3" placeholder="Formulez votre intention de rêve pour cette nuit..." required class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none"></textarea>
+        <input type="date" name="targetDate" value="${new Date().toISOString().split('T')[0]}" class="w-full mb-4 px-3 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-sm">
+        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg font-semibold text-sm"><i class="fas fa-moon mr-2"></i>Programmer l'incubation</button>
+      </form>
+      <div class="mt-4 p-2.5 rounded-lg bg-night-900/30 border border-dream-700/10"><p class="text-[10px] text-gray-400"><i class="fas fa-info-circle mr-1 text-dream-400"></i>Relisez votre intention avant de dormir. Visualisez la scène souhaitée. Barrett (1993) : ~50% de succès.</p></div>
     </div>
-  `, '500px');
+  `);
 };
 
-window.saveIncubation = async function(seriesId) {
-  const intent = document.getElementById('incubation-intent').value;
-  if (!intent.trim()) { alert('Formulez une intention'); return; }
-  try { await api('/incubation', { method: 'POST', body: JSON.stringify({ seriesId, intentText: intent, targetDate: new Date().toISOString().split('T')[0] }) }); closeModal(); showToast('🌙 Intention enregistrée. Bonne nuit !'); } catch (err) { alert(err.message); }
-};
-
-// ========== STATS VIEW ==========
-async function renderStats() {
-  const main = document.getElementById('main-content');
+window.saveIncubation = async function(e, seriesId) {
+  e.preventDefault();
+  const form = new FormData(e.target);
   try {
-    const [stats, heatmap] = await Promise.all([api('/stats'), api('/stats/heatmap')]); state.stats = stats;
-    main.innerHTML = `
-      <div class="animate-slideUp">
-        <h2 class="text-base font-display font-semibold text-dream-200 mb-5"><i class="fas fa-chart-line mr-2"></i>Statistiques</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
-          <div class="glass rounded-xl p-3 text-center"><div class="text-2xl font-display font-bold text-dream-300">${stats.overview.totalDreams}</div><div class="text-[10px] text-gray-400 mt-1">Rêves totaux</div></div>
-          <div class="glass rounded-xl p-3 text-center"><div class="text-2xl font-display font-bold text-emerald-400">${stats.overview.lucidDreams}</div><div class="text-[10px] text-gray-400 mt-1">Rêves lucides</div></div>
-          <div class="glass rounded-xl p-3 text-center"><div class="text-2xl font-display font-bold text-amber-400">${stats.overview.streak}</div><div class="text-[10px] text-gray-400 mt-1">Jours de suite 🔥</div></div>
-          <div class="glass rounded-xl p-3 text-center"><div class="text-2xl font-display font-bold text-pink-400">${stats.overview.lucidRate}%</div><div class="text-[10px] text-gray-400 mt-1">Taux lucidité</div></div>
-        </div>
-        <div class="grid sm:grid-cols-2 gap-3 mb-5">
-          <div class="glass rounded-xl p-3"><h3 class="text-xs font-semibold text-dream-200 mb-3">Rêves par semaine</h3><canvas id="weekly-chart" height="180"></canvas></div>
-          <div class="glass rounded-xl p-3"><h3 class="text-xs font-semibold text-dream-200 mb-3">Émotions</h3><canvas id="emotions-chart" height="180"></canvas></div>
-        </div>
-        <div class="grid sm:grid-cols-2 gap-3 mb-5">
-          <div class="glass rounded-xl p-3"><h3 class="text-xs font-semibold text-dream-200 mb-3">Types de rêves</h3><canvas id="types-chart" height="180"></canvas></div>
-          <div class="glass rounded-xl p-3"><h3 class="text-xs font-semibold text-dream-200 mb-3">Tags populaires</h3><div class="flex flex-wrap gap-1.5 mt-2">${stats.topTags.map(t => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)} <span class="opacity-60">(${t.count})</span></span>`).join('') || '<span class="text-gray-500 text-sm">Aucun tag</span>'}</div></div>
-        </div>
-        <div class="glass rounded-xl p-3"><h3 class="text-xs font-semibold text-dream-200 mb-3">Calendrier</h3><div id="heatmap-container" class="overflow-x-auto"></div></div>
-      </div>`;
-    renderWeeklyChart(stats.weeklyData); renderEmotionsChart(stats.emotionStats); renderTypesChart(stats.typeStats); renderHeatmap(heatmap.heatmap);
-  } catch (err) { main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`; }
-}
-
-function renderWeeklyChart(data) { const ctx = document.getElementById('weekly-chart'); if (!ctx) return; new Chart(ctx, { type: 'bar', data: { labels: data.map(d => d.week), datasets: [{ label: 'Total', data: data.map(d => d.total), backgroundColor: 'rgba(99,102,241,0.6)', borderRadius: 4 }, { label: 'Lucides', data: data.map(d => d.lucid), backgroundColor: 'rgba(52,211,153,0.6)', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: { size: 10 } } } }, scales: { x: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: 'rgba(99,102,241,0.05)' } }, y: { ticks: { color: '#6b7280', stepSize: 1 }, grid: { color: 'rgba(99,102,241,0.05)' } } } } }); }
-function renderEmotionsChart(data) { const ctx = document.getElementById('emotions-chart'); if (!ctx || !data.length) return; const emojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' }; const colors = ['#818cf8','#34d399','#f87171','#fbbf24','#a78bfa','#fb923c','#22d3ee','#f472b6','#4ade80','#e879f9','#38bdf8']; new Chart(ctx, { type: 'doughnut', data: { labels: data.map(d => (emojis[d.emotion]||'') + ' ' + d.emotion), datasets: [{ data: data.map(d => d.count), backgroundColor: colors.slice(0, data.length), borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: { size: 10 }, padding: 6 } } } } }); }
-function renderTypesChart(data) { const ctx = document.getElementById('types-chart'); if (!ctx || !data.length) return; const tc = { normal: '#818cf8', lucid: '#34d399', nightmare: '#f87171', recurring: '#fbbf24', hypnagogic: '#22d3ee', false_awakening: '#f472b6' }; const tl = { normal: 'Normal', lucid: 'Lucide', nightmare: 'Cauchemar', recurring: 'Récurrent', hypnagogic: 'Hypnago.', false_awakening: 'Faux éveil' }; new Chart(ctx, { type: 'polarArea', data: { labels: data.map(d => tl[d.dream_type] || d.dream_type), datasets: [{ data: data.map(d => d.count), backgroundColor: data.map(d => (tc[d.dream_type]||'#818cf8')+'80'), borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: { size: 10 } } } }, scales: { r: { ticks: { display: false }, grid: { color: 'rgba(99,102,241,0.1)' } } } } }); }
-
-function renderHeatmap(data) {
-  const container = document.getElementById('heatmap-container'); if (!container) return;
-  const cellSize = window.innerWidth < 640 ? 10 : 14, gap = 2, weeks = window.innerWidth < 640 ? 26 : 52;
-  const width = weeks * (cellSize + gap) + 50, height = 7 * (cellSize + gap) + 20;
-  const dataMap = {}; data.forEach(d => { dataMap[d.dream_date] = d; });
-  const svg = d3.select('#heatmap-container').append('svg').attr('width', width).attr('height', height);
-  const today = new Date();
-  for (let w = 0; w < weeks; w++) { for (let d = 0; d < 7; d++) {
-    const date = new Date(today); date.setDate(date.getDate() - ((weeks-1-w)*7+(6-d))); const dateStr = date.toISOString().split('T')[0]; const entry = dataMap[dateStr];
-    let color = 'rgba(139,92,246,0.05)';
-    if (entry) { color = entry.lucid_count > 0 ? `rgba(52,211,153,${Math.min(0.3+entry.count*0.2,1)})` : `rgba(99,102,241,${Math.min(0.2+entry.count*0.2,0.9)})`; }
-    svg.append('rect').attr('class','heatmap-cell').attr('x',w*(cellSize+gap)+30).attr('y',d*(cellSize+gap)+10).attr('width',cellSize).attr('height',cellSize).attr('fill',color).attr('rx',2).append('title').text(`${dateStr}: ${entry ? entry.count+' rêve(s)' : 'aucun'}`);
-  }}
-}
+    await api('/incubation', { method: 'POST', body: JSON.stringify({ seriesId, intentText: form.get('intent'), targetDate: form.get('targetDate') }) });
+    closeModal(); showToast('🌙 Incubation programmée !');
+  } catch (err) { alert(err.message); }
+};
 
 // ========== LUCIDITY VIEW ==========
 async function renderLucidity() {

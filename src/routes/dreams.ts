@@ -62,14 +62,14 @@ dreamRoutes.get('/', async (c) => {
   })
 })
 
-// Obtenir un rêve par ID
+// Obtenir un rêve par ID (avec phases et interprétations)
 dreamRoutes.get('/:id', async (c) => {
   const userId = c.get('userId')
   const id = parseInt(c.req.param('id'))
 
-  const dream = await c.env.DB.prepare(`
-    SELECT d.* FROM dreams d WHERE d.id = ? AND d.user_id = ?
-  `).bind(id, userId).first<any>()
+  const dream = await c.env.DB.prepare(
+    'SELECT d.* FROM dreams d WHERE d.id = ? AND d.user_id = ?'
+  ).bind(id, userId).first<any>()
 
   if (!dream) return c.json({ error: 'Rêve non trouvé' }, 404)
 
@@ -96,12 +96,42 @@ dreamRoutes.get('/:id', async (c) => {
     JOIN series_dreams sd ON sd.series_id = ds.id WHERE sd.dream_id = ?
   `).bind(id).all<any>()
 
+  // Phases du rêve
+  const phases = await c.env.DB.prepare(
+    'SELECT * FROM dream_phases WHERE dream_id = ? ORDER BY order_index ASC'
+  ).bind(id).all<any>()
+
+  // Émotions et interprétations par phase
+  const parsedPhases = []
+  for (const phase of phases.results) {
+    const phaseEmotions = await c.env.DB.prepare(
+      'SELECT emotion, intensity FROM phase_emotions WHERE phase_id = ?'
+    ).bind(phase.id).all<any>()
+
+    const phaseInterpretations = await c.env.DB.prepare(
+      'SELECT id, content, created_at FROM dream_interpretations WHERE phase_id = ?'
+    ).bind(phase.id).all<any>()
+
+    parsedPhases.push({
+      ...phase,
+      emotions: phaseEmotions.results,
+      interpretations: phaseInterpretations.results
+    })
+  }
+
+  // Interprétations globales du rêve (phase_id IS NULL)
+  const globalInterpretations = await c.env.DB.prepare(
+    'SELECT id, content, created_at FROM dream_interpretations WHERE dream_id = ? AND phase_id IS NULL'
+  ).bind(id).all<any>()
+
   return c.json({
     ...dream,
     emotions: emotions.results,
     tags: tags.results,
     connections: connections.results,
-    series: series.results
+    series: series.results,
+    phases: parsedPhases,
+    interpretations: globalInterpretations.results
   })
 })
 
@@ -109,7 +139,7 @@ dreamRoutes.get('/:id', async (c) => {
 dreamRoutes.post('/', async (c) => {
   const userId = c.get('userId')
   const body = await c.req.json()
-  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, emotions, tags } = body
+  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, emotions, tags, phases, interpretations } = body
 
   if (!title || !content) {
     return c.json({ error: 'Titre et contenu requis' }, 400)
@@ -139,7 +169,6 @@ dreamRoutes.post('/', async (c) => {
   // Ajouter les tags
   if (tags?.length) {
     for (const tag of tags) {
-      // Créer le tag s'il n'existe pas
       let tagRecord = await c.env.DB.prepare(
         'SELECT id FROM tags WHERE user_id = ? AND name = ? AND category = ?'
       ).bind(userId, tag.name, tag.category || 'custom').first<any>()
@@ -155,10 +184,48 @@ dreamRoutes.post('/', async (c) => {
         'INSERT OR IGNORE INTO dream_tags (dream_id, tag_id) VALUES (?, ?)'
       ).bind(dreamId, tagRecord.id).run()
 
-      // Incrementer le compteur d'usage
       await c.env.DB.prepare(
         'UPDATE tags SET usage_count = usage_count + 1 WHERE id = ?'
       ).bind(tagRecord.id).run()
+    }
+  }
+
+  // Ajouter les phases
+  if (phases?.length) {
+    for (let i = 0; i < phases.length; i++) {
+      const phase = phases[i]
+      const phaseResult = await c.env.DB.prepare(
+        'INSERT INTO dream_phases (dream_id, order_index, title, content) VALUES (?, ?, ?, ?)'
+      ).bind(dreamId, i, phase.title || null, phase.content).run()
+
+      const phaseId = phaseResult.meta.last_row_id
+
+      // Émotions de la phase
+      if (phase.emotions?.length) {
+        for (const em of phase.emotions) {
+          await c.env.DB.prepare(
+            'INSERT INTO phase_emotions (phase_id, emotion, intensity) VALUES (?, ?, ?)'
+          ).bind(phaseId, em.emotion, em.intensity || 3).run()
+        }
+      }
+
+      // Interprétations de la phase
+      if (phase.interpretations?.length) {
+        for (const interp of phase.interpretations) {
+          await c.env.DB.prepare(
+            'INSERT INTO dream_interpretations (dream_id, phase_id, content) VALUES (?, ?, ?)'
+          ).bind(dreamId, phaseId, interp.content || interp).run()
+        }
+      }
+    }
+  }
+
+  // Interprétations globales
+  if (interpretations?.length) {
+    for (const interp of interpretations) {
+      await c.env.DB.prepare(
+        'INSERT INTO dream_interpretations (dream_id, phase_id, content) VALUES (?, NULL, ?)'
+      ).bind(dreamId, interp.content || interp).run()
     }
   }
 
@@ -171,13 +238,12 @@ dreamRoutes.put('/:id', async (c) => {
   const id = parseInt(c.req.param('id'))
   const body = await c.req.json()
 
-  // Vérifier que le rêve appartient à l'utilisateur
   const existing = await c.env.DB.prepare(
     'SELECT id FROM dreams WHERE id = ? AND user_id = ?'
   ).bind(id, userId).first()
   if (!existing) return c.json({ error: 'Rêve non trouvé' }, 404)
 
-  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, isFavorite, emotions, tags } = body
+  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, isFavorite, emotions, tags, phases, interpretations } = body
 
   await c.env.DB.prepare(`
     UPDATE dreams SET title = ?, content = ?, dream_date = ?, dream_type = ?,
@@ -213,6 +279,63 @@ dreamRoutes.put('/:id', async (c) => {
       await c.env.DB.prepare(
         'INSERT OR IGNORE INTO dream_tags (dream_id, tag_id) VALUES (?, ?)'
       ).bind(id, tagRecord.id).run()
+    }
+  }
+
+  // Mettre à jour les phases
+  if (phases !== undefined) {
+    // Supprimer toutes les anciennes phases et leurs données liées
+    const oldPhases = await c.env.DB.prepare(
+      'SELECT id FROM dream_phases WHERE dream_id = ?'
+    ).bind(id).all<any>()
+    
+    for (const op of oldPhases.results) {
+      await c.env.DB.prepare('DELETE FROM phase_emotions WHERE phase_id = ?').bind(op.id).run()
+      await c.env.DB.prepare('DELETE FROM dream_interpretations WHERE phase_id = ?').bind(op.id).run()
+    }
+    await c.env.DB.prepare('DELETE FROM dream_phases WHERE dream_id = ?').bind(id).run()
+
+    // Recréer les phases
+    if (phases?.length) {
+      for (let i = 0; i < phases.length; i++) {
+        const phase = phases[i]
+        const phaseResult = await c.env.DB.prepare(
+          'INSERT INTO dream_phases (dream_id, order_index, title, content) VALUES (?, ?, ?, ?)'
+        ).bind(id, i, phase.title || null, phase.content).run()
+
+        const phaseId = phaseResult.meta.last_row_id
+
+        if (phase.emotions?.length) {
+          for (const em of phase.emotions) {
+            await c.env.DB.prepare(
+              'INSERT INTO phase_emotions (phase_id, emotion, intensity) VALUES (?, ?, ?)'
+            ).bind(phaseId, em.emotion, em.intensity || 3).run()
+          }
+        }
+
+        if (phase.interpretations?.length) {
+          for (const interp of phase.interpretations) {
+            await c.env.DB.prepare(
+              'INSERT INTO dream_interpretations (dream_id, phase_id, content) VALUES (?, ?, ?)'
+            ).bind(id, phaseId, interp.content || interp).run()
+          }
+        }
+      }
+    }
+  }
+
+  // Mettre à jour les interprétations globales
+  if (interpretations !== undefined) {
+    await c.env.DB.prepare(
+      'DELETE FROM dream_interpretations WHERE dream_id = ? AND phase_id IS NULL'
+    ).bind(id).run()
+
+    if (interpretations?.length) {
+      for (const interp of interpretations) {
+        await c.env.DB.prepare(
+          'INSERT INTO dream_interpretations (dream_id, phase_id, content) VALUES (?, NULL, ?)'
+        ).bind(id, interp.content || interp).run()
+      }
     }
   }
 
