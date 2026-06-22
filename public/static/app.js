@@ -1116,7 +1116,7 @@ async function renderSeries() {
               ${s.description ? `<p class="text-xs text-gray-400 mb-2 line-clamp-2">${escapeHtml(s.description)}</p>` : ''}
               <div class="flex gap-2 mt-2">
                 <button onclick="event.stopPropagation(); openDreamEditorForSeries(${s.id})" class="flex-1 py-1.5 bg-night-800/40 text-gray-300 rounded-lg text-[10px] hover:bg-night-800/60 transition-all"><i class="fas fa-plus mr-1"></i>Nouveau rêve</button>
-                <button onclick="event.stopPropagation(); startIncubation(${s.id})" class="flex-1 py-1.5 bg-dream-600/20 text-dream-300 rounded-lg text-[10px] hover:bg-dream-600/30 transition-all"><i class="fas fa-moon mr-1"></i>Incubation</button>
+                <button onclick="event.stopPropagation(); openSeriesDetail(${s.id})" class="flex-1 py-1.5 bg-dream-600/20 text-dream-300 rounded-lg text-[10px] hover:bg-dream-600/30 transition-all"><i class="fas fa-book-open mr-1"></i>Rêves de la série</button>
               </div>
             </div>
           `).join('')}
@@ -1369,13 +1369,16 @@ async function renderLucidity() {
           <!-- Explication scientifique -->
           <div class="space-y-2">
             <p class="text-xs text-gray-300 leading-relaxed">
-              <strong class="text-amber-200">Le principe :</strong> Écoutez ce refrain à chaque contrôle de réalité. L'objectif est de créer un <strong class="text-dream-300">conditionnement associatif</strong> entre la musique et le questionnement « suis-je en train de rêver ? ». Avec la répétition, votre cerveau associe les deux de manière automatique.
+              <strong class="text-amber-200">Le principe (jour) :</strong> Écoutez ce refrain à chaque contrôle de réalité. L'objectif est de créer un <strong class="text-dream-300">conditionnement associatif</strong> entre la musique et le questionnement « suis-je en train de rêver ? ». Avec la répétition, votre cerveau associe les deux de manière automatique.
             </p>
             <p class="text-xs text-gray-300 leading-relaxed">
               <strong class="text-amber-200">Pourquoi ça fonctionne :</strong> Ce mécanisme repose sur le <strong class="text-dream-300">conditionnement classique</strong> (Pavlov, 1927) et l'<strong class="text-dream-300">apprentissage associatif</strong>. À force de coupler un stimulus (la musique) avec un comportement (le questionnement de la réalité), le stimulus seul finit par déclencher le comportement — même en rêve. Les travaux de Konkoly et al. (2021, publiés dans <em>Current Biology</em>) ont démontré que des stimuli sensoriels externes (sons, lumières) peuvent être intégrés dans les rêves pendant le sommeil paradoxal. Le cerveau endormi continue de traiter les sons de l'environnement, et les souvenirs musicaux fortement encodés sont parmi les plus résistants à l'oubli.
             </p>
             <p class="text-xs text-gray-300 leading-relaxed">
               <strong class="text-amber-200">L'effet dans les rêves :</strong> La mémoire musicale dépend de l'hippocampe et du cortex auditif, deux structures actives pendant le REM (Stickgold, 2005). Des études sur l'<strong class="text-dream-300">effet earworm</strong> (Williamson et al., 2012, <em>Psychology of Music</em>) montrent que les fragments musicaux répétés s'inscrivent involontairement dans la boucle phonologique de la mémoire de travail. Concrètement : un refrain écouté en boucle pendant vos reality checks a de fortes chances de se « rejouer » spontanément dans vos rêves. Et comme votre cerveau a associé ce refrain au questionnement de la réalité, il peut déclencher un <strong class="text-dream-300">moment de lucidité automatique</strong>.
+            </p>
+            <p class="text-xs text-gray-300 leading-relaxed">
+              <strong class="text-amber-200">Le bénéfice nocturne (TLR) :</strong> Au-delà de l'écoute en journée, ce même refrain peut être utilisé comme <strong class="text-dream-300">indice sonore nocturne</strong> grâce à la fonctionnalité TLR ci-dessous. Joué à volume ultra-faible pendant le sommeil paradoxal (6h après le coucher), le son est trop discret pour vous réveiller, mais suffisant pour que votre cerveau endormi le capte et l'intègre dans le rêve en cours. Et comme il a été conditionné en journée avec le questionnement « suis-je en train de rêver ? », il peut provoquer un <strong class="text-dream-300">flash de lucidité spontané</strong>. L'étude de Northwestern (Konkoly et al., 2024) a validé cette approche : même un refrain court joué pendant le REM peut être incorporé dans le rêve et agir comme déclencheur de lucidité.
             </p>
             <div class="p-2.5 rounded-lg bg-amber-500/8 border border-amber-500/15 mt-2">
               <p class="text-[10px] text-gray-300 leading-relaxed">
@@ -1385,6 +1388,81 @@ async function renderLucidity() {
             </div>
           </div>
           <p class="text-[9px] text-gray-500 italic mt-2">Sources : Pavlov (1927, conditionnement classique) · Konkoly et al. (2021, Current Biology) · Williamson et al. (2012, Psychology of Music) · Stickgold (2005, Nature Reviews Neuroscience)</p>
+        </div>
+
+        <!-- ===== TLR NOCTURNE — DÉCLENCHEUR AUTOMATIQUE ===== -->
+        <div class="mb-5 p-4 rounded-xl border border-violet-500/25" style="background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(245,158,11,0.04));">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xl">🌜</span>
+            <h4 class="font-semibold text-violet-200 text-sm">TLR Nocturne — Déclencheur Automatique</h4>
+          </div>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">
+            La <strong class="text-violet-300">Targeted Lucidity Reactivation</strong> (TLR), développée par l'Université de Northwestern (Konkoly et al., 2024, <em>Consciousness and Cognition</em>), consiste à rejouer pendant le sommeil paradoxal un son préalablement associé à l'entraînement au rêve lucide. L'étude a montré que les participants utilisant l'app TLR sont passés de <strong class="text-dream-300">0,74 à 2,11 rêves lucides/semaine</strong>, et 7 participants ont rapporté 14 rêves lucides directement déclenchés par le son.
+          </p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">
+            <strong class="text-violet-200">Comment ça marche ici :</strong> Vous définissez votre heure de coucher habituelle. <strong class="text-dream-300">6 heures</strong> après (pic de sommeil paradoxal, Erlacher & Stumbrys 2020), le refrain « Rêve Mieux » se jouera automatiquement à un volume ultra-faible. Comme votre cerveau a déjà associé ce refrain au questionnement « suis-je en train de rêver ? » via l'ancrage musical, le son peut s'intégrer dans votre rêve et <strong class="text-dream-300">déclencher la lucidité</strong> sans vous réveiller.
+          </p>
+
+          <!-- Configuration -->
+          <div id="tlr-config" class="space-y-3">
+            <!-- Heure de coucher habituelle -->
+            <div class="flex items-center gap-3">
+              <label class="text-xs text-gray-400 shrink-0 w-36">Coucher habituel :</label>
+              <input type="time" id="tlr-bedtime" value="${getTLRBedtime()}" onchange="saveTLRBedtime(this.value)"
+                class="px-3 py-1.5 bg-night-900/60 border border-violet-700/30 rounded-lg text-white text-sm focus:border-violet-400 focus:outline-none">
+            </div>
+            <!-- Override ce soir -->
+            <div class="flex items-center gap-3">
+              <label class="text-xs text-gray-400 shrink-0 w-36">Ce soir (optionnel) :</label>
+              <input type="time" id="tlr-tonight-override" value="${getTLRTonightOverride()}" onchange="saveTLRTonightOverride(this.value)"
+                class="px-3 py-1.5 bg-night-900/60 border border-violet-700/30 rounded-lg text-white text-sm focus:border-violet-400 focus:outline-none">
+              <button onclick="clearTLRTonightOverride()" class="text-[10px] text-gray-500 hover:text-red-400 transition-all" title="Effacer l'override"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- Volume -->
+            <div class="flex items-center gap-3">
+              <label class="text-xs text-gray-400 shrink-0 w-36">Volume nocturne :</label>
+              <div class="flex gap-1.5" id="tlr-volume-picker">
+                ${[1,2,3].map(v => `<button onclick="setTLRVolume(${v})" data-vol="${v}" class="tlr-vol-btn w-8 h-8 rounded-lg text-xs font-bold border transition-all ${getTLRVolume() === v ? 'border-violet-400 bg-violet-600/30 text-violet-200' : 'border-violet-700/20 bg-night-900/40 text-gray-500 hover:text-gray-300'}">${v}</button>`).join('')}
+              </div>
+              <span class="text-[10px] text-gray-500">${['', 'Très faible', 'Faible', 'Modéré'][getTLRVolume()]}</span>
+            </div>
+            <!-- Activation -->
+            <div class="flex items-center gap-3 pt-1">
+              <button onclick="toggleTLR()" id="tlr-toggle-btn"
+                class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${isTLRActive() ? 'bg-violet-600/40 text-violet-200 border border-violet-400/50 shadow-lg shadow-violet-500/10' : 'bg-gradient-to-r from-violet-600 to-dream-600 text-white hover:from-violet-500 hover:to-dream-500'}">
+                <i class="fas ${isTLRActive() ? 'fa-stop' : 'fa-moon'}"></i>
+                ${isTLRActive() ? 'Désactiver TLR' : 'Activer TLR Nocturne'}
+              </button>
+            </div>
+          </div>
+
+          <!-- Zone de compteurs (visible quand TLR actif) -->
+          <div id="tlr-counters" class="${isTLRActive() ? '' : 'hidden'} mt-4 p-3 rounded-xl bg-night-900/50 border border-violet-500/20 space-y-2">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-question-circle text-dream-400 text-xs"></i>
+              <span class="text-xs text-dream-200 font-semibold">Est-ce que tu rêves ?</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-bed text-violet-400 text-xs"></i>
+              <span class="text-xs text-gray-400">Tu dois dormir dans</span>
+              <span id="tlr-sleep-countdown" class="text-sm font-mono font-bold text-violet-300">--:--</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-bolt text-amber-400 text-xs"></i>
+              <span class="text-xs text-gray-400">Déclencheur lucide dans</span>
+              <span id="tlr-trigger-countdown" class="text-sm font-mono font-bold text-amber-300">--:--</span>
+            </div>
+            <div id="tlr-status-msg" class="text-[10px] text-gray-500 italic"></div>
+          </div>
+
+          <!-- Explication scientifique courte -->
+          <div class="mt-3 p-2.5 rounded-lg bg-violet-500/8 border border-violet-500/15">
+            <p class="text-[10px] text-gray-300 leading-relaxed">
+              <i class="fas fa-flask text-violet-400 mr-1"></i>
+              <strong class="text-violet-200">Pourquoi 6 heures :</strong> Les phases REM les plus longues (30-60 min) surviennent en fin de nuit. L'étude TLR a montré que commencer les indices sonores 6h après l'endormissement cible le pic de sommeil paradoxal. Le volume est maintenu au <strong class="text-dream-300">seuil de discrimination perceptive</strong> : assez fort pour que le cerveau endormi intègre le son dans le rêve, pas assez pour provoquer le réveil.
+            </p>
+          </div>
+          <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Erlacher & Stumbrys (2020) · Carr et al. (2020, Frontiers in Psychology)</p>
         </div>
 
         <!-- Explications scientifiques des reality checks -->
@@ -1606,6 +1684,272 @@ function updateReveMieuxProgress() {
     timeEl.textContent = Math.floor(cur / 60) + ':' + String(cur % 60).padStart(2, '0');
   }
   reveMieuxAnimFrame = requestAnimationFrame(updateReveMieuxProgress);
+}
+
+// ========== TLR NOCTURNE — TARGETED LUCIDITY REACTIVATION ==========
+let tlrInterval = null;
+let tlrNotifPermission = false;
+
+function getTLRBedtime() { return localStorage.getItem('tlr_bedtime') || '23:00'; }
+function saveTLRBedtime(val) { localStorage.setItem('tlr_bedtime', val); if (isTLRActive()) restartTLRCounters(); }
+
+function getTLRTonightOverride() { 
+  const data = localStorage.getItem('tlr_tonight');
+  if (!data) return '';
+  try { 
+    const parsed = JSON.parse(data);
+    // Only valid if set today
+    if (parsed.date === new Date().toISOString().split('T')[0]) return parsed.time;
+    localStorage.removeItem('tlr_tonight');
+    return '';
+  } catch { return ''; }
+}
+function saveTLRTonightOverride(val) { 
+  if (!val) { localStorage.removeItem('tlr_tonight'); return; }
+  localStorage.setItem('tlr_tonight', JSON.stringify({ time: val, date: new Date().toISOString().split('T')[0] }));
+  if (isTLRActive()) restartTLRCounters();
+}
+window.clearTLRTonightOverride = function() {
+  localStorage.removeItem('tlr_tonight');
+  const el = document.getElementById('tlr-tonight-override');
+  if (el) el.value = '';
+  if (isTLRActive()) restartTLRCounters();
+};
+
+function getTLRVolume() { return parseInt(localStorage.getItem('tlr_volume') || '1'); }
+window.setTLRVolume = function(v) {
+  localStorage.setItem('tlr_volume', v);
+  document.querySelectorAll('.tlr-vol-btn').forEach(btn => {
+    const isActive = parseInt(btn.dataset.vol) === v;
+    btn.className = `tlr-vol-btn w-8 h-8 rounded-lg text-xs font-bold border transition-all ${isActive ? 'border-violet-400 bg-violet-600/30 text-violet-200' : 'border-violet-700/20 bg-night-900/40 text-gray-500 hover:text-gray-300'}`;
+  });
+};
+
+function isTLRActive() { return localStorage.getItem('tlr_active') === '1'; }
+
+function getEffectiveBedtime() {
+  const override = getTLRTonightOverride();
+  return override || getTLRBedtime();
+}
+
+function getBedtimeDate() {
+  const timeStr = getEffectiveBedtime();
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const bed = new Date(now);
+  bed.setHours(h, m, 0, 0);
+  // If bedtime is earlier than now, it means tonight (push to tomorrow if before noon context)
+  if (bed <= now) bed.setDate(bed.getDate() + 1);
+  return bed;
+}
+
+function getTriggerDate() {
+  const bed = getBedtimeDate();
+  return new Date(bed.getTime() + 6 * 60 * 60 * 1000); // +6 hours
+}
+
+window.toggleTLR = function() {
+  if (isTLRActive()) {
+    // Deactivate
+    localStorage.setItem('tlr_active', '0');
+    stopTLRCounters();
+    const btn = document.getElementById('tlr-toggle-btn');
+    if (btn) {
+      btn.className = 'px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-gradient-to-r from-violet-600 to-dream-600 text-white hover:from-violet-500 hover:to-dream-500';
+      btn.innerHTML = '<i class="fas fa-moon"></i> Activer TLR Nocturne';
+    }
+    const counters = document.getElementById('tlr-counters');
+    if (counters) counters.classList.add('hidden');
+    showToast('TLR nocturne désactivé');
+  } else {
+    // Activate — request notification permission
+    localStorage.setItem('tlr_active', '1');
+    requestTLRNotification();
+    startTLRCounters();
+    const btn = document.getElementById('tlr-toggle-btn');
+    if (btn) {
+      btn.className = 'px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-violet-600/40 text-violet-200 border border-violet-400/50 shadow-lg shadow-violet-500/10';
+      btn.innerHTML = '<i class="fas fa-stop"></i> Désactiver TLR';
+    }
+    const counters = document.getElementById('tlr-counters');
+    if (counters) counters.classList.remove('hidden');
+    showToast('TLR nocturne activé ! Le refrain se jouera 6h après le coucher.');
+  }
+};
+
+function requestTLRNotification() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    tlrNotifPermission = true;
+    showPersistentNotification();
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => {
+      tlrNotifPermission = (p === 'granted');
+      if (tlrNotifPermission) showPersistentNotification();
+    });
+  }
+}
+
+let tlrNotifInterval = null;
+function showPersistentNotification() {
+  if (!tlrNotifPermission || !isTLRActive()) return;
+  // Update notification every 30 seconds
+  updateTLRNotification();
+  if (tlrNotifInterval) clearInterval(tlrNotifInterval);
+  tlrNotifInterval = setInterval(updateTLRNotification, 30000);
+}
+
+function updateTLRNotification() {
+  if (!tlrNotifPermission || !isTLRActive()) {
+    if (tlrNotifInterval) { clearInterval(tlrNotifInterval); tlrNotifInterval = null; }
+    return;
+  }
+  const now = new Date();
+  const bed = getBedtimeDate();
+  const trigger = getTriggerDate();
+  const sleepDiff = bed - now;
+  const triggerDiff = trigger - now;
+
+  let body = 'Est-ce que tu rêves ? 🌙\n';
+  if (sleepDiff > 0) {
+    const sh = Math.floor(sleepDiff / 3600000);
+    const sm = Math.floor((sleepDiff % 3600000) / 60000);
+    body += `Dodo dans ${sh}h${String(sm).padStart(2,'0')}\n`;
+  } else {
+    body += 'Bonne nuit ! 😴\n';
+  }
+  if (triggerDiff > 0) {
+    const th = Math.floor(triggerDiff / 3600000);
+    const tm = Math.floor((triggerDiff % 3600000) / 60000);
+    body += `Déclencheur lucide dans ${th}h${String(tm).padStart(2,'0')}`;
+  } else {
+    body += 'Déclencheur en cours...';
+  }
+
+  try {
+    new Notification('Rêve Mieux — TLR', {
+      body: body,
+      icon: '🌙',
+      tag: 'tlr-persistent',
+      renotify: true,
+      silent: true,
+      requireInteraction: false
+    });
+  } catch {}
+}
+
+function startTLRCounters() {
+  stopTLRCounters();
+  updateTLRDisplay();
+  tlrInterval = setInterval(updateTLRDisplay, 1000);
+  if (tlrNotifPermission) showPersistentNotification();
+}
+
+function stopTLRCounters() {
+  if (tlrInterval) { clearInterval(tlrInterval); tlrInterval = null; }
+  if (tlrNotifInterval) { clearInterval(tlrNotifInterval); tlrNotifInterval = null; }
+}
+
+function restartTLRCounters() { stopTLRCounters(); startTLRCounters(); }
+
+let tlrTriggered = false;
+function updateTLRDisplay() {
+  const now = new Date();
+  const bed = getBedtimeDate();
+  const trigger = getTriggerDate();
+
+  const sleepEl = document.getElementById('tlr-sleep-countdown');
+  const triggerEl = document.getElementById('tlr-trigger-countdown');
+  const statusEl = document.getElementById('tlr-status-msg');
+
+  const sleepDiff = bed - now;
+  const triggerDiff = trigger - now;
+
+  if (sleepEl) {
+    if (sleepDiff > 0) {
+      const h = Math.floor(sleepDiff / 3600000);
+      const m = Math.floor((sleepDiff % 3600000) / 60000);
+      const s = Math.floor((sleepDiff % 60000) / 1000);
+      sleepEl.textContent = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    } else {
+      sleepEl.textContent = 'Bonne nuit !';
+      sleepEl.className = 'text-sm font-mono font-bold text-emerald-300';
+    }
+  }
+
+  if (triggerEl) {
+    if (triggerDiff > 0) {
+      const h = Math.floor(triggerDiff / 3600000);
+      const m = Math.floor((triggerDiff % 3600000) / 60000);
+      const s = Math.floor((triggerDiff % 60000) / 1000);
+      triggerEl.textContent = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    } else {
+      triggerEl.textContent = 'En cours !';
+      triggerEl.className = 'text-sm font-mono font-bold text-amber-200 animate-pulse';
+    }
+  }
+
+  if (statusEl) {
+    if (triggerDiff <= 0) {
+      statusEl.textContent = '🎵 Le refrain se joue... Faites de beaux rêves lucides.';
+    } else if (sleepDiff <= 0) {
+      statusEl.textContent = '😴 Vous devriez dormir. Le déclencheur arrivera dans votre sommeil paradoxal.';
+    } else {
+      statusEl.textContent = '⏳ En attente. Le refrain se jouera automatiquement à l\'heure prévue.';
+    }
+  }
+
+  // Auto-play trigger: when triggerDiff crosses 0
+  if (triggerDiff <= 0 && !tlrTriggered && isTLRActive()) {
+    tlrTriggered = true;
+    playTLRRefrain();
+  }
+  // Reset trigger flag when trigger is in the future again (new day)
+  if (triggerDiff > 0) tlrTriggered = false;
+}
+
+function playTLRRefrain() {
+  if (!reveMieuxAudio) {
+    reveMieuxAudio = new Audio('/static/reve-mieux-refrain.mp3');
+    reveMieuxAudio.loop = true;
+    reveMieuxAudio.addEventListener('ended', () => {
+      reveMieuxAudio.currentTime = 0;
+      reveMieuxAudio.play().catch(() => {});
+    });
+  }
+  // Volume mapping: 1 = 0.03, 2 = 0.08, 3 = 0.15
+  const volumeMap = { 1: 0.03, 2: 0.08, 3: 0.15 };
+  reveMieuxAudio.volume = volumeMap[getTLRVolume()] || 0.03;
+  reveMieuxAudio.play().then(() => {
+    // Update UI if player is visible
+    const icon = document.getElementById('reve-mieux-play-icon');
+    const btn = document.getElementById('reve-mieux-play-btn');
+    if (icon) icon.className = 'fas fa-pause';
+    if (btn) btn.classList.add('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+    updateReveMieuxProgress();
+  }).catch(() => {
+    // Auto-play blocked by browser — show notification instead
+    if (tlrNotifPermission) {
+      try {
+        new Notification('Rêve Mieux — Déclencheur Lucide !', {
+          body: 'Le moment est venu ! Appuyez pour lancer le refrain à volume faible.',
+          tag: 'tlr-trigger',
+          requireInteraction: true
+        });
+      } catch {}
+    }
+  });
+}
+
+// On page load, restart TLR counters if active
+if (isTLRActive()) {
+  setTimeout(() => {
+    startTLRCounters();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      tlrNotifPermission = true;
+      showPersistentNotification();
+    }
+  }, 1000);
 }
 
 // ========== MODAL & TOAST ==========
