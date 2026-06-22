@@ -74,6 +74,13 @@ intentionRoutes.post('/', async (c) => {
     VALUES (?, ?, ?, ?, ?)
   `).bind(userId, type, sourceDreamId || null, title.trim(), description?.trim() || null).run()
 
+  // Sync: si c'est une suite de rêve, mettre à jour wished_continuation du rêve source
+  if (type === 'dream_continuation' && sourceDreamId && description?.trim()) {
+    await c.env.DB.prepare(
+      'UPDATE dreams SET wished_continuation = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?'
+    ).bind(description.trim(), sourceDreamId, userId).run()
+  }
+
   return c.json({ id: result.meta.last_row_id, message: 'Intention créée' }, 201)
 })
 
@@ -81,7 +88,7 @@ intentionRoutes.post('/', async (c) => {
 intentionRoutes.put('/:id', async (c) => {
   const userId = c.get('userId')
   const id = parseInt(c.req.param('id'))
-  const { title, description, status } = await c.req.json()
+  const { title, description, status, type, sourceDreamId } = await c.req.json()
 
   if (title !== undefined && !title?.trim()) return c.json({ error: 'Titre requis' }, 400)
   if (status && !['active', 'realized', 'archived'].includes(status)) return c.json({ error: 'Statut invalide' }, 400)
@@ -92,9 +99,23 @@ intentionRoutes.put('/:id', async (c) => {
   if (title !== undefined) { sets.push('title = ?'); params.push(title.trim()) }
   if (description !== undefined) { sets.push('description = ?'); params.push(description?.trim() || null) }
   if (status) { sets.push('status = ?'); params.push(status) }
+  if (type !== undefined) { sets.push('type = ?'); params.push(type) }
+  if (sourceDreamId !== undefined) { sets.push('source_dream_id = ?'); params.push(sourceDreamId) }
 
   params.push(id, userId)
   await c.env.DB.prepare(`UPDATE dream_intentions SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).bind(...params).run()
+
+  // Sync: si c'est une suite de rêve, mettre à jour wished_continuation du rêve source
+  if (description !== undefined) {
+    const intention = await c.env.DB.prepare(
+      'SELECT type, source_dream_id FROM dream_intentions WHERE id = ? AND user_id = ?'
+    ).bind(id, userId).first<any>()
+    if (intention?.type === 'dream_continuation' && intention?.source_dream_id) {
+      await c.env.DB.prepare(
+        'UPDATE dreams SET wished_continuation = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?'
+      ).bind(description?.trim() || null, intention.source_dream_id, userId).run()
+    }
+  }
 
   return c.json({ message: 'Intention mise à jour' })
 })
@@ -133,6 +154,25 @@ intentionRoutes.delete('/:id', async (c) => {
   const userId = c.get('userId')
   const id = parseInt(c.req.param('id'))
 
+  // Lire l'intention avant suppression pour sync
+  const intention = await c.env.DB.prepare(
+    'SELECT type, source_dream_id FROM dream_intentions WHERE id = ? AND user_id = ?'
+  ).bind(id, userId).first<any>()
+
   await c.env.DB.prepare('DELETE FROM dream_intentions WHERE id = ? AND user_id = ?').bind(id, userId).run()
+
+  // Sync: si c'était une suite de rêve, vérifier s'il reste d'autres intentions actives pour ce rêve
+  if (intention?.type === 'dream_continuation' && intention?.source_dream_id) {
+    const remaining = await c.env.DB.prepare(
+      'SELECT COUNT(*) as cnt FROM dream_intentions WHERE user_id = ? AND source_dream_id = ? AND status = ?'
+    ).bind(userId, intention.source_dream_id, 'active').first<any>()
+    if (!remaining?.cnt || remaining.cnt === 0) {
+      // Plus d'intention active pour ce rêve → vider wished_continuation
+      await c.env.DB.prepare(
+        'UPDATE dreams SET wished_continuation = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?'
+      ).bind(intention.source_dream_id, userId).run()
+    }
+  }
+
   return c.json({ message: 'Intention supprimée' })
 })

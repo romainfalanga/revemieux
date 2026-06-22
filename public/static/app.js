@@ -15,7 +15,9 @@ let state = {
   stats: null,
 
   editingDream: null,
-  filters: { type: 'all', tagIds: [] }
+  filters: { type: 'all', tagIds: [], emotion: null, minIntensity: 1, maxIntensity: 5 },
+  dreamDetailId: null, // for dream sub-page view
+  previousView: null   // to remember where to go back
 };
 
 // ========== API Helper ==========
@@ -180,6 +182,15 @@ function renderApp() {
     <div id="modal-container"></div>
   `;
   navigate(state.currentView);
+
+  // Auto-play refrain si ouvert depuis la notification avec ?autoplay=refrain
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('autoplay') === 'refrain') {
+    // Retirer le paramètre de l'URL pour éviter de re-jouer au refresh
+    window.history.replaceState({}, '', window.location.pathname);
+    // Attendre que la page soit prête puis lancer le refrain
+    setTimeout(() => { window.toggleReveMieuxPlayer?.(); showToast('🎵 Refrain lancé depuis la notification'); }, 1000);
+  }
 }
 
 window.navigate = function(view) {
@@ -196,6 +207,7 @@ window.navigate = function(view) {
     case 'series': renderSeries(); break;
     case 'intentions': renderIntentions(); break;
     case 'lucidity': renderLucidity(); break;
+    case 'dream-detail': renderDreamDetailPage(state.dreamDetailId); break;
   }
 };
 
@@ -211,11 +223,16 @@ async function renderJournal() {
     const params = new URLSearchParams({ page: state.pagination.page, limit: state.pagination.limit });
     if (state.filters.type !== 'all') params.set('type', state.filters.type);
     if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
+    if (state.filters.emotion) {
+      params.set('emotion', state.filters.emotion);
+      params.set('minIntensity', state.filters.minIntensity);
+      params.set('maxIntensity', state.filters.maxIntensity);
+    }
     const data = await api(`/dreams?${params}`);
     state.dreams = data.dreams; state.pagination = data.pagination;
   } catch (err) { main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`; return; }
 
-  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0);
+  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + (state.filters.emotion ? 1 : 0);
 
   const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
   const categoryOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
@@ -242,6 +259,15 @@ async function renderJournal() {
       `).join('');
   }
 
+  // Build emotion filter HTML
+  const emotionFilterHTML = EMOTION_LIST.map(em => {
+    const isActive = state.filters.emotion === em;
+    return `<button onclick="toggleEmotionFilter('${em}')"
+      class="px-2 py-1 rounded-full text-[10px] font-medium transition-all cursor-pointer ${isActive ? 'border-dream-400 bg-dream-600/30 text-dream-200 ring-1 ring-dream-400/40' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200'}" style="border:1px solid ${isActive ? 'rgba(139,92,246,0.5)' : 'rgba(139,92,246,0.15)'}">
+      ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${isActive ? ' <i class="fas fa-times text-[8px] ml-0.5"></i>' : ''}
+    </button>`;
+  }).join('');
+
   main.innerHTML = `
     <div class="animate-slideUp">
       <div class="flex flex-col gap-3 mb-5">
@@ -265,10 +291,11 @@ async function renderJournal() {
           </button>
         </div>
         <!-- Active filters display -->
-        ${(state.filters.type !== 'all' || state.filters.tagIds.length > 0) ? `
+        ${(state.filters.type !== 'all' || state.filters.tagIds.length > 0 || state.filters.emotion) ? `
         <div class="flex flex-wrap gap-1 items-center">
           <span class="text-[9px] text-gray-500 mr-1">Filtres actifs :</span>
           ${state.filters.type !== 'all' ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).icon||''} ${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).label||state.filters.type} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="filterType('all')"></i></span>` : ''}
+          ${state.filters.emotion ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${EMOTION_EMOJIS[state.filters.emotion]} ${EMOTION_LABELS[state.filters.emotion]} ${state.filters.minIntensity}-${state.filters.maxIntensity}/5 <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleEmotionFilter(null)"></i></span>` : ''}
           ${state.filters.tagIds.map(tid => {
             const tag = Object.values(groupedTags).flat().find(t => t.id === tid);
             return tag ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style="background:${tag.color}30; color:${tag.color}; border:1px solid ${tag.color}50">${escapeHtml(tag.name)} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleTagFilter(${tid})"></i></span>` : '';
@@ -276,7 +303,7 @@ async function renderJournal() {
         </div>` : ''}
       </div>
 
-      <!-- Expandable filter panel -->
+      <!-- Expandable filter panel — all filters apply in real-time -->
       <div id="filter-panel" class="hidden mb-4 glass rounded-xl p-3 animate-slideUp">
         <div class="flex items-center justify-between mb-3">
           <h4 class="text-xs font-semibold text-dream-200"><i class="fas fa-filter mr-1.5"></i>Filtres</h4>
@@ -293,6 +320,29 @@ async function renderJournal() {
               </button>
             `).join('')}
           </div>
+        </div>
+        <!-- Emotion filter -->
+        <div class="mb-3">
+          <p class="text-[9px] text-gray-500 font-semibold uppercase mb-1.5">Émotion</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${emotionFilterHTML}
+          </div>
+          ${state.filters.emotion ? `
+          <div class="mt-2 p-2 rounded-lg bg-night-900/50 border border-dream-700/20">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs">${EMOTION_EMOJIS[state.filters.emotion]}</span>
+              <span class="text-[10px] text-dream-200 font-medium">${EMOTION_LABELS[state.filters.emotion]}</span>
+              <span class="text-[9px] text-gray-500">Intensité : ${state.filters.minIntensity} - ${state.filters.maxIntensity}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] text-gray-500 shrink-0">Min</span>
+              <input type="range" min="1" max="5" value="${state.filters.minIntensity}" class="flex-1 accent-dream-400"
+                oninput="setEmotionFilterIntensity('min', parseInt(this.value))">
+              <span class="text-[9px] text-gray-500 shrink-0">Max</span>
+              <input type="range" min="1" max="5" value="${state.filters.maxIntensity}" class="flex-1 accent-dream-400"
+                oninput="setEmotionFilterIntensity('max', parseInt(this.value))">
+            </div>
+          </div>` : ''}
         </div>
         <!-- Tags filter -->
         <div>
@@ -352,16 +402,69 @@ function renderDreamCard(d) {
     </div>`;
 }
 
-window.filterType = function(val) { state.filters.type = val; state.pagination.page = 1; renderJournal(); };
+// Filter functions — all apply in real-time, panel stays open
+window.filterType = function(val) { state.filters.type = val; state.pagination.page = 1; renderJournalList(); };
 window.goToPage = function(p) { state.pagination.page = p; renderJournal(); };
 
-// Tag-based filtering
+// Tag-based filtering (real-time)
 window.toggleTagFilter = function(tagId) {
   const idx = state.filters.tagIds.indexOf(tagId);
   if (idx >= 0) { state.filters.tagIds.splice(idx, 1); } else { state.filters.tagIds.push(tagId); }
   state.pagination.page = 1;
-  renderJournal();
+  renderJournalList();
 };
+
+// Emotion-based filtering (real-time)
+window.toggleEmotionFilter = function(em) {
+  if (!em || state.filters.emotion === em) {
+    state.filters.emotion = null;
+    state.filters.minIntensity = 1;
+    state.filters.maxIntensity = 5;
+  } else {
+    state.filters.emotion = em;
+  }
+  state.pagination.page = 1;
+  renderJournal(); // full re-render to update the filter panel UI (intensity slider)
+};
+
+window.setEmotionFilterIntensity = function(which, val) {
+  if (which === 'min') {
+    state.filters.minIntensity = val;
+    if (state.filters.maxIntensity < val) state.filters.maxIntensity = val;
+  } else {
+    state.filters.maxIntensity = val;
+    if (state.filters.minIntensity > val) state.filters.minIntensity = val;
+  }
+  state.pagination.page = 1;
+  renderJournalList();
+};
+
+// Render only the dream list (for real-time filter updates without closing the panel)
+async function renderJournalList() {
+  const params = new URLSearchParams({ page: state.pagination.page, limit: state.pagination.limit });
+  if (state.filters.type !== 'all') params.set('type', state.filters.type);
+  if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
+  if (state.filters.emotion) {
+    params.set('emotion', state.filters.emotion);
+    params.set('minIntensity', state.filters.minIntensity);
+    params.set('maxIntensity', state.filters.maxIntensity);
+  }
+  try {
+    const data = await api(`/dreams?${params}`);
+    state.dreams = data.dreams; state.pagination = data.pagination;
+  } catch { return; }
+  const list = document.getElementById('dreams-list');
+  if (list) {
+    const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + (state.filters.emotion ? 1 : 0);
+    list.innerHTML = state.dreams.length === 0 ? `
+      <div class="text-center py-12">
+        <div class="text-5xl mb-4 animate-float">${activeFilterCount > 0 ? '🔍' : '🌙'}</div>
+        <h3 class="text-lg font-display font-semibold text-dream-200 mb-2">${activeFilterCount > 0 ? 'Aucun rêve trouvé' : 'Votre journal est vide'}</h3>
+        <p class="text-gray-400 mb-6 max-w-md mx-auto text-sm">${activeFilterCount > 0 ? 'Essayez de modifier vos filtres.' : 'Commencez à noter vos rêves dès le réveil.'}</p>
+      </div>
+    ` : state.dreams.map(d => renderDreamCard(d)).join('');
+  }
+}
 
 window.toggleFilterPanel = function() {
   const panel = document.getElementById('filter-panel');
@@ -371,39 +474,33 @@ window.toggleFilterPanel = function() {
 window.clearAllFilters = function() {
   state.filters.type = 'all';
   state.filters.tagIds = [];
+  state.filters.emotion = null;
+  state.filters.minIntensity = 1;
+  state.filters.maxIntensity = 5;
   state.pagination.page = 1;
   renderJournal();
 };
 
-// ========== DREAM DETAIL ==========
-window.openDreamDetail = async function(id) {
-  // Affichage instantané avec les données déjà en mémoire
-  const cached = state.dreams.find(d => d.id === id);
-  if (cached) {
-    showModal(renderDreamDetailModal(cached, true, []));
-    // Enrichir en arrière-plan avec les données complètes + intentions
-    try {
-      const [full, intentionsData] = await Promise.all([
-        api(`/dreams/${id}`),
-        api(`/intentions/for-dream/${id}`).catch(() => ({ intentions: [] }))
-      ]);
-      const modalContent = document.querySelector('.modal-content');
-      if (modalContent) {
-        const inner = modalContent.querySelector('.dream-detail-inner');
-        if (inner) inner.outerHTML = renderDreamDetailModal(full, false, intentionsData.intentions || []);
-      }
-    } catch {}
-  } else {
-    showModal(`<div class="p-8 text-center"><div class="inline-block w-6 h-6 border-2 border-dream-400 border-t-transparent rounded-full animate-spin"></div><p class="text-xs text-gray-400 mt-3">Chargement…</p></div>`);
-    try {
-      const [dream, intentionsData] = await Promise.all([
-        api(`/dreams/${id}`),
-        api(`/intentions/for-dream/${id}`).catch(() => ({ intentions: [] }))
-      ]);
-      showModal(renderDreamDetailModal(dream, false, intentionsData.intentions || []));
-    } catch (err) { closeModal(); alert(err.message); }
-  }
+// ========== DREAM DETAIL (sub-page, not modal) ==========
+window.openDreamDetail = function(id) {
+  state.dreamDetailId = id;
+  state.previousView = state.currentView;
+  navigate('dream-detail');
 };
+
+async function renderDreamDetailPage(id) {
+  const main = document.getElementById('main-content');
+  main.innerHTML = '<div class="flex justify-center py-12"><div class="animate-spin text-dream-400 text-2xl"><i class="fas fa-circle-notch"></i></div></div>';
+  try {
+    const [dream, intentionsData] = await Promise.all([
+      api(`/dreams/${id}`),
+      api(`/intentions/for-dream/${id}`).catch(() => ({ intentions: [] }))
+    ]);
+    main.innerHTML = `<div class="animate-slideUp">${renderDreamDetailContent(dream, intentionsData.intentions || [])}</div>`;
+  } catch (err) {
+    main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`;
+  }
+}
 
 window.confirmDeleteDream = async function(id) {
   const actions = document.getElementById('dream-detail-actions');
@@ -422,27 +519,32 @@ window.cancelDeleteDream = function(id) {
   const actions = document.getElementById('dream-detail-actions');
   if (!actions) return;
   actions.innerHTML = `
-    <button onclick="closeModal(); openDreamEditor(${id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
+    <button onclick="openDreamEditor(${id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
     <button onclick="confirmDeleteDream(${id})" class="py-2 px-4 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-all text-xs font-medium"><i class="fas fa-trash mr-1"></i>Supprimer</button>`;
 };
 
 window.executeDeleteDream = async function(id) {
   try {
     await api(`/dreams/${id}`, { method: 'DELETE' });
-    closeModal();
     showToast('🗑️ Rêve supprimé');
-    renderJournal();
+    goBackFromDreamDetail();
   } catch (err) { alert(err.message); }
 };
 
-function renderDreamDetailModal(d, isPartial, intentions) {
+window.goBackFromDreamDetail = function() {
+  const prev = state.previousView || 'journal';
+  state.dreamDetailId = null;
+  navigate(prev);
+};
+
+function renderDreamDetailContent(d, intentions) {
   intentions = intentions || [];
   const typeLabels = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.label]));
   const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
+  const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-  // Sections enrichies — affichées seulement quand les données complètes sont chargées
-  const phasesHTML = !isPartial && d.phases?.length ? `
+  const phasesHTML = d.phases?.length ? `
       <div class="mb-5">
         <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-route mr-1"></i>Étapes du rêve</h4>
         <div class="space-y-2">
@@ -460,7 +562,7 @@ function renderDreamDetailModal(d, isPartial, intentions) {
         </div>
       </div>` : '';
 
-  const interpretationsHTML = !isPartial && d.interpretations?.length ? `
+  const interpretationsHTML = d.interpretations?.length ? `
       <div class="mb-4">
         <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-lightbulb mr-1"></i>Interprétations</h4>
         <div class="space-y-1.5">
@@ -468,25 +570,25 @@ function renderDreamDetailModal(d, isPartial, intentions) {
         </div>
       </div>` : '';
 
-  const connectionsHTML = !isPartial && d.connections?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Connexions</h4><div class="space-y-1">${d.connections.map(cn => `<div class="flex items-center gap-2 p-2 rounded-lg bg-night-900/40 cursor-pointer hover:bg-night-900/60" onclick="closeModal(); setTimeout(() => openDreamDetail(${cn.connected_dream_id}), 300)"><i class="fas fa-link text-dream-400 text-xs"></i><span class="text-xs text-dream-200">${escapeHtml(cn.connected_dream_title)}</span><span class="text-[9px] text-gray-500 capitalize">${cn.connection_type}</span></div>`).join('')}</div></div>` : '';
+  const connectionsHTML = d.connections?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Connexions</h4><div class="space-y-1">${d.connections.map(cn => `<div class="flex items-center gap-2 p-2 rounded-lg bg-night-900/40 cursor-pointer hover:bg-night-900/60" onclick="openDreamDetail(${cn.connected_dream_id})"><i class="fas fa-link text-dream-400 text-xs"></i><span class="text-xs text-dream-200">${escapeHtml(cn.connected_dream_title)}</span><span class="text-[9px] text-gray-500 capitalize">${cn.connection_type}</span></div>`).join('')}</div></div>` : '';
 
-  const seriesHTML = !isPartial && d.series?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Séries</h4><div class="flex flex-wrap gap-1.5">${d.series.map(s => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${s.color}20; color:${s.color}">${escapeHtml(s.name)}</span>`).join('')}</div></div>` : '';
-
-  // Indicateur de chargement pour les sections enrichies
-  const loadingHTML = isPartial ? `<div id="dream-detail-loading" class="flex items-center gap-2 mb-4 py-2"><div class="w-3.5 h-3.5 border-2 border-dream-400 border-t-transparent rounded-full animate-spin"></div><span class="text-[10px] text-gray-500">Chargement des détails…</span></div>` : '';
+  const seriesHTML = d.series?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Séries</h4><div class="flex flex-wrap gap-1.5">${d.series.map(s => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${s.color}20; color:${s.color}">${escapeHtml(s.name)}</span>`).join('')}</div></div>` : '';
 
   return `
-    <div class="dream-detail-inner p-4 sm:p-6">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2 flex-wrap">
+    <div class="dream-detail-inner">
+      <!-- Back button + badges -->
+      <div class="flex items-center gap-2 mb-4">
+        <button onclick="goBackFromDreamDetail()" class="p-2 text-gray-400 hover:text-dream-300 transition-all rounded-lg hover:bg-night-900/40" title="Retour"><i class="fas fa-arrow-left"></i></button>
+        <div class="flex items-center gap-2 flex-wrap flex-1">
           <span class="badge-${d.dream_type} text-[10px] px-2 py-1 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
           ${d.lucidity_level > 0 ? `<span class="text-[10px] px-2 py-1 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
+          ${d.clarity ? `<span class="text-[10px] px-2 py-1 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity}/5</span>` : ''}
         </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
       </div>
+
       <h2 class="text-xl font-display font-bold text-dream-100 mb-2">${escapeHtml(d.title)}</h2>
       <p class="text-xs text-gray-400 mb-4"><i class="far fa-calendar mr-1"></i>${dateStr}</p>
-      <div class="mb-5"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(d.content)}</p></div>
+      <div class="glass rounded-xl p-4 mb-5"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(d.content)}</p></div>
 
       ${phasesHTML}
       ${interpretationsHTML}
@@ -514,19 +616,19 @@ function renderDreamDetailModal(d, isPartial, intentions) {
             </div>
           `).join('')}
         </div>
-        <button onclick="closeModal(); createContinuationIntention(${d.id}, '${escapeHtml(d.title).replace(/'/g, "\\'")}')" class="mt-2 w-full py-1.5 text-[10px] text-indigo-300 bg-indigo-600/10 border border-indigo-500/15 rounded-lg hover:bg-indigo-600/20 transition-all"><i class="fas fa-plus mr-1"></i>Ajouter une intention de suite</button>
+        <button onclick="createContinuationIntention(${d.id}, '${escapeHtml(d.title).replace(/'/g, "\\'")}')" class="mt-2 w-full py-1.5 text-[10px] text-indigo-300 bg-indigo-600/10 border border-indigo-500/15 rounded-lg hover:bg-indigo-600/20 transition-all"><i class="fas fa-plus mr-1"></i>Ajouter une intention de suite</button>
       </div>` : `
       <div class="mb-4">
-        <button onclick="closeModal(); createContinuationIntention(${d.id}, '${escapeHtml(d.title).replace(/'/g, "\\'")}')" class="w-full py-2 text-xs text-indigo-300/70 bg-indigo-600/10 border border-indigo-500/15 rounded-lg hover:bg-indigo-600/20 transition-all"><i class="fas fa-lightbulb mr-1"></i>Créer une intention de suite pour ce rêve</button>
+        <button onclick="createContinuationIntention(${d.id}, '${escapeHtml(d.title).replace(/'/g, "\\'")}')" class="w-full py-2 text-xs text-indigo-300/70 bg-indigo-600/10 border border-indigo-500/15 rounded-lg hover:bg-indigo-600/20 transition-all"><i class="fas fa-lightbulb mr-1"></i>Créer une intention de suite pour ce rêve</button>
       </div>`}
 
       ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions globales</h4><div class="flex flex-wrap gap-1.5">${[...d.emotions].sort((a, b) => b.intensity - a.intensity).map((e, i) => `<span class="flex items-center gap-1 px-2 py-1 rounded-full text-xs ${i === 0 ? 'bg-dream-600/30 ring-1 ring-dream-400/30' : 'bg-dream-800/30'}">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${emotionLabels[e.emotion] || e.emotion}</span> <span class="text-[9px] ${i === 0 ? 'text-dream-300 font-medium' : 'text-gray-500'}">${e.intensity}/5</span>${i === 0 ? '<span class="text-[8px] text-dream-400/60 ml-0.5">principale</span>' : ''}</span>`).join('')}</div></div>` : ''}
       ${d.tags?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Tags</h4><div class="flex flex-wrap gap-1.5">${d.tags.map(t => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)}</span>`).join('')}</div></div>` : ''}
       ${connectionsHTML}
       ${seriesHTML}
-      ${loadingHTML}
       <div id="dream-detail-actions" class="flex gap-2 pt-3 border-t border-dream-700/20">
-        <button onclick="closeModal(); openDreamEditor(${d.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
+        <button onclick="goBackFromDreamDetail()" class="py-2 px-4 bg-night-800/40 text-gray-300 rounded-lg hover:bg-night-800/60 transition-all text-xs font-medium"><i class="fas fa-arrow-left mr-1"></i>Retour</button>
+        <button onclick="openDreamEditor(${d.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
         <button onclick="confirmDeleteDream(${d.id})" class="py-2 px-4 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-all text-xs font-medium"><i class="fas fa-trash mr-1"></i>Supprimer</button>
       </div>
     </div>`;
@@ -1240,7 +1342,8 @@ window.saveDream = async function(e, id) {
     closeModal();
     const tagCount = body.tags?.length || 0;
     showToast(id ? 'Rêve mis à jour' + (tagCount ? ' (' + tagCount + ' tag' + (tagCount > 1 ? 's' : '') + ')' : '') : 'Rêve enregistré !');
-    if (state.currentView === 'journal') renderJournal();
+    if (state.currentView === 'dream-detail') { renderDreamDetailPage(state.dreamDetailId || dreamId); }
+    else if (state.currentView === 'journal') renderJournal();
     else if (state.currentView === 'series') renderSeries();
     else if (state.currentView === 'intentions') renderIntentions();
     else renderJournal();
@@ -1249,7 +1352,12 @@ window.saveDream = async function(e, id) {
 
 window.deleteDream = async function(id) {
   if (!confirm('Supprimer ce rêve ? Cette action est irréversible.')) return;
-  try { await api(`/dreams/${id}`, { method: 'DELETE' }); renderJournal(); } catch (err) { alert(err.message); }
+  try {
+    await api(`/dreams/${id}`, { method: 'DELETE' });
+    showToast('🗑️ Rêve supprimé');
+    if (state.currentView === 'dream-detail') goBackFromDreamDetail();
+    else renderJournal();
+  } catch (err) { alert(err.message); }
 };
 
 // ========== SERIES VIEW ==========
@@ -1802,6 +1910,8 @@ window.saveContinuationIntention = async function(e, dreamId) {
       title: form.get('title'), description: form.get('description') || null
     })});
     closeModal(); showToast('💭 Intention de suite créée !');
+    // Refresh current view to reflect the new intention
+    if (state.currentView === 'dream-detail') renderDreamDetailPage(state.dreamDetailId);
   } catch (err) { alert(err.message); }
 };
 
@@ -1933,7 +2043,7 @@ async function renderLucidity() {
           </div>
           <div class="flex items-center gap-2">
             <i class="fas fa-bed text-violet-400 text-xs"></i>
-            <span class="text-xs text-gray-400">Tu dois dormir dans</span>
+            <span id="tlr-sleep-label" class="text-xs text-gray-400">Tu dois dormir dans</span>
             <span id="tlr-sleep-countdown" class="text-sm font-mono font-bold text-violet-300">--:--</span>
           </div>
           <div class="flex items-center gap-2">
@@ -2148,15 +2258,19 @@ if ('serviceWorker' in navigator) {
       if (state.currentView === 'lucidity') renderLucidity();
     }
     if (event.data?.type === 'REALITY_CHECK_FROM_SW') {
-      // Enregistrer un reality check et naviguer vers lucidité
-      api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: 'notification', wasDreaming: false }) }).catch(() => {});
-      navigate('lucidity');
-      showToast('Reality check depuis la notification !');
+      // RC already recorded by SW directly — just update UI
+      const typeLabelsRC = { hands: '✋ Doigts', text: '📖 Lire', time: '⏰ Heure' };
+      showToast(`${typeLabelsRC[event.data.checkType] || 'RC'} enregistré !`);
+      if (state.currentView === 'lucidity') renderLucidity();
     }
     if (event.data?.type === 'PLAY_REFRAIN_FROM_SW') {
-      // Lancer le refrain depuis la notification
-      toggleReveMieuxPlayer();
-      showToast('🎵 Refrain lancé !');
+      // Auto-play refrain when user taps notification body
+      setTimeout(() => {
+        if (!reveMieuxAudio || reveMieuxAudio.paused) {
+          window.toggleReveMieuxPlayer?.();
+          showToast('🎵 Refrain lancé depuis la notification');
+        }
+      }, 300);
     }
   });
 }
@@ -2212,7 +2326,16 @@ function getBedtimeDate() {
   const now = new Date();
   const bed = new Date(now);
   bed.setHours(h, m, 0, 0);
-  if (bed <= now) bed.setDate(bed.getDate() + 1);
+  // Bed is in the past: it's tonight's bedtime if before trigger, or tomorrow's if trigger has passed
+  if (bed <= now) {
+    // Check if the trigger for this bedtime has also passed
+    const trigger = new Date(bed.getTime() + 6 * 60 * 60 * 1000);
+    if (trigger <= now) {
+      // Both bedtime and trigger passed → next cycle is tomorrow
+      bed.setDate(bed.getDate() + 1);
+    }
+    // else: bedtime passed but trigger not yet → keep today's bedtime (we're in the sleep period)
+  }
   return bed;
 }
 
@@ -2297,11 +2420,12 @@ function restartTLRCounters() { stopTLRCounters(); startTLRCounters(); }
 
 function updateSWNotification() {
   if (!isTLRActive()) return;
-  // Envoyer les timestamps absolus au SW pour qu'il calcule les countdowns en autonomie
+  // Envoyer les timestamps absolus + token au SW pour qu'il calcule les countdowns et enregistre les RC en autonomie
   sendSWMessage({
     type: 'TLR_UPDATE',
     bedtimeTimestamp: getBedtimeDate().getTime(),
-    triggerTimestamp: getTriggerDate().getTime()
+    triggerTimestamp: getTriggerDate().getTime(),
+    token: state.token
   });
 }
 
@@ -2312,6 +2436,7 @@ function updateTLRDisplay() {
   const trigger = getTriggerDate();
 
   const sleepEl = document.getElementById('tlr-sleep-countdown');
+  const sleepLabel = document.getElementById('tlr-sleep-label');
   const triggerEl = document.getElementById('tlr-trigger-countdown');
   const statusEl = document.getElementById('tlr-status-msg');
 
@@ -2319,11 +2444,18 @@ function updateTLRDisplay() {
   const triggerDiff = trigger - now;
 
   if (sleepEl) {
-    const sc = formatCountdown(sleepDiff);
-    if (sc) {
-      sleepEl.textContent = sc;
+    if (sleepDiff > 0) {
+      // Bedtime not reached yet
+      if (sleepLabel) sleepLabel.textContent = 'Tu dois dormir dans';
+      sleepEl.textContent = formatCountdown(sleepDiff);
       sleepEl.className = 'text-sm font-mono font-bold text-violet-300';
+    } else if (triggerDiff > 0) {
+      // Bedtime passed but trigger not yet → show elapsed time since bedtime
+      if (sleepLabel) sleepLabel.textContent = 'Tu devrais dormir depuis';
+      sleepEl.textContent = formatCountdown(Math.abs(sleepDiff));
+      sleepEl.className = 'text-sm font-mono font-bold text-amber-300';
     } else {
+      if (sleepLabel) sleepLabel.textContent = 'Dodo';
       sleepEl.textContent = 'Bonne nuit !';
       sleepEl.className = 'text-sm font-mono font-bold text-emerald-300';
     }

@@ -1,15 +1,16 @@
 // TLR Service Worker - Notification persistante pour Rêve Mieux
 // Gère les notifications sur écran de verrouillage
 // La notification ne peut être retirée QUE depuis la page Lucidité (toggleTLR)
-// v1.2.0 : calcul autonome des countdowns via timestamps absolus
+// v2.0.0 : 3 boutons RC (doigts/lire/heure), RC enregistrés directement depuis SW
 
-const SW_VERSION = '1.2.0';
+const SW_VERSION = '2.0.0';
 
 // État interne
 let tlrActive = false;
 let bedtimeTimestamp = null;
 let triggerTimestamp = null;
 let refreshTimer = null;
+let apiToken = null; // JWT token for API calls from SW
 
 // Installation
 self.addEventListener('install', (event) => {
@@ -31,6 +32,7 @@ self.addEventListener('message', (event) => {
       tlrActive = true;
       bedtimeTimestamp = data.bedtimeTimestamp;
       triggerTimestamp = data.triggerTimestamp;
+      if (data.token) apiToken = data.token;
       refreshNotification();
       startAutoRefresh();
       break;
@@ -43,6 +45,9 @@ self.addEventListener('message', (event) => {
       break;
     case 'TLR_TRIGGER':
       showTriggerNotification();
+      break;
+    case 'TLR_SET_TOKEN':
+      apiToken = data.token;
       break;
   }
 });
@@ -67,8 +72,12 @@ function refreshNotification() {
 
   if (sleepDiff > 0) {
     body += 'Dodo dans ' + formatCountdownHM(sleepDiff) + '\n';
+  } else if (triggerDiff > 0) {
+    // Bedtime passed but trigger not yet — show elapsed time since bedtime
+    const elapsed = Math.abs(sleepDiff);
+    body += 'Tu devrais dormir depuis ' + formatCountdownHM(elapsed) + '\n';
   } else {
-    body += 'Bonne nuit !\n';
+    body += 'Déclencheur en cours...\n';
   }
 
   if (triggerDiff > 0) {
@@ -88,11 +97,29 @@ function refreshNotification() {
     silent: true,
     ongoing: true,
     actions: [
-      { action: 'reality-check', title: 'Reality Check' },
-      { action: 'play-refrain', title: '▶ Refrain' }
+      { action: 'rc-hands', title: '✋ Doigts' },
+      { action: 'rc-text', title: '📖 Lire' },
+      { action: 'rc-time', title: '⏰ Heure' }
     ],
     data: { url: '/', type: 'tlr-persistent' }
   }).catch(() => {});
+}
+
+// Enregistrer un reality check via l'API directement depuis le SW (pas besoin de déverrouiller)
+async function recordRealityCheck(checkType) {
+  if (!apiToken) return;
+  try {
+    await fetch('/api/reality-checks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiToken
+      },
+      body: JSON.stringify({ checkType: checkType, wasDreaming: false })
+    });
+  } catch (err) {
+    // Silent fail — will be visible in app next time
+  }
 }
 
 // Auto-refresh toutes les 60 secondes (autonome, même app fermée)
@@ -142,45 +169,24 @@ async function closeTLRNotification() {
 self.addEventListener('notificationclick', (event) => {
   const notifType = event.notification.data?.type;
 
-  if (event.action === 'reality-check') {
-    if (notifType === 'tlr-persistent') {
-      event.notification.close();
-      event.waitUntil(
-        (async () => {
-          if (tlrActive) refreshNotification();
-          const clients = await self.clients.matchAll({ type: 'window' });
-          clients.forEach(client => client.postMessage({ type: 'REALITY_CHECK_FROM_SW' }));
-          if (clients.length > 0) {
-            clients[0].focus();
-          } else {
-            await self.clients.openWindow('/');
-          }
-        })()
-      );
-    } else {
-      event.notification.close();
-    }
-    return;
-  }
-
-  if (event.action === 'play-refrain') {
+  // Reality Check actions — record RC directly from SW (no unlock needed)
+  if (event.action === 'rc-hands' || event.action === 'rc-text' || event.action === 'rc-time') {
+    const checkType = event.action === 'rc-hands' ? 'hands' : event.action === 'rc-text' ? 'text' : 'time';
+    // Close and immediately re-show notification (keeps it persistent)
     event.notification.close();
     event.waitUntil(
       (async () => {
+        await recordRealityCheck(checkType);
         if (tlrActive) refreshNotification();
+        // Notify app if open
         const clients = await self.clients.matchAll({ type: 'window' });
-        clients.forEach(client => client.postMessage({ type: 'PLAY_REFRAIN_FROM_SW' }));
-        if (clients.length > 0) {
-          clients[0].focus();
-        } else {
-          await self.clients.openWindow('/');
-        }
+        clients.forEach(client => client.postMessage({ type: 'REALITY_CHECK_FROM_SW', checkType }));
       })()
     );
     return;
   }
 
-  // Clic normal sur la notif persistante : ouvrir l'app mais NE PAS fermer la notif
+  // Clic normal sur la notif persistante : ouvrir l'app et auto-play le refrain
   if (notifType === 'tlr-persistent') {
     event.notification.close();
     event.waitUntil(
@@ -189,8 +195,11 @@ self.addEventListener('notificationclick', (event) => {
         const clients = await self.clients.matchAll({ type: 'window' });
         if (clients.length > 0) {
           clients[0].focus();
+          // Demander à l'app de lancer le refrain automatiquement
+          clients[0].postMessage({ type: 'PLAY_REFRAIN_FROM_SW' });
         } else {
-          await self.clients.openWindow('/');
+          // Ouvrir l'app avec un paramètre pour auto-play
+          await self.clients.openWindow('/?autoplay=refrain');
         }
       })()
     );

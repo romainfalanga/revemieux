@@ -13,6 +13,9 @@ dreamRoutes.get('/', async (c) => {
   const type = c.req.query('type')
   const search = c.req.query('search')
   const tagsParam = c.req.query('tags') // comma-separated tag IDs
+  const emotionParam = c.req.query('emotion') // emotion name e.g. 'joy'
+  const minIntensity = c.req.query('minIntensity') // min intensity for emotion filter
+  const maxIntensity = c.req.query('maxIntensity') // max intensity for emotion filter
   const favorites = c.req.query('favorites')
   const offset = (page - 1) * limit
 
@@ -35,6 +38,24 @@ dreamRoutes.get('/', async (c) => {
   }
   if (favorites === '1') {
     where += ' AND d.is_favorite = 1'
+  }
+
+  // Emotion filter: find dreams with a specific emotion at a given intensity range
+  if (emotionParam) {
+    let emotionSubquery = ` AND d.id IN (
+      SELECT de_filter.dream_id FROM dream_emotions de_filter
+      WHERE de_filter.emotion = ?`
+    params.push(emotionParam)
+    if (minIntensity) {
+      emotionSubquery += ` AND de_filter.intensity >= ?`
+      params.push(parseInt(minIntensity))
+    }
+    if (maxIntensity) {
+      emotionSubquery += ` AND de_filter.intensity <= ?`
+      params.push(parseInt(maxIntensity))
+    }
+    emotionSubquery += `)`
+    where += emotionSubquery
   }
 
   // If tag filtering is active, we need to find dreams that have ALL selected tags (intersection)
