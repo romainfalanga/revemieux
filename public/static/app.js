@@ -1297,6 +1297,52 @@ async function renderLucidity() {
           <span class="text-dream-300"><strong>${rcStats.today}</strong> aujourd'hui</span>
           <span class="text-gray-400"><strong>${rcStats.total}</strong> au total</span>
         </div>
+
+        <!-- ===== ANCRAGE MUSICAL — DÉCLENCHEUR DE LUCIDITÉ ===== -->
+        <div class="mb-5 p-4 rounded-xl border border-amber-500/25" style="background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(139,92,246,0.06));">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xl">🎵</span>
+            <h4 class="font-semibold text-amber-200 text-sm">Ancrage Musical — « Rêve Mieux » par Aurel San</h4>
+          </div>
+          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-amber-600/20 text-amber-300 mb-3">🧠 Basé sur le conditionnement associatif</span>
+
+          <!-- Lecteur audio -->
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-night-900/50 border border-amber-500/15 mb-3" id="music-player-container">
+            <button onclick="toggleReveMieuxPlayer()" id="reve-mieux-play-btn"
+              class="w-11 h-11 rounded-full flex items-center justify-center text-lg transition-all shrink-0 border border-amber-500/40 bg-amber-600/20 text-amber-300 hover:bg-amber-600/40 hover:scale-105 active:scale-95">
+              <i class="fas fa-play" id="reve-mieux-play-icon"></i>
+            </button>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-amber-200 truncate">Rêve Mieux — Aurel San</p>
+              <p class="text-[10px] text-gray-400">Refrain · En boucle automatique</p>
+              <div class="mt-1.5 w-full bg-night-900/60 rounded-full h-1 overflow-hidden">
+                <div id="reve-mieux-progress" class="h-full bg-gradient-to-r from-amber-500 to-dream-400 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <span id="reve-mieux-time" class="text-[10px] text-gray-500 font-mono shrink-0">0:00</span>
+          </div>
+
+          <!-- Explication scientifique -->
+          <div class="space-y-2">
+            <p class="text-xs text-gray-300 leading-relaxed">
+              <strong class="text-amber-200">Le principe :</strong> Écoutez ce refrain à chaque contrôle de réalité. L'objectif est de créer un <strong class="text-dream-300">conditionnement associatif</strong> entre la musique et le questionnement « suis-je en train de rêver ? ». Avec la répétition, votre cerveau associe les deux de manière automatique.
+            </p>
+            <p class="text-xs text-gray-300 leading-relaxed">
+              <strong class="text-amber-200">Pourquoi ça fonctionne :</strong> Ce mécanisme repose sur le <strong class="text-dream-300">conditionnement classique</strong> (Pavlov, 1927) et l'<strong class="text-dream-300">apprentissage associatif</strong>. À force de coupler un stimulus (la musique) avec un comportement (le questionnement de la réalité), le stimulus seul finit par déclencher le comportement — même en rêve. Les travaux de Konkoly et al. (2021, publiés dans <em>Current Biology</em>) ont démontré que des stimuli sensoriels externes (sons, lumières) peuvent être intégrés dans les rêves pendant le sommeil paradoxal. Le cerveau endormi continue de traiter les sons de l'environnement, et les souvenirs musicaux fortement encodés sont parmi les plus résistants à l'oubli.
+            </p>
+            <p class="text-xs text-gray-300 leading-relaxed">
+              <strong class="text-amber-200">L'effet dans les rêves :</strong> La mémoire musicale dépend de l'hippocampe et du cortex auditif, deux structures actives pendant le REM (Stickgold, 2005). Des études sur l'<strong class="text-dream-300">effet earworm</strong> (Williamson et al., 2012, <em>Psychology of Music</em>) montrent que les fragments musicaux répétés s'inscrivent involontairement dans la boucle phonologique de la mémoire de travail. Concrètement : un refrain écouté en boucle pendant vos reality checks a de fortes chances de se « rejouer » spontanément dans vos rêves. Et comme votre cerveau a associé ce refrain au questionnement de la réalité, il peut déclencher un <strong class="text-dream-300">moment de lucidité automatique</strong>.
+            </p>
+            <div class="p-2.5 rounded-lg bg-amber-500/8 border border-amber-500/15 mt-2">
+              <p class="text-[10px] text-gray-300 leading-relaxed">
+                <i class="fas fa-lightbulb text-amber-400 mr-1"></i>
+                <strong class="text-amber-200">Mode d'emploi :</strong> Lancez la musique, effectuez votre contrôle de réalité, et demandez-vous sincèrement « suis-je en train de rêver ? ». Avec le temps, le simple fait d'entendre ou de penser à ce refrain — y compris pendant un rêve — activera ce réflexe de questionnement.
+              </p>
+            </div>
+          </div>
+          <p class="text-[9px] text-gray-500 italic mt-2">Sources : Pavlov (1927, conditionnement classique) · Konkoly et al. (2021, Current Biology) · Williamson et al. (2012, Psychology of Music) · Stickgold (2005, Nature Reviews Neuroscience)</p>
+        </div>
+
         <!-- Explications scientifiques des reality checks -->
         <div class="space-y-2">
           <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
@@ -1478,6 +1524,51 @@ async function renderLucidity() {
 }
 
 window.doRealityCheck = async function(type) { try { await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: type, wasDreaming: false }) }); showToast('✋ Reality check enregistré !'); renderLucidity(); } catch {} };
+
+// ========== LECTEUR AUDIO — RÊVE MIEUX (ANCRAGE MUSICAL) ==========
+let reveMieuxAudio = null;
+let reveMieuxAnimFrame = null;
+
+window.toggleReveMieuxPlayer = function() {
+  if (!reveMieuxAudio) {
+    reveMieuxAudio = new Audio('/static/reve-mieux-refrain.mp3');
+    reveMieuxAudio.loop = true;
+    reveMieuxAudio.addEventListener('ended', () => {
+      // Sécurité : si loop ne fonctionne pas sur certains navigateurs
+      reveMieuxAudio.currentTime = 0;
+      reveMieuxAudio.play();
+    });
+  }
+  const icon = document.getElementById('reve-mieux-play-icon');
+  const btn = document.getElementById('reve-mieux-play-btn');
+  if (reveMieuxAudio.paused) {
+    reveMieuxAudio.play().then(() => {
+      icon.className = 'fas fa-pause';
+      btn.classList.add('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+      updateReveMieuxProgress();
+    }).catch(() => {});
+  } else {
+    reveMieuxAudio.pause();
+    icon.className = 'fas fa-play';
+    btn.classList.remove('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+    if (reveMieuxAnimFrame) cancelAnimationFrame(reveMieuxAnimFrame);
+  }
+};
+
+function updateReveMieuxProgress() {
+  if (!reveMieuxAudio || reveMieuxAudio.paused) return;
+  const progress = document.getElementById('reve-mieux-progress');
+  const timeEl = document.getElementById('reve-mieux-time');
+  if (progress && reveMieuxAudio.duration) {
+    const pct = (reveMieuxAudio.currentTime / reveMieuxAudio.duration) * 100;
+    progress.style.width = pct + '%';
+  }
+  if (timeEl) {
+    const cur = Math.floor(reveMieuxAudio.currentTime);
+    timeEl.textContent = Math.floor(cur / 60) + ':' + String(cur % 60).padStart(2, '0');
+  }
+  reveMieuxAnimFrame = requestAnimationFrame(updateReveMieuxProgress);
+}
 
 // ========== MODAL & TOAST ==========
 function showModal(content, maxWidth) {
