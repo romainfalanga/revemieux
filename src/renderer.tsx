@@ -7,7 +7,7 @@ export function renderApp(): string {
   <meta name="theme-color" content="#0f0a1e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Rêve Mieux — Journal de Rêves Lucides</title>
+  <title>Rêve Mieux</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -39,6 +39,9 @@ export function renderApp(): string {
   <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
 </head>
 <body class="bg-night-950 text-gray-100 font-sans min-h-screen overflow-x-hidden">
   <div id="app">
