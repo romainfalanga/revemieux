@@ -15,7 +15,7 @@ let state = {
   stats: null,
 
   editingDream: null,
-  filters: { type: 'all', search: '', tagIds: [] }
+  filters: { type: 'all', tagIds: [] }
 };
 
 // ========== API Helper ==========
@@ -217,7 +217,6 @@ async function renderJournal() {
   try {
     const params = new URLSearchParams({ page: state.pagination.page, limit: state.pagination.limit });
     if (state.filters.type !== 'all') params.set('type', state.filters.type);
-    if (state.filters.search) params.set('search', state.filters.search);
     if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
     const data = await api(`/dreams?${params}`);
     state.dreams = data.dreams; state.pagination = data.pagination;
@@ -253,22 +252,7 @@ async function renderJournal() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <div class="flex flex-col gap-3 mb-5">
-        <div class="relative">
-          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
-          <input type="text" id="search-input" value="${state.filters.search}" placeholder="Rechercher dans vos rêves..."
-            class="w-full pl-10 pr-4 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-xl text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none"
-            oninput="debounceSearch(this.value)">
-        </div>
         <div class="flex gap-2 items-center flex-wrap">
-          <select onchange="filterType(this.value)" class="flex-1 sm:flex-none px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-xl text-gray-300 text-sm focus:border-dream-400 focus:outline-none appearance-auto">
-            <option value="all" ${state.filters.type === 'all' ? 'selected' : ''}>Tous les types</option>
-            <option value="normal" ${state.filters.type === 'normal' ? 'selected' : ''}>🌀 Normal</option>
-            <option value="lucid" ${state.filters.type === 'lucid' ? 'selected' : ''}>✨ Lucide</option>
-            <option value="nightmare" ${state.filters.type === 'nightmare' ? 'selected' : ''}>👹 Cauchemar</option>
-            <option value="recurring" ${state.filters.type === 'recurring' ? 'selected' : ''}>🔄 Récurrent</option>
-            <option value="hypnagogic" ${state.filters.type === 'hypnagogic' ? 'selected' : ''}>🌊 Hypnagogique</option>
-            <option value="false_awakening" ${state.filters.type === 'false_awakening' ? 'selected' : ''}>🪞 Faux éveil</option>
-          </select>
           <button onclick="toggleFilterPanel()" class="px-3 py-2.5 ${activeFilterCount > 0 ? 'bg-dream-600/40 text-dream-200 border-dream-400/40' : 'bg-night-900/60 text-gray-400 border-dream-700/30'} border rounded-xl text-sm font-medium transition-all flex items-center gap-1.5">
             <i class="fas fa-filter text-xs"></i>
             <span class="text-xs">Filtres</span>
@@ -283,10 +267,11 @@ async function renderJournal() {
             <i class="fas fa-plus"></i> Nouveau rêve
           </button>
         </div>
-        <!-- Active tag filters display -->
-        ${state.filters.tagIds.length > 0 ? `
+        <!-- Active filters display -->
+        ${(state.filters.type !== 'all' || state.filters.tagIds.length > 0) ? `
         <div class="flex flex-wrap gap-1 items-center">
           <span class="text-[9px] text-gray-500 mr-1">Filtres actifs :</span>
+          ${state.filters.type !== 'all' ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${{normal:'🌀 Normal',lucid:'✨ Lucide',nightmare:'👹 Cauchemar',recurring:'🔄 Récurrent',hypnagogic:'🌊 Hypnago.',false_awakening:'🪞 Faux éveil'}[state.filters.type] || state.filters.type} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="filterType('all')"></i></span>` : ''}
           ${state.filters.tagIds.map(tid => {
             const tag = Object.values(groupedTags).flat().find(t => t.id === tid);
             return tag ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style="background:${tag.color}30; color:${tag.color}; border:1px solid ${tag.color}50">${escapeHtml(tag.name)} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleTagFilter(${tid})"></i></span>` : '';
@@ -296,11 +281,27 @@ async function renderJournal() {
 
       <!-- Expandable filter panel -->
       <div id="filter-panel" class="hidden mb-4 glass rounded-xl p-3 animate-slideUp">
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="text-xs font-semibold text-dream-200"><i class="fas fa-filter mr-1.5"></i>Filtrer par tags</h4>
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-xs font-semibold text-dream-200"><i class="fas fa-filter mr-1.5"></i>Filtres</h4>
           <button onclick="toggleFilterPanel()" class="text-gray-400 hover:text-white text-xs"><i class="fas fa-times"></i></button>
         </div>
-        ${hasAnyTags ? tagFilterHTML : '<p class="text-[10px] text-gray-500 italic py-2 text-center">Aucun tag créé. Ajoutez des tags à vos rêves pour les utiliser comme filtres.</p>'}
+        <!-- Type de rêve filter -->
+        <div class="mb-3">
+          <p class="text-[9px] text-gray-500 font-semibold uppercase mb-1.5">Type de rêve</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${[{v:'all',icon:'🔮',l:'Tous'},{v:'normal',icon:'🌀',l:'Normal'},{v:'lucid',icon:'✨',l:'Lucide'},{v:'nightmare',icon:'👹',l:'Cauchemar'},{v:'recurring',icon:'🔄',l:'Récurrent'},{v:'hypnagogic',icon:'🌊',l:'Hypnago.'},{v:'false_awakening',icon:'🪞',l:'Faux éveil'}].map(t => `
+              <button onclick="filterType('${t.v}')"
+                class="px-2 py-1 rounded-lg text-[10px] font-medium border transition-all ${state.filters.type === t.v ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200 hover:border-dream-700/40'}">
+                ${t.icon} ${t.l}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+        <!-- Tags filter -->
+        <div>
+          <p class="text-[9px] text-gray-500 font-semibold uppercase mb-1.5">Tags</p>
+          ${hasAnyTags ? tagFilterHTML : '<p class="text-[10px] text-gray-500 italic py-2 text-center">Aucun tag créé. Ajoutez des tags à vos rêves pour les utiliser comme filtres.</p>'}
+        </div>
       </div>
 
       <div id="dreams-list" class="space-y-3">
@@ -354,8 +355,6 @@ function renderDreamCard(d) {
     </div>`;
 }
 
-let searchTimeout;
-window.debounceSearch = function(val) { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { state.filters.search = val; state.pagination.page = 1; renderJournal(); }, 400); };
 window.filterType = function(val) { state.filters.type = val; state.pagination.page = 1; renderJournal(); };
 window.goToPage = function(p) { state.pagination.page = p; renderJournal(); };
 
@@ -374,7 +373,6 @@ window.toggleFilterPanel = function() {
 
 window.clearAllFilters = function() {
   state.filters.type = 'all';
-  state.filters.search = '';
   state.filters.tagIds = [];
   state.pagination.page = 1;
   renderJournal();
@@ -499,7 +497,7 @@ window.openDreamEditor = async function(id) {
   window._allTags = allTags;
 
   showModal(`
-    <div class="flex flex-col" style="height:85vh; max-height:85vh;">
+    <div class="flex flex-col" style="height:100%;">
       <div class="flex items-center justify-between p-4 sm:px-6 sm:pt-6 pb-2 shrink-0 border-b border-dream-700/20">
         <h2 class="text-lg font-display font-bold text-dream-100">${dream ? 'Modifier le rêve' : '🌙 Nouveau rêve'}</h2>
         <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
