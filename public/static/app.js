@@ -499,12 +499,12 @@ window.openDreamEditor = async function(id) {
   window._allTags = allTags;
 
   showModal(`
-    <div class="flex flex-col" style="max-height:85vh;">
+    <div class="flex flex-col" style="height:85vh; max-height:85vh;">
       <div class="flex items-center justify-between p-4 sm:px-6 sm:pt-6 pb-2 shrink-0 border-b border-dream-700/20">
         <h2 class="text-lg font-display font-bold text-dream-100">${dream ? 'Modifier le rêve' : '🌙 Nouveau rêve'}</h2>
         <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
       </div>
-      <div class="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-3">
+      <div class="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-3" style="min-height:0;">
       <form onsubmit="saveDream(event, ${id || 'null'})" id="dream-form">
         <input type="text" name="title" value="${dream ? escapeHtml(dream.title) : ''}" placeholder="Titre du rêve..." required
           class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white font-medium placeholder-gray-500 focus:border-dream-400 focus:outline-none text-sm">
@@ -663,11 +663,13 @@ window.openDreamEditor = async function(id) {
             class="w-full px-3 py-2 bg-night-900/60 border border-indigo-700/25 rounded-lg text-white text-xs placeholder-gray-500 focus:border-indigo-400 focus:outline-none resize-none">${dream?.wished_continuation ? escapeHtml(dream.wished_continuation) : ''}</textarea>
         </div>
 
-        <div id="save-error" class="text-red-400 text-sm mb-3 hidden"></div>
-        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg font-semibold hover:from-dream-400 hover:to-dream-600 transition-all text-sm">
+      </form>
+      </div>
+      <div class="shrink-0 px-4 sm:px-6 py-3 border-t border-dream-700/20">
+        <div id="save-error" class="text-red-400 text-sm mb-2 hidden"></div>
+        <button type="submit" form="dream-form" class="w-full py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg font-semibold hover:from-dream-400 hover:to-dream-600 transition-all text-sm">
           <i class="fas fa-save mr-2"></i>${dream ? 'Enregistrer' : 'Enregistrer ce rêve'}
         </button>
-      </form>
       </div>
     </div>
   `, '650px');
