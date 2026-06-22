@@ -429,6 +429,14 @@ function renderDreamDetailModal(d) {
         </div>
       </div>` : ''}
 
+      ${d.wished_continuation ? `
+      <div class="mb-4">
+        <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-moon mr-1 text-indigo-400/60"></i>Suite souhaitée</h4>
+        <div class="p-3 rounded-lg bg-indigo-900/15 border border-indigo-500/15">
+          <p class="text-xs text-indigo-200/90 leading-relaxed whitespace-pre-wrap">${escapeHtml(d.wished_continuation)}</p>
+        </div>
+      </div>` : ''}
+
       ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions globales</h4><div class="flex flex-wrap gap-1.5">${d.emotions.map(e => `<span class="flex items-center gap-1 px-2 py-1 rounded-full bg-dream-800/30 text-xs">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${e.emotion}</span> <span class="text-[9px] text-gray-500">${e.intensity}/5</span></span>`).join('')}</div></div>` : ''}
       ${d.tags?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Tags</h4><div class="flex flex-wrap gap-1.5">${d.tags.map(t => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)}</span>`).join('')}</div></div>` : ''}
       ${d.connections?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Connexions</h4><div class="space-y-1">${d.connections.map(cn => `<div class="flex items-center gap-2 p-2 rounded-lg bg-night-900/40 cursor-pointer hover:bg-night-900/60" onclick="closeModal(); setTimeout(() => openDreamDetail(${cn.connected_dream_id}), 300)"><i class="fas fa-link text-dream-400 text-xs"></i><span class="text-xs text-dream-200">${escapeHtml(cn.connected_dream_title)}</span><span class="text-[9px] text-gray-500 capitalize">${cn.connection_type}</span></div>`).join('')}</div></div>` : ''}
@@ -647,6 +655,17 @@ window.openDreamEditor = async function(id) {
             <button type="button" onclick="addNewTag()" class="px-3 py-1.5 bg-dream-600/40 text-dream-300 rounded-lg hover:bg-dream-600/60 text-xs shrink-0 font-medium"><i class="fas fa-plus mr-1"></i>Ajouter</button>
           </div>
           <div id="tag-feedback" class="hidden text-[10px] mt-1"></div>
+        </div>
+
+        <!-- ========== SUITE SOUHAITÉE (INCUBATION) ========== -->
+        <div class="mb-4 border border-indigo-700/20 rounded-lg p-3 bg-indigo-900/10" id="dream-continuation-section">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-moon text-indigo-400/70 text-xs"></i>
+            <label class="text-[10px] text-gray-400 font-semibold uppercase">Suite souhaitée pour ce rêve</label>
+          </div>
+          <p class="text-[9px] text-gray-500 mb-2">Décrivez ce que vous aimeriez qu'il se passe ensuite. Relisez-le avant de dormir pour orienter vos prochains rêves.</p>
+          <textarea name="wishedContinuation" rows="3" placeholder="Quelle suite imaginez-vous pour ce rêve ? Décrivez la scène, les actions, les sensations..."
+            class="w-full px-3 py-2 bg-night-900/60 border border-indigo-700/25 rounded-lg text-white text-xs placeholder-gray-500 focus:border-indigo-400 focus:outline-none resize-none">${dream?.wished_continuation ? escapeHtml(dream.wished_continuation) : ''}</textarea>
         </div>
 
         <div id="save-error" class="text-red-400 text-sm mb-3 hidden"></div>
@@ -937,7 +956,8 @@ window.saveDream = async function(e, id) {
     emotions: Object.entries(window._editorState.emotions).map(([emotion, intensity]) => ({ emotion, intensity })),
     tags: window._editorState.tags,
     phases: phasesData,
-    interpretations: interpData
+    interpretations: interpData,
+    wishedContinuation: form.get('wishedContinuation')?.trim() || null
   };
   try {
     let dreamId = id;
@@ -1275,6 +1295,30 @@ window.saveIncubation = async function(e, seriesId) {
   } catch (err) { alert(err.message); }
 };
 
+// ========== INCUBATION — OUVRIR LE DERNIER RÊVE ==========
+window.openLastDreamForIncubation = async function() {
+  try {
+    const data = await api('/dreams?page=1&limit=1');
+    if (!data.dreams?.length) {
+      showToast('Aucun rêve enregistré. Notez d\'abord un rêve !');
+      return;
+    }
+    const lastDream = data.dreams[0];
+    await openDreamEditor(lastDream.id);
+    // Scroll vers la section "Suite souhaitée" après un court délai (le modal doit être rendu)
+    setTimeout(() => {
+      const section = document.getElementById('dream-continuation-section');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        section.classList.add('ring-2', 'ring-indigo-400/50');
+        setTimeout(() => section.classList.remove('ring-2', 'ring-indigo-400/50'), 3000);
+      }
+    }, 300);
+  } catch (err) {
+    showToast('Erreur : ' + err.message);
+  }
+};
+
 // ========== LUCIDITY VIEW ==========
 async function renderLucidity() {
   const main = document.getElementById('main-content');
@@ -1302,9 +1346,9 @@ async function renderLucidity() {
         <div class="mb-5 p-4 rounded-xl border border-amber-500/25" style="background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(139,92,246,0.06));">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xl">🎵</span>
-            <h4 class="font-semibold text-amber-200 text-sm">Ancrage Musical — « Rêve Mieux » par Aurel San</h4>
+            <h4 class="font-semibold text-amber-200 text-sm">Ancrage Musical — « Rêve Mieux » par Orelsan</h4>
           </div>
-          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-amber-600/20 text-amber-300 mb-3">🧠 Basé sur le conditionnement associatif</span>
+
 
           <!-- Lecteur audio -->
           <div class="flex items-center gap-3 p-3 rounded-lg bg-night-900/50 border border-amber-500/15 mb-3" id="music-player-container">
@@ -1313,7 +1357,7 @@ async function renderLucidity() {
               <i class="fas fa-play" id="reve-mieux-play-icon"></i>
             </button>
             <div class="flex-1 min-w-0">
-              <p class="text-xs font-semibold text-amber-200 truncate">Rêve Mieux — Aurel San</p>
+              <p class="text-xs font-semibold text-amber-200 truncate">Rêve Mieux — Orelsan</p>
               <p class="text-[10px] text-gray-400">Refrain · En boucle automatique</p>
               <div class="mt-1.5 w-full bg-night-900/60 rounded-full h-1 overflow-hidden">
                 <div id="reve-mieux-progress" class="h-full bg-gradient-to-r from-amber-500 to-dream-400 rounded-full transition-all" style="width: 0%"></div>
@@ -1400,8 +1444,8 @@ async function renderLucidity() {
           </p>
         </div>
         <div class="mt-3 text-center">
-          <button onclick="navigate('series')" class="px-4 py-2 bg-dream-600/30 text-dream-300 rounded-lg text-xs font-medium hover:bg-dream-600/50 transition-all">
-            <i class="fas fa-layer-group mr-1.5"></i>Voir mes séries de rêves
+          <button onclick="openLastDreamForIncubation()" class="px-4 py-2 bg-dream-600/30 text-dream-300 rounded-lg text-xs font-medium hover:bg-dream-600/50 transition-all">
+            <i class="fas fa-moon mr-1.5"></i>Programmer une suite de rêve
           </button>
         </div>
       </div>
@@ -1413,7 +1457,6 @@ async function renderLucidity() {
         <!-- MILD -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧠</span><h4 class="font-semibold text-dream-200 text-sm">MILD (Mnemonic Induction of Lucid Dreams)</h4></div>
-          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
           <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée par Stephen LaBerge à l'Université de Stanford en 1980, la MILD est la technique d'induction la plus étudiée et la plus validée par la recherche. Elle repose sur la mémoire prospective : la capacité de se souvenir d'effectuer une action dans le futur. Le principe est de programmer votre esprit pour qu'il reconnaisse l'état de rêve au moment où il se produit. Une étude australienne de 2017 (Aspy et al.) a montré un taux de réussite de 46% quand elle est combinée au WBTB, contre 3,7% en baseline. L'étude ILDIS de 2020 confirme que MILD augmente significativement la fréquence des rêves lucides, y compris chez des débutants complets.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
@@ -1429,7 +1472,6 @@ async function renderLucidity() {
         <!-- WBTB -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">⏰</span><h4 class="font-semibold text-dream-200 text-sm">WBTB (Wake Back To Bed)</h4></div>
-          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
           <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est la technique la plus puissante quand elle est combinée à MILD. Le principe exploite l'architecture du sommeil : les phases de sommeil paradoxal (REM) deviennent plus longues et plus intenses en fin de nuit. En vous réveillant après 5 à 6 heures, vous interrompez votre sommeil juste avant les périodes REM les plus longues. La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral (responsable de la conscience de soi et de la pensée critique), ce qui se maintient partiellement lors du retour au sommeil. L'étude de Stumbrys et al. (2012) a montré que cette technique multiplie par 5 les chances de lucidité. L'étude de Aspy et al. (2017) rapporte un taux de succès de 46% pour la combinaison WBTB + MILD, et 50% des participants n'ayant jamais fait de rêve lucide ont réussi leur premier en seulement 5 semaines.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
@@ -1445,7 +1487,6 @@ async function renderLucidity() {
         <!-- Reality Testing -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">✋</span><h4 class="font-semibold text-dream-200 text-sm">Reality Testing (Technique de Réflexion)</h4></div>
-          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
           <p class="text-xs text-gray-300 leading-relaxed mb-3">Formalisée par Paul Tholey en 1983 sous le nom de « Reflexionstechnik » (technique de réflexion), cette méthode repose sur un principe simple : si vous prenez l'habitude de questionner la réalité régulièrement pendant la journée, ce réflexe finit par se déclencher aussi en rêve. L'élément clé est la qualité de l'interrogation, pas la quantité. Il ne suffit pas de faire le geste mécaniquement : vous devez sincèrement vous demander « suis-je en train de rêver ? » et examiner votre environnement avec attention critique. C'est cette attitude de questionnement conscient qui crée le conditionnement. Une étude de 2017 (Aspy et al.) a montré un taux de succès de 47,5% quand le Reality Testing est pratiqué avec intention, contre un effet négligeable quand il est fait par habitude mécanique.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
@@ -1461,7 +1502,6 @@ async function renderLucidity() {
         <!-- Journal -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">📝</span><h4 class="font-semibold text-dream-200 text-sm">Journal de Rêves</h4></div>
-          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
           <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal de rêves est le fondement absolu de toute pratique de rêve lucide. Sans rappel de vos rêves, même si vous devenez lucide, vous ne vous en souviendrez pas au réveil. Les recherches de Schredl et Erlacher (2004) ont montré que la simple habitude de noter ses rêves augmente de façon mesurable la fréquence de rappel en seulement 2 à 3 semaines. Plus vous notez, plus votre cerveau comprend que les rêves sont importants et les retient. Le journal permet aussi d'identifier vos « signes de rêve » récurrents (lieux, personnages, situations qui reviennent souvent dans vos rêves), ce qui est essentiel pour la technique MILD et le Reality Testing.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Bonnes pratiques :</p>
           <ul class="text-[10px] text-gray-300 space-y-1.5 mb-2">
@@ -1477,7 +1517,6 @@ async function renderLucidity() {
         <!-- SSILD -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧘</span><h4 class="font-semibold text-dream-200 text-sm">SSILD (Senses Initiated Lucid Dream)</h4></div>
-          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-amber-600/20 text-amber-300 mb-2">⚡ Technique communautaire, validation en cours</span>
           <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée en 2011 par un rêveur lucide connu sous le pseudonyme CosmicIron, la SSILD est devenue l'une des techniques les plus populaires dans la communauté. Elle consiste à effectuer des cycles courts d'attention sensorielle (vue, ouïe, toucher) en position allongée, sans effort de concentration. L'objectif est de créer un état propice à l'apparition spontanée de rêves lucides. Bien qu'aucune étude en laboratoire n'ait testé SSILD de manière isolée, l'étude ILDIS (2020, publiée dans Consciousness and Cognition) a trouvé que SSILD produisait des résultats comparables à MILD. Les communautés de rêveurs lucides rapportent des taux de succès de 20 à 30%. La technique est souvent recommandée aux débutants pour sa simplicité.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
@@ -1494,7 +1533,6 @@ async function renderLucidity() {
         <!-- Incubation -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">🌙</span><h4 class="font-semibold text-dream-200 text-sm">Incubation & Séries de Rêves</h4></div>
-          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
           <p class="text-xs text-gray-300 leading-relaxed mb-3">L'incubation de rêves est la technique qui consiste à influencer le contenu de ses rêves par une suggestion pré-sommeil ciblée. Deirdre Barrett, professeure à Harvard, a mené l'étude de référence en 1993 : elle a demandé à des participants de se concentrer sur un problème personnel pendant 15 minutes avant de dormir. Résultat : environ 50% ont rêvé du sujet choisi, et beaucoup ont rapporté des insights utiles. L'hypothèse de la continuité (Schredl, 2003) confirme ce mécanisme : les pensées et préoccupations actives avant le sommeil influencent directement le contenu onirique. C'est le principe fondamental derrière les séries de rêves dans Rêve Mieux. En relisant vos rêves précédents avant le coucher, vous « rechargez » votre mémoire de travail avec tous les éléments de ce monde onirique, ce qui augmente considérablement les chances d'y retourner.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole avec Rêve Mieux :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
