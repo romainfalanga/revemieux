@@ -54,10 +54,11 @@ async function showTLRNotification(data) {
     }
 
     if (triggerCountdown) {
-      body += 'Déclencheur lucide dans ' + triggerCountdown;
+      body += 'Déclencheur lucide dans ' + triggerCountdown + '\n';
     } else {
-      body += 'Déclencheur en cours...';
+      body += 'Déclencheur en cours...\n';
     }
+    body += 'Désactiver : page Lucidité → Désactiver TLR';
 
     await self.registration.showNotification('Rêve Mieux', {
       body: body,
