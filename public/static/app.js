@@ -380,27 +380,64 @@ window.clearAllFilters = function() {
 
 // ========== DREAM DETAIL ==========
 window.openDreamDetail = async function(id) {
-  try { const dream = await api(`/dreams/${id}`); showModal(renderDreamDetailModal(dream)); } catch (err) { alert(err.message); }
+  // Affichage instantané avec les données déjà en mémoire
+  const cached = state.dreams.find(d => d.id === id);
+  if (cached) {
+    showModal(renderDreamDetailModal(cached, true));
+    // Enrichir en arrière-plan avec les données complètes (phases, connexions, séries, interprétations)
+    try {
+      const full = await api(`/dreams/${id}`);
+      // Mettre à jour le contenu du modal si encore ouvert
+      const modalContent = document.querySelector('.modal-content');
+      if (modalContent) {
+        const inner = modalContent.querySelector('.dream-detail-inner');
+        if (inner) inner.outerHTML = renderDreamDetailModal(full, false);
+      }
+    } catch {}
+  } else {
+    // Pas en cache — fallback API direct avec spinner
+    showModal(`<div class="p-8 text-center"><div class="inline-block w-6 h-6 border-2 border-dream-400 border-t-transparent rounded-full animate-spin"></div><p class="text-xs text-gray-400 mt-3">Chargement…</p></div>`);
+    try { const dream = await api(`/dreams/${id}`); showModal(renderDreamDetailModal(dream, false)); } catch (err) { closeModal(); alert(err.message); }
+  }
 };
 
-function renderDreamDetailModal(d) {
+window.confirmDeleteDream = async function(id) {
+  const actions = document.getElementById('dream-detail-actions');
+  if (!actions) return;
+  actions.innerHTML = `
+    <div class="w-full">
+      <p class="text-xs text-red-300 mb-2.5 text-center"><i class="fas fa-exclamation-triangle mr-1"></i>Supprimer ce rêve ? Cette action est irréversible.</p>
+      <div class="flex gap-2">
+        <button onclick="cancelDeleteDream(${id})" class="flex-1 py-2 bg-night-800/60 text-gray-300 rounded-lg hover:bg-night-800/80 transition-all text-xs font-medium">Annuler</button>
+        <button onclick="executeDeleteDream(${id})" class="flex-1 py-2 bg-red-600/40 text-red-300 rounded-lg hover:bg-red-600/60 transition-all text-xs font-medium"><i class="fas fa-trash mr-1"></i>Confirmer</button>
+      </div>
+    </div>`;
+};
+
+window.cancelDeleteDream = function(id) {
+  const actions = document.getElementById('dream-detail-actions');
+  if (!actions) return;
+  actions.innerHTML = `
+    <button onclick="closeModal(); openDreamEditor(${id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
+    <button onclick="confirmDeleteDream(${id})" class="py-2 px-4 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-all text-xs font-medium"><i class="fas fa-trash mr-1"></i>Supprimer</button>`;
+};
+
+window.executeDeleteDream = async function(id) {
+  try {
+    await api(`/dreams/${id}`, { method: 'DELETE' });
+    closeModal();
+    showToast('🗑️ Rêve supprimé');
+    renderJournal();
+  } catch (err) { alert(err.message); }
+};
+
+function renderDreamDetailModal(d, isPartial) {
   const typeLabels = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.label]));
   const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  return `
-    <div class="p-4 sm:p-6">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="badge-${d.dream_type} text-[10px] px-2 py-1 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
-          ${d.lucidity_level > 0 ? `<span class="text-[10px] px-2 py-1 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
-        </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
-      </div>
-      <h2 class="text-xl font-display font-bold text-dream-100 mb-2">${escapeHtml(d.title)}</h2>
-      <p class="text-xs text-gray-400 mb-4"><i class="far fa-calendar mr-1"></i>${dateStr}</p>
-      <div class="mb-5"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(d.content)}</p></div>
 
-      ${d.phases?.length ? `
+  // Sections enrichies — affichées seulement quand les données complètes sont chargées
+  const phasesHTML = !isPartial && d.phases?.length ? `
       <div class="mb-5">
         <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-route mr-1"></i>Étapes du rêve</h4>
         <div class="space-y-2">
@@ -416,15 +453,38 @@ function renderDreamDetailModal(d) {
             </div>
           `).join('')}
         </div>
-      </div>` : ''}
+      </div>` : '';
 
-      ${d.interpretations?.length ? `
+  const interpretationsHTML = !isPartial && d.interpretations?.length ? `
       <div class="mb-4">
         <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-lightbulb mr-1"></i>Interprétations</h4>
         <div class="space-y-1.5">
           ${d.interpretations.map(interp => `<div class="p-2.5 rounded-lg bg-amber-900/10 border border-amber-500/10"><p class="text-xs text-amber-200/90 italic">${escapeHtml(interp.content)}</p></div>`).join('')}
         </div>
-      </div>` : ''}
+      </div>` : '';
+
+  const connectionsHTML = !isPartial && d.connections?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Connexions</h4><div class="space-y-1">${d.connections.map(cn => `<div class="flex items-center gap-2 p-2 rounded-lg bg-night-900/40 cursor-pointer hover:bg-night-900/60" onclick="closeModal(); setTimeout(() => openDreamDetail(${cn.connected_dream_id}), 300)"><i class="fas fa-link text-dream-400 text-xs"></i><span class="text-xs text-dream-200">${escapeHtml(cn.connected_dream_title)}</span><span class="text-[9px] text-gray-500 capitalize">${cn.connection_type}</span></div>`).join('')}</div></div>` : '';
+
+  const seriesHTML = !isPartial && d.series?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Séries</h4><div class="flex flex-wrap gap-1.5">${d.series.map(s => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${s.color}20; color:${s.color}">${escapeHtml(s.name)}</span>`).join('')}</div></div>` : '';
+
+  // Indicateur de chargement pour les sections enrichies
+  const loadingHTML = isPartial ? `<div id="dream-detail-loading" class="flex items-center gap-2 mb-4 py-2"><div class="w-3.5 h-3.5 border-2 border-dream-400 border-t-transparent rounded-full animate-spin"></div><span class="text-[10px] text-gray-500">Chargement des détails…</span></div>` : '';
+
+  return `
+    <div class="dream-detail-inner p-4 sm:p-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="badge-${d.dream_type} text-[10px] px-2 py-1 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
+          ${d.lucidity_level > 0 ? `<span class="text-[10px] px-2 py-1 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
+      </div>
+      <h2 class="text-xl font-display font-bold text-dream-100 mb-2">${escapeHtml(d.title)}</h2>
+      <p class="text-xs text-gray-400 mb-4"><i class="far fa-calendar mr-1"></i>${dateStr}</p>
+      <div class="mb-5"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(d.content)}</p></div>
+
+      ${phasesHTML}
+      ${interpretationsHTML}
 
       ${d.wished_continuation ? `
       <div class="mb-4">
@@ -436,10 +496,12 @@ function renderDreamDetailModal(d) {
 
       ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions globales</h4><div class="flex flex-wrap gap-1.5">${d.emotions.map(e => `<span class="flex items-center gap-1 px-2 py-1 rounded-full bg-dream-800/30 text-xs">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${e.emotion}</span> <span class="text-[9px] text-gray-500">${e.intensity}/5</span></span>`).join('')}</div></div>` : ''}
       ${d.tags?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Tags</h4><div class="flex flex-wrap gap-1.5">${d.tags.map(t => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)}</span>`).join('')}</div></div>` : ''}
-      ${d.connections?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Connexions</h4><div class="space-y-1">${d.connections.map(cn => `<div class="flex items-center gap-2 p-2 rounded-lg bg-night-900/40 cursor-pointer hover:bg-night-900/60" onclick="closeModal(); setTimeout(() => openDreamDetail(${cn.connected_dream_id}), 300)"><i class="fas fa-link text-dream-400 text-xs"></i><span class="text-xs text-dream-200">${escapeHtml(cn.connected_dream_title)}</span><span class="text-[9px] text-gray-500 capitalize">${cn.connection_type}</span></div>`).join('')}</div></div>` : ''}
-      ${d.series?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Séries</h4><div class="flex flex-wrap gap-1.5">${d.series.map(s => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${s.color}20; color:${s.color}">${escapeHtml(s.name)}</span>`).join('')}</div></div>` : ''}
-      <div class="flex gap-2 pt-3 border-t border-dream-700/20">
+      ${connectionsHTML}
+      ${seriesHTML}
+      ${loadingHTML}
+      <div id="dream-detail-actions" class="flex gap-2 pt-3 border-t border-dream-700/20">
         <button onclick="closeModal(); openDreamEditor(${d.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
+        <button onclick="confirmDeleteDream(${d.id})" class="py-2 px-4 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-all text-xs font-medium"><i class="fas fa-trash mr-1"></i>Supprimer</button>
       </div>
     </div>`;
 }

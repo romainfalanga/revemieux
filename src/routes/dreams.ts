@@ -101,56 +101,47 @@ dreamRoutes.get('/:id', async (c) => {
 
   if (!dream) return c.json({ error: 'Rêve non trouvé' }, 404)
 
-  const emotions = await c.env.DB.prepare(
-    'SELECT emotion, intensity FROM dream_emotions WHERE dream_id = ?'
-  ).bind(id).all<any>()
+  // Paralléliser toutes les requêtes indépendantes
+  const [emotions, tags, connections, series, phases, globalInterpretations] = await Promise.all([
+    c.env.DB.prepare(
+      'SELECT emotion, intensity FROM dream_emotions WHERE dream_id = ?'
+    ).bind(id).all<any>(),
+    c.env.DB.prepare(`
+      SELECT t.id, t.name, t.category, t.color FROM tags t
+      JOIN dream_tags dt ON dt.tag_id = t.id WHERE dt.dream_id = ?
+    `).bind(id).all<any>(),
+    c.env.DB.prepare(`
+      SELECT dc.*, 
+        CASE WHEN dc.dream_from_id = ? THEN dc.dream_to_id ELSE dc.dream_from_id END as connected_dream_id,
+        d2.title as connected_dream_title, d2.dream_date as connected_dream_date
+      FROM dream_connections dc
+      JOIN dreams d2 ON d2.id = CASE WHEN dc.dream_from_id = ? THEN dc.dream_to_id ELSE dc.dream_from_id END
+      WHERE dc.dream_from_id = ? OR dc.dream_to_id = ?
+    `).bind(id, id, id, id).all<any>(),
+    c.env.DB.prepare(`
+      SELECT ds.id, ds.name, ds.color, sd.order_index FROM dream_series ds
+      JOIN series_dreams sd ON sd.series_id = ds.id WHERE sd.dream_id = ?
+    `).bind(id).all<any>(),
+    c.env.DB.prepare(
+      'SELECT * FROM dream_phases WHERE dream_id = ? ORDER BY order_index ASC'
+    ).bind(id).all<any>(),
+    c.env.DB.prepare(
+      'SELECT id, content, created_at FROM dream_interpretations WHERE dream_id = ? AND phase_id IS NULL'
+    ).bind(id).all<any>()
+  ])
 
-  const tags = await c.env.DB.prepare(`
-    SELECT t.id, t.name, t.category, t.color FROM tags t
-    JOIN dream_tags dt ON dt.tag_id = t.id WHERE dt.dream_id = ?
-  `).bind(id).all<any>()
-
-  const connections = await c.env.DB.prepare(`
-    SELECT dc.*, 
-      CASE WHEN dc.dream_from_id = ? THEN dc.dream_to_id ELSE dc.dream_from_id END as connected_dream_id,
-      d2.title as connected_dream_title, d2.dream_date as connected_dream_date
-    FROM dream_connections dc
-    JOIN dreams d2 ON d2.id = CASE WHEN dc.dream_from_id = ? THEN dc.dream_to_id ELSE dc.dream_from_id END
-    WHERE dc.dream_from_id = ? OR dc.dream_to_id = ?
-  `).bind(id, id, id, id).all<any>()
-
-  const series = await c.env.DB.prepare(`
-    SELECT ds.id, ds.name, ds.color, sd.order_index FROM dream_series ds
-    JOIN series_dreams sd ON sd.series_id = ds.id WHERE sd.dream_id = ?
-  `).bind(id).all<any>()
-
-  // Phases du rêve
-  const phases = await c.env.DB.prepare(
-    'SELECT * FROM dream_phases WHERE dream_id = ? ORDER BY order_index ASC'
-  ).bind(id).all<any>()
-
-  // Émotions et interprétations par phase
-  const parsedPhases = []
-  for (const phase of phases.results) {
-    const phaseEmotions = await c.env.DB.prepare(
-      'SELECT emotion, intensity FROM phase_emotions WHERE phase_id = ?'
-    ).bind(phase.id).all<any>()
-
-    const phaseInterpretations = await c.env.DB.prepare(
-      'SELECT id, content, created_at FROM dream_interpretations WHERE phase_id = ?'
-    ).bind(phase.id).all<any>()
-
-    parsedPhases.push({
-      ...phase,
-      emotions: phaseEmotions.results,
-      interpretations: phaseInterpretations.results
-    })
-  }
-
-  // Interprétations globales du rêve (phase_id IS NULL)
-  const globalInterpretations = await c.env.DB.prepare(
-    'SELECT id, content, created_at FROM dream_interpretations WHERE dream_id = ? AND phase_id IS NULL'
-  ).bind(id).all<any>()
+  // Émotions et interprétations par phase — paralléliser aussi
+  const parsedPhases = await Promise.all(phases.results.map(async (phase: any) => {
+    const [phaseEmotions, phaseInterpretations] = await Promise.all([
+      c.env.DB.prepare(
+        'SELECT emotion, intensity FROM phase_emotions WHERE phase_id = ?'
+      ).bind(phase.id).all<any>(),
+      c.env.DB.prepare(
+        'SELECT id, content, created_at FROM dream_interpretations WHERE phase_id = ?'
+      ).bind(phase.id).all<any>()
+    ])
+    return { ...phase, emotions: phaseEmotions.results, interpretations: phaseInterpretations.results }
+  }))
 
   return c.json({
     ...dream,
