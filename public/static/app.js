@@ -317,8 +317,8 @@ function renderDreamCard(d) {
   const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
   const preview = d.content.length > 150 ? d.content.substring(0, 150) + '...' : d.content;
-  // Émotion dominante (la plus intense)
-  const topEmotion = d.emotions?.length ? d.emotions.reduce((best, e) => (!best || e.intensity > best.intensity) ? e : best, null) : null;
+  // Toutes les émotions classées par intensité décroissante
+  const sortedEmotions = d.emotions?.length ? [...d.emotions].sort((a, b) => b.intensity - a.intensity) : [];
   return `
     <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all cursor-pointer animate-fadeIn group" style="user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;" onclick="openDreamDetail(${d.id})">
       <div class="flex items-start gap-2.5">
@@ -331,7 +331,7 @@ function renderDreamCard(d) {
             <span class="badge-${d.dream_type} text-[9px] px-1.5 py-0.5 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
             ${d.lucidity_level > 0 ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
             ${d.clarity ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity}/5</span>` : ''}
-            ${topEmotion ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/30 text-dream-200">${emotionEmojis[topEmotion.emotion] || ''} ${emotionLabels[topEmotion.emotion] || topEmotion.emotion} ${topEmotion.intensity}/5</span>` : ''}
+            ${sortedEmotions.length ? sortedEmotions.map((e, i) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full ${i === 0 ? 'bg-dream-600/30 text-dream-200 font-medium' : 'bg-dream-800/20 text-dream-300/70'}">${emotionEmojis[e.emotion] || ''} ${emotionLabels[e.emotion] || e.emotion} ${e.intensity}/5</span>`).join('') : ''}
           </div>
           <p class="text-xs text-gray-400 mb-2 line-clamp-2">${escapeHtml(preview)}</p>
           <div class="flex items-center gap-2 flex-wrap">
@@ -486,7 +486,7 @@ function renderDreamDetailModal(d, isPartial) {
         </div>
       </div>` : ''}
 
-      ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions globales</h4><div class="flex flex-wrap gap-1.5">${d.emotions.map(e => `<span class="flex items-center gap-1 px-2 py-1 rounded-full bg-dream-800/30 text-xs">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${e.emotion}</span> <span class="text-[9px] text-gray-500">${e.intensity}/5</span></span>`).join('')}</div></div>` : ''}
+      ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions globales</h4><div class="flex flex-wrap gap-1.5">${[...d.emotions].sort((a, b) => b.intensity - a.intensity).map((e, i) => `<span class="flex items-center gap-1 px-2 py-1 rounded-full text-xs ${i === 0 ? 'bg-dream-600/30 ring-1 ring-dream-400/30' : 'bg-dream-800/30'}">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${emotionLabels[e.emotion] || e.emotion}</span> <span class="text-[9px] ${i === 0 ? 'text-dream-300 font-medium' : 'text-gray-500'}">${e.intensity}/5</span>${i === 0 ? '<span class="text-[8px] text-dream-400/60 ml-0.5">principale</span>' : ''}</span>`).join('')}</div></div>` : ''}
       ${d.tags?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Tags</h4><div class="flex flex-wrap gap-1.5">${d.tags.map(t => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)}</span>`).join('')}</div></div>` : ''}
       ${connectionsHTML}
       ${seriesHTML}
@@ -816,10 +816,8 @@ window.togglePhaseEmotion = function(idx, em) {
   if (!phase) return;
   if (!phase.emotions) phase.emotions = {};
   if (phase.emotions[em]) {
-    delete phase.emotions[em];
-    refreshPhaseEmotionButton(idx, em);
-    const panel = document.getElementById(`phase-emotion-panel-${idx}`);
-    if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
+    // Déjà sélectionnée → réouvrir le panel d'intensité
+    showPhaseEmotionIntensityPanel(idx, em);
   } else {
     phase.emotions[em] = 3;
     refreshPhaseEmotionButton(idx, em);
@@ -850,8 +848,18 @@ function showPhaseEmotionIntensityPanel(idx, em) {
       <input type="range" min="1" max="5" value="${intensity}" class="flex-1 accent-dream-400"
         oninput="setPhaseEmotionIntensity(${idx}, '${em}', parseInt(this.value)); this.nextElementSibling.textContent = this.value + '/5'">
       <span class="text-[10px] text-dream-300 w-8 text-right">${intensity}/5</span>
+      <button type="button" onclick="removePhaseEmotion(${idx}, '${em}')" class="w-4 h-4 rounded-full bg-red-600/30 text-red-300 text-[8px] flex items-center justify-center hover:bg-red-600/50 transition-all shrink-0" title="Retirer"><i class="fas fa-times"></i></button>
     </div>`;
 }
+
+window.removePhaseEmotion = function(idx, em) {
+  const phase = window._editorState.phases[idx];
+  if (!phase?.emotions) return;
+  delete phase.emotions[em];
+  refreshPhaseEmotionButton(idx, em);
+  const panel = document.getElementById(`phase-emotion-panel-${idx}`);
+  if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
+};
 
 window.setPhaseEmotionIntensity = function(idx, em, val) {
   const phase = window._editorState.phases[idx];
@@ -959,11 +967,8 @@ window.toggleSeriesInEditor = function(seriesId) {
 
 window.toggleEmotion = function(em) {
   if (window._editorState.emotions[em]) {
-    delete window._editorState.emotions[em];
-    refreshEmotionButton(em);
-    // Fermer le panel si c'est l'émotion active
-    const panel = document.getElementById('emotion-intensity-panel');
-    if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
+    // Déjà sélectionnée → réouvrir le panel d'intensité (pas désélectionner)
+    showEmotionIntensityPanel(em);
   } else {
     window._editorState.emotions[em] = 3;
     refreshEmotionButton(em);
@@ -993,8 +998,16 @@ function showEmotionIntensityPanel(em) {
       <input type="range" min="1" max="5" value="${intensity}" class="flex-1 accent-dream-400"
         oninput="setEmotionIntensity('${em}', parseInt(this.value)); this.nextElementSibling.textContent = this.value + '/5'">
       <span class="text-xs text-dream-300 w-8 text-right">${intensity}/5</span>
+      <button type="button" onclick="removeEmotion('${em}')" class="w-5 h-5 rounded-full bg-red-600/30 text-red-300 text-[10px] flex items-center justify-center hover:bg-red-600/50 transition-all shrink-0" title="Retirer cette émotion"><i class="fas fa-times"></i></button>
     </div>`;
 }
+
+window.removeEmotion = function(em) {
+  delete window._editorState.emotions[em];
+  refreshEmotionButton(em);
+  const panel = document.getElementById('emotion-intensity-panel');
+  if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
+};
 
 window.setEmotionIntensity = function(em, val) {
   window._editorState.emotions[em] = val;
