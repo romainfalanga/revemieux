@@ -602,15 +602,27 @@ window.openDreamEditor = async function(id) {
               `).join('')}
             </div>
           </div>` : ''}
+          <div class="mb-2">
+            <span class="text-[9px] text-gray-500 mb-1 block">Catégorie du nouveau tag :</span>
+            <div class="flex flex-wrap gap-1" id="tag-category-picker">
+              ${TAG_CATEGORIES.map(c => `
+                <button type="button" onclick="selectTagCategory('${c.value}')"
+                  data-cat="${c.value}"
+                  class="tag-cat-btn px-2 py-1 rounded-lg text-[10px] font-medium border transition-all ${c.value === 'custom' ? 'border-opacity-60 text-white' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200'}"
+                  style="${c.value === 'custom' ? 'border-color:' + TAG_COLORS[c.value] + '; background:' + TAG_COLORS[c.value] + '25; color:' + TAG_COLORS[c.value] : ''}">
+                  ${c.icon} ${c.label}
+                </button>
+              `).join('')}
+            </div>
+            <input type="hidden" id="tag-category-select" value="custom">
+          </div>
           <div class="flex gap-1.5 items-center">
-            <input type="text" id="tag-input" placeholder="Créer un tag..."
+            <input type="text" id="tag-input" placeholder="Nom du tag..."
               class="flex-1 px-3 py-1.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none min-w-0"
               onkeydown="if(event.key==='Enter'){event.preventDefault(); addNewTag()}">
-            <select id="tag-category-select" class="px-2 py-1.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-xs text-gray-300 focus:border-dream-400 focus:outline-none">
-              ${TAG_CATEGORIES.map(c => `<option value="${c.value}">${c.icon} ${c.label}</option>`).join('')}
-            </select>
-            <button type="button" onclick="addNewTag()" class="px-2.5 py-1.5 bg-dream-600/40 text-dream-300 rounded-lg hover:bg-dream-600/60 text-xs shrink-0"><i class="fas fa-plus"></i></button>
+            <button type="button" onclick="addNewTag()" class="px-3 py-1.5 bg-dream-600/40 text-dream-300 rounded-lg hover:bg-dream-600/60 text-xs shrink-0 font-medium"><i class="fas fa-plus mr-1"></i>Ajouter</button>
           </div>
+          <div id="tag-feedback" class="hidden text-[10px] mt-1"></div>
         </div>
 
         <div id="save-error" class="text-red-400 text-sm mb-3 hidden"></div>
@@ -798,23 +810,61 @@ window.toggleEmotion = function(em) {
 // Tag management — pick existing
 window.pickExistingTag = function(tagId) {
   const tag = window._allTags.find(t => t.id === tagId);
-  if (!tag || window._editorState.tags.find(t => t.name === tag.name)) return;
+  if (!tag) return;
+  // Case-insensitive duplicate check
+  if (window._editorState.tags.find(t => t.name.toLowerCase() === tag.name.toLowerCase())) return;
   window._editorState.tags.push({ id: tag.id, name: tag.name, category: tag.category, color: tag.color });
   updateTagsDisplay();
   const pickBtn = document.getElementById(`pick-tag-${tagId}`);
   if (pickBtn) { pickBtn.classList.add('opacity-40', 'pointer-events-none'); pickBtn.disabled = true; }
+  // Feedback
+  const feedback = document.getElementById('tag-feedback');
+  const catLabel = TAG_CATEGORIES.find(c => c.value === tag.category);
+  if (feedback) { feedback.innerHTML = '<i class="fas fa-check mr-1"></i>' + (catLabel?.icon || '') + ' <b>' + escapeHtml(tag.name) + '</b> ajouté'; feedback.className = 'text-[10px] mt-1 text-emerald-400'; setTimeout(() => feedback.className = 'hidden text-[10px] mt-1', 3000); }
+};
+
+// Tag management — select category
+window.selectTagCategory = function(cat) {
+  document.getElementById('tag-category-select').value = cat;
+  document.querySelectorAll('.tag-cat-btn').forEach(btn => {
+    const btnCat = btn.dataset.cat;
+    if (btnCat === cat) {
+      btn.style.borderColor = TAG_COLORS[btnCat];
+      btn.style.background = TAG_COLORS[btnCat] + '25';
+      btn.style.color = TAG_COLORS[btnCat];
+      btn.classList.remove('text-gray-400', 'border-dream-700/20', 'bg-night-900/40');
+    } else {
+      btn.style.borderColor = ''; btn.style.background = ''; btn.style.color = '';
+      btn.classList.add('text-gray-400', 'border-dream-700/20', 'bg-night-900/40');
+    }
+  });
 };
 
 // Tag management — create new
 window.addNewTag = function() {
   const input = document.getElementById('tag-input');
   const catSelect = document.getElementById('tag-category-select');
+  const feedback = document.getElementById('tag-feedback');
   const name = input.value.trim();
-  if (!name || window._editorState.tags.find(t => t.name === name)) { input.value = ''; return; }
+  if (!name) {
+    if (feedback) { feedback.textContent = 'Entrez un nom de tag.'; feedback.className = 'text-[10px] mt-1 text-amber-400'; setTimeout(() => feedback.className = 'hidden text-[10px] mt-1', 2000); }
+    return;
+  }
+  // Case-insensitive duplicate check
+  const nameLower = name.toLowerCase();
+  if (window._editorState.tags.find(t => t.name.toLowerCase() === nameLower)) {
+    if (feedback) { feedback.textContent = 'Ce tag est déjà ajouté.'; feedback.className = 'text-[10px] mt-1 text-amber-400'; setTimeout(() => feedback.className = 'hidden text-[10px] mt-1', 2000); }
+    input.value = '';
+    return;
+  }
   const category = catSelect.value || 'custom';
-  window._editorState.tags.push({ name, category, color: TAG_COLORS[category] || '#6366f1' });
+  const color = TAG_COLORS[category] || '#6366f1';
+  window._editorState.tags.push({ name, category, color });
   input.value = '';
   updateTagsDisplay();
+  // Feedback positif
+  const catLabel = TAG_CATEGORIES.find(c => c.value === category);
+  if (feedback) { feedback.innerHTML = '<i class="fas fa-check mr-1"></i>' + (catLabel?.icon || '') + ' <b>' + escapeHtml(name) + '</b> ajouté'; feedback.className = 'text-[10px] mt-1 text-emerald-400'; setTimeout(() => feedback.className = 'hidden text-[10px] mt-1', 3000); }
 };
 
 window.removeTag = function(name) {
@@ -875,6 +925,8 @@ window.saveDream = async function(e, id) {
       }
     }
     closeModal();
+    const tagCount = body.tags?.length || 0;
+    showToast(id ? 'Rêve mis à jour' + (tagCount ? ' (' + tagCount + ' tag' + (tagCount > 1 ? 's' : '') + ')' : '') : 'Rêve enregistré !');
     if (state.currentView === 'journal') renderJournal();
     else if (state.currentView === 'series') renderSeries();
     else renderJournal();
