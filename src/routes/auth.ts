@@ -100,7 +100,7 @@ authRoutes.post('/register', async (c) => {
   ).bind(email, username).first()
   
   if (existing) {
-    return c.json({ error: 'Cet email ou nom d\'utilisateur existe déjà' }, 409)
+    return c.json({ error: 'Un compte avec cet email existe déjà' }, 409)
   }
   
   const passwordHash = await hashPassword(password)

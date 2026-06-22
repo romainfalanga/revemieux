@@ -65,10 +65,6 @@ function renderAuth() {
           <button onclick="showAuthTab('register')" id="tab-register" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all text-gray-400 hover:text-white">Inscription</button>
         </div>
         <form id="auth-form" onsubmit="handleAuth(event)">
-          <div id="register-fields" class="hidden">
-            <input type="text" name="username" placeholder="Nom d'utilisateur" class="w-full mb-3 px-4 py-3 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none transition-colors">
-            <input type="text" name="displayName" placeholder="Nom affiché (optionnel)" class="w-full mb-3 px-4 py-3 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none transition-colors">
-          </div>
           <input type="email" name="login" placeholder="Email" required class="w-full mb-3 px-4 py-3 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none transition-colors">
           <input type="password" name="password" placeholder="Mot de passe" required minlength="6" class="w-full mb-4 px-4 py-3 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none transition-colors">
           <div id="auth-error" class="text-red-300 text-sm mb-3 hidden px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg"></div>
@@ -86,9 +82,6 @@ window.showAuthTab = function(mode) {
   authMode = mode;
   document.getElementById('tab-login').className = `flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === 'login' ? 'bg-dream-600 text-white' : 'text-gray-400 hover:text-white'}`;
   document.getElementById('tab-register').className = `flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${mode === 'register' ? 'bg-dream-600 text-white' : 'text-gray-400 hover:text-white'}`;
-  document.getElementById('register-fields').classList.toggle('hidden', mode === 'login');
-  const usernameField = document.querySelector('input[name="username"]');
-  if (usernameField) usernameField.required = (mode === 'register');
   document.getElementById('auth-btn').textContent = mode === 'login' ? 'Se connecter' : "S'inscrire";
 };
 
@@ -107,8 +100,7 @@ window.handleAuth = async function(e) {
       data = await api('/auth/login', { method: 'POST', body: JSON.stringify({ login: form.get('login'), password: form.get('password') }) });
     } else {
       const email = form.get('login');
-      const username = form.get('username') || email.split('@')[0];
-      data = await api('/auth/register', { method: 'POST', body: JSON.stringify({ email, username, password: form.get('password'), displayName: form.get('displayName') || username })});
+      data = await api('/auth/register', { method: 'POST', body: JSON.stringify({ email, password: form.get('password') })});
     }
     state.token = data.token; state.user = data.user;
     localStorage.setItem('ds_token', data.token);
