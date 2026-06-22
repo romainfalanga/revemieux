@@ -1226,22 +1226,22 @@ async function renderLucidity() {
           <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
             <p class="text-xs font-semibold text-dream-200 mb-1">✋ Compter ses doigts</p>
             <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Regardez attentivement vos mains et comptez vos doigts un par un, en vous demandant sincèrement si vous rêvez.</p>
-            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> En rêve, le cortex visuel primaire fonctionne de façon altérée (Hobson, 2009). Le cerveau peine à maintenir une représentation stable des détails — vos doigts peuvent apparaître en nombre incorrect, déformés ou flous. La répétition quotidienne crée un réflexe qui se déclenche aussi en rêve (Tholey, 1983).</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> En rêve, le cortex visuel primaire fonctionne de façon altérée (Hobson, 2009). Le cerveau peine à maintenir une représentation stable des détails : vos doigts peuvent apparaître en nombre incorrect, déformés ou flous. La répétition quotidienne crée un réflexe qui se déclenche aussi en rêve (Tholey, 1983).</p>
           </div>
           <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
             <p class="text-xs font-semibold text-dream-200 mb-1">📖 Lire un texte</p>
             <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Lisez un texte (panneau, écran, livre), détournez le regard, puis relisez-le. Demandez-vous : le texte est-il resté identique ?</p>
-            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> Les travaux de Stephen LaBerge à Stanford (1985) ont démontré que les aires de Broca et Wernicke — responsables du langage écrit — fonctionnent de manière instable pendant le sommeil paradoxal. Le texte se transforme, se brouille ou change de contenu entre deux lectures. C'est l'un des indicateurs de rêve les plus fiables, avec un taux de détection de ~75% (LaBerge & Rheingold, 1990).</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> Les travaux de Stephen LaBerge à Stanford (1985) ont démontré que les aires de Broca et Wernicke (responsables du langage écrit) fonctionnent de manière instable pendant le sommeil paradoxal. Le texte se transforme, se brouille ou change de contenu entre deux lectures. C'est l'un des indicateurs de rêve les plus fiables, avec un taux de détection de ~75% (LaBerge & Rheingold, 1990).</p>
           </div>
           <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
             <p class="text-xs font-semibold text-dream-200 mb-1">⏰ Regarder l'heure</p>
             <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Regardez une horloge ou une montre, détournez le regard, puis regardez à nouveau. L'heure est-elle cohérente ?</p>
-            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> Comme pour le texte, les représentations numériques sont instables en rêve. Le cortex préfrontal — qui gère la logique temporelle et séquentielle — est partiellement désactivé pendant le sommeil REM (Hobson et al., 2000). Les chiffres se transforment ou n'ont aucun sens.</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> Comme pour le texte, les représentations numériques sont instables en rêve. Le cortex préfrontal, qui gère la logique temporelle et séquentielle, est partiellement désactivé pendant le sommeil REM (Hobson et al., 2000). Les chiffres se transforment ou n'ont aucun sens.</p>
           </div>
           <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
             <p class="text-xs font-semibold text-dream-200 mb-1">👃 Nez pincé</p>
             <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Pincez-vous le nez fermement avec vos doigts, bouche fermée, et essayez de respirer par le nez. En êtes-vous incapable ?</p>
-            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> C'est le reality check le plus fiable (~95% de succès selon les communautés de rêveurs lucides). En rêve, le corps physique continue de respirer normalement — la sensation de blocage nasal n'est pas reproduite par le cerveau onirique. Vous respirerez à travers vos doigts, preuve immédiate que vous rêvez. Scientifiquement, c'est lié à la dissociation somato-sensorielle pendant le REM (LaBerge, 2004).</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> C'est le reality check le plus fiable (~95% de succès selon les communautés de rêveurs lucides). En rêve, le corps physique continue de respirer normalement, et la sensation de blocage nasal n'est pas reproduite par le cerveau onirique. Vous respirerez à travers vos doigts, preuve immédiate que vous rêvez. Scientifiquement, c'est lié à la dissociation somato-sensorielle pendant le REM (LaBerge, 2004).</p>
           </div>
         </div>
       </div>
@@ -1267,14 +1267,14 @@ async function renderLucidity() {
             <span class="text-lg mt-0.5 shrink-0">🧭</span>
             <div>
               <p class="text-sm font-semibold text-dream-200 mb-1">Choisir la trajectoire de vos rêves</p>
-              <p class="text-xs text-gray-400">Grâce aux <strong class="text-dream-300">séries de rêves</strong>, vous pouvez structurer vos rêves en arcs narratifs. Avant de dormir, relisez les étapes précédentes d'une série — votre subconscient absorbe tous les éléments (lieux, personnages, émotions) et augmente significativement les chances de poursuivre cette histoire onirique.</p>
+              <p class="text-xs text-gray-400">Grâce aux <strong class="text-dream-300">séries de rêves</strong>, vous pouvez structurer vos rêves en arcs narratifs. Avant de dormir, relisez les étapes précédentes d'une série : votre subconscient absorbe tous les éléments (lieux, personnages, émotions) et augmente significativement les chances de poursuivre cette histoire onirique.</p>
             </div>
           </div>
         </div>
         <div class="p-3 rounded-lg bg-dream-900/20 border border-dream-700/15">
           <p class="text-xs text-gray-300 leading-relaxed">
             <i class="fas fa-lightbulb text-amber-400 mr-1.5"></i>
-            <strong class="text-dream-200">La stratégie clé :</strong> La relecture immersive de vos rêves avant le sommeil agit comme une incubation naturelle. En replongeant dans l'ambiance, les détails et les émotions de vos rêves précédents, vous « programmez » votre esprit pour continuer l'exploration. Barrett (1993) a montré que la suggestion pré-sommeil ciblée permet de rêver du sujet choisi dans ~50% des cas — et ce taux augmente avec la richesse des détails mémorisés.
+            <strong class="text-dream-200">La stratégie clé :</strong> La relecture immersive de vos rêves avant le sommeil agit comme une incubation naturelle. En replongeant dans l'ambiance, les détails et les émotions de vos rêves précédents, vous « programmez » votre esprit pour continuer l'exploration. Barrett (1993) a montré que la suggestion pré-sommeil ciblée permet de rêver du sujet choisi dans environ 50% des cas, et ce taux augmente avec la richesse des détails mémorisés.
           </p>
         </div>
         <div class="mt-3 text-center">
@@ -1286,24 +1286,116 @@ async function renderLucidity() {
 
       <!-- ===== TECHNIQUES D'INDUCTION ===== -->
       <h3 class="text-sm font-display font-semibold text-dream-200 mb-3"><i class="fas fa-tools mr-2"></i>Techniques d'Induction</h3>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🧠</div><h4 class="font-semibold text-dream-200 text-sm mb-2">MILD</h4><p class="text-[10px] text-gray-400 mb-2">Mnemonic Induction of Lucid Dreams — l'intention consciente avant le sommeil.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Au réveil, mémorisez votre dernier rêve</li><li>2. Répétez : « La prochaine fois que je rêve, je saurai que je rêve »</li><li>3. Visualisez-vous devenant lucide dans ce rêve</li><li>4. Endormez-vous en maintenant cette intention</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">LaBerge (1985) — Technique la plus validée scientifiquement</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">⏰</div><h4 class="font-semibold text-dream-200 text-sm mb-2">WBTB</h4><p class="text-[10px] text-gray-400 mb-2">Wake Back To Bed — exploiter le pic de sommeil paradoxal en fin de nuit.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Dormez 5-6h puis réveillez-vous</li><li>2. Restez éveillé 20-60 min (lisez sur le rêve lucide)</li><li>3. Recouchez-vous en appliquant MILD</li><li>4. Les phases REM longues du matin facilitent la lucidité</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Stumbrys et al. (2012) — Multiplie par 5 les chances de lucidité</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">✋</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Reality Testing</h4><p class="text-[10px] text-gray-400 mb-2">L'habitude éveillée se transfert dans le rêve par conditionnement.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Questionnez la réalité 10-15x/jour avec intention</li><li>2. Comptez vos doigts attentivement</li><li>3. Essayez de respirer nez pincé</li><li>4. Lisez un texte, détournez le regard, relisez</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Tholey (1983) — Base de la « technique de réflexion »</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">📝</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Journal de Rêves</h4><p class="text-[10px] text-gray-400 mb-2">Le fondement. Sans rappel de rêves, pas de lucidité possible.</p><ul class="text-[10px] text-gray-300 space-y-1"><li>• Écrivez dans les 5 min du réveil</li><li>• Notez même les fragments les plus flous</li><li>• Utilisez le présent pour plus d'immersion</li><li>• Identifiez vos « signes de rêve » récurrents</li></ul><p class="text-[9px] text-gray-500 mt-2 italic">Schredl (2002) — Effet mesurable dès 2-3 semaines</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🧘</div><h4 class="font-semibold text-dream-200 text-sm mb-2">SSILD</h4><p class="text-[10px] text-gray-400 mb-2">Senses Initiated Lucid Dream — rotation attentionnelle sensorielle.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Après WBTB, allongez-vous détendu</li><li>2. Portez attention à la vision (yeux fermés) ~20s</li><li>3. Portez attention aux sons ~20s</li><li>4. Portez attention aux sensations corporelles ~20s</li><li>5. Répétez 4-5 cycles puis endormez-vous</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Technique communautaire — En cours de validation</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🌙</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Incubation & Séries</h4><p class="text-[10px] text-gray-400 mb-2">Programmez le contenu de vos rêves par suggestion pré-sommeil.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Relisez votre série de rêves avant le coucher</li><li>2. Formulez une intention claire et positive</li><li>3. Visualisez la scène et ses détails</li><li>4. Gardez l'image et l'ambiance en vous endormant</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Barrett (Harvard, 1993) — ~50% de succès sur le sujet ciblé</p></div>
+      <div class="space-y-3 mb-5">
+
+        <!-- MILD -->
+        <div class="glass rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧠</span><h4 class="font-semibold text-dream-200 text-sm">MILD (Mnemonic Induction of Lucid Dreams)</h4></div>
+          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée par Stephen LaBerge à l'Université de Stanford en 1980, la MILD est la technique d'induction la plus étudiée et la plus validée par la recherche. Elle repose sur la mémoire prospective : la capacité de se souvenir d'effectuer une action dans le futur. Le principe est de programmer votre esprit pour qu'il reconnaisse l'état de rêve au moment où il se produit. Une étude australienne de 2017 (Aspy et al.) a montré un taux de réussite de 46% quand elle est combinée au WBTB, contre 3,7% en baseline. L'étude ILDIS de 2020 confirme que MILD augmente significativement la fréquence des rêves lucides, y compris chez des débutants complets.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
+            <li><strong class="text-dream-300">1. Rappel du rêve :</strong> Au réveil (naturel ou par alarme), gardez les yeux fermés et remémorez-vous le rêve que vous veniez de faire. Notez mentalement les éléments marquants.</li>
+            <li><strong class="text-dream-300">2. Identification des signes de rêve :</strong> Repérez dans ce rêve un élément bizarre ou impossible (voler, rencontrer quelqu'un de décédé, lieu qui change). C'est votre « signe de rêve ».</li>
+            <li><strong class="text-dream-300">3. Formulation de l'intention :</strong> Répétez-vous avec conviction : « La prochaine fois que je rêve, je me rendrai compte que je rêve. » Accompagnez cette phrase d'une visualisation.</li>
+            <li><strong class="text-dream-300">4. Visualisation :</strong> Imaginez-vous de retour dans le rêve précédent. Rejouez la scène mentalement, mais cette fois, vous reconnaissez le signe de rêve et devenez lucide.</li>
+            <li><strong class="text-dream-300">5. Endormissement :</strong> Maintenez l'intention et la visualisation en vous endormant. Si d'autres pensées surgissent, revenez doucement à votre intention.</li>
+          </ol>
+          <p class="text-[9px] text-gray-500 italic">Sources : LaBerge (1985, Stanford) · Aspy et al. (2017, Adélaïde) · ILDIS (2020, PMC7379166)</p>
+        </div>
+
+        <!-- WBTB -->
+        <div class="glass rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-xl">⏰</span><h4 class="font-semibold text-dream-200 text-sm">WBTB (Wake Back To Bed)</h4></div>
+          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est la technique la plus puissante quand elle est combinée à MILD. Le principe exploite l'architecture du sommeil : les phases de sommeil paradoxal (REM) deviennent plus longues et plus intenses en fin de nuit. En vous réveillant après 5 à 6 heures, vous interrompez votre sommeil juste avant les périodes REM les plus longues. La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral (responsable de la conscience de soi et de la pensée critique), ce qui se maintient partiellement lors du retour au sommeil. L'étude de Stumbrys et al. (2012) a montré que cette technique multiplie par 5 les chances de lucidité. L'étude de Aspy et al. (2017) rapporte un taux de succès de 46% pour la combinaison WBTB + MILD, et 50% des participants n'ayant jamais fait de rêve lucide ont réussi leur premier en seulement 5 semaines.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
+            <li><strong class="text-dream-300">1. Programmez une alarme :</strong> Réglez un réveil pour 5 à 6 heures après l'endormissement. C'est le moment optimal (juste avant le pic de REM).</li>
+            <li><strong class="text-dream-300">2. Levez-vous :</strong> Sortez du lit pour garantir un vrai éveil. Allez aux toilettes, buvez un verre d'eau. Le but est d'activer votre cortex préfrontal.</li>
+            <li><strong class="text-dream-300">3. Restez éveillé 20 à 60 min :</strong> Lisez ou réfléchissez sur le rêve lucide. Relisez vos rêves récents dans Rêve Mieux. Évitez les écrans lumineux intenses.</li>
+            <li><strong class="text-dream-300">4. Appliquez MILD au recoucher :</strong> En vous recouchant, formulez votre intention et visualisez un rêve lucide. La conscience accrue du cortex préfrontal se maintient dans le sommeil qui suit.</li>
+            <li><strong class="text-dream-300">5. Laissez le REM travailler :</strong> Les périodes REM du matin durent 30 à 60 minutes (contre 10 min en début de nuit). Vous avez une large fenêtre pour devenir lucide.</li>
+          </ol>
+          <p class="text-[9px] text-gray-500 italic">Sources : Stumbrys et al. (2012, méta-analyse) · Aspy et al. (2017) · Frontiers in Psychology (2020, PMC7332853)</p>
+        </div>
+
+        <!-- Reality Testing -->
+        <div class="glass rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-xl">✋</span><h4 class="font-semibold text-dream-200 text-sm">Reality Testing (Technique de Réflexion)</h4></div>
+          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Formalisée par Paul Tholey en 1983 sous le nom de « Reflexionstechnik » (technique de réflexion), cette méthode repose sur un principe simple : si vous prenez l'habitude de questionner la réalité régulièrement pendant la journée, ce réflexe finit par se déclencher aussi en rêve. L'élément clé est la qualité de l'interrogation, pas la quantité. Il ne suffit pas de faire le geste mécaniquement : vous devez sincèrement vous demander « suis-je en train de rêver ? » et examiner votre environnement avec attention critique. C'est cette attitude de questionnement conscient qui crée le conditionnement. Une étude de 2017 (Aspy et al.) a montré un taux de succès de 47,5% quand le Reality Testing est pratiqué avec intention, contre un effet négligeable quand il est fait par habitude mécanique.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
+            <li><strong class="text-dream-300">1. Choisissez vos déclencheurs :</strong> Associez vos tests à des moments récurrents (passer une porte, regarder l'heure, entendre un son particulier).</li>
+            <li><strong class="text-dream-300">2. Questionnez-vous sincèrement :</strong> Demandez-vous « suis-je en train de rêver en ce moment ? » avec une vraie intention. Examinez votre environnement.</li>
+            <li><strong class="text-dream-300">3. Effectuez un test physique :</strong> Comptez vos doigts, pincez-vous le nez et essayez de respirer, ou relisez un texte deux fois.</li>
+            <li><strong class="text-dream-300">4. Visez 10 à 15 tests par jour :</strong> La régularité est essentielle. Plus le réflexe est ancré, plus il a de chances d'apparaître dans vos rêves.</li>
+            <li><strong class="text-dream-300">5. Observez les incohérences :</strong> En rêve, les résultats seront anormaux : doigts en trop, air passant à travers le nez pincé, texte qui se modifie.</li>
+          </ol>
+          <p class="text-[9px] text-gray-500 italic">Sources : Tholey (1983, Reflexionstechnik) · Aspy et al. (2017) · Erlacher & Schredl (2008)</p>
+        </div>
+
+        <!-- Journal -->
+        <div class="glass rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-xl">📝</span><h4 class="font-semibold text-dream-200 text-sm">Journal de Rêves</h4></div>
+          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal de rêves est le fondement absolu de toute pratique de rêve lucide. Sans rappel de vos rêves, même si vous devenez lucide, vous ne vous en souviendrez pas au réveil. Les recherches de Schredl et Erlacher (2004) ont montré que la simple habitude de noter ses rêves augmente de façon mesurable la fréquence de rappel en seulement 2 à 3 semaines. Plus vous notez, plus votre cerveau comprend que les rêves sont importants et les retient. Le journal permet aussi d'identifier vos « signes de rêve » récurrents (lieux, personnages, situations qui reviennent souvent dans vos rêves), ce qui est essentiel pour la technique MILD et le Reality Testing.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Bonnes pratiques :</p>
+          <ul class="text-[10px] text-gray-300 space-y-1.5 mb-2">
+            <li><strong class="text-dream-300">Au réveil, ne bougez pas :</strong> Restez immobile et gardez les yeux fermés. Les souvenirs de rêve s'effacent très rapidement avec le mouvement.</li>
+            <li><strong class="text-dream-300">Notez dans les 5 premières minutes :</strong> Même un fragment, une émotion ou une image. Utilisez la dictée vocale de Rêve Mieux si c'est plus rapide.</li>
+            <li><strong class="text-dream-300">Écrivez au présent :</strong> « Je marche dans une forêt » plutôt que « J'étais dans une forêt ». Cela augmente l'immersion et le rappel.</li>
+            <li><strong class="text-dream-300">Utilisez les étapes de Rêve Mieux :</strong> Découpez vos rêves en scènes distinctes avec les émotions de chaque moment. Cette structuration renforce la mémorisation.</li>
+            <li><strong class="text-dream-300">Relisez vos anciens rêves :</strong> La relecture régulière consolide les souvenirs et vous aide à repérer vos signes de rêve récurrents.</li>
+          </ul>
+          <p class="text-[9px] text-gray-500 italic">Sources : Schredl & Erlacher (2004) · Schredl (2002) · Cleveland Clinic (2024)</p>
+        </div>
+
+        <!-- SSILD -->
+        <div class="glass rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧘</span><h4 class="font-semibold text-dream-200 text-sm">SSILD (Senses Initiated Lucid Dream)</h4></div>
+          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-amber-600/20 text-amber-300 mb-2">⚡ Technique communautaire, validation en cours</span>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée en 2011 par un rêveur lucide connu sous le pseudonyme CosmicIron, la SSILD est devenue l'une des techniques les plus populaires dans la communauté. Elle consiste à effectuer des cycles courts d'attention sensorielle (vue, ouïe, toucher) en position allongée, sans effort de concentration. L'objectif est de créer un état propice à l'apparition spontanée de rêves lucides. Bien qu'aucune étude en laboratoire n'ait testé SSILD de manière isolée, l'étude ILDIS (2020, publiée dans Consciousness and Cognition) a trouvé que SSILD produisait des résultats comparables à MILD. Les communautés de rêveurs lucides rapportent des taux de succès de 20 à 30%. La technique est souvent recommandée aux débutants pour sa simplicité.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
+            <li><strong class="text-dream-300">1. Préparez un WBTB :</strong> Dormez environ 5 heures, puis réveillez-vous brièvement (quelques minutes suffisent). Recouchez-vous.</li>
+            <li><strong class="text-dream-300">2. Cycle « Vue » (~20s) :</strong> Les yeux fermés, portez attention à ce que vous voyez (obscurité, formes, couleurs). Ne forcez pas, observez simplement.</li>
+            <li><strong class="text-dream-300">3. Cycle « Son » (~20s) :</strong> Portez attention aux sons (bourdonnement d'oreilles, silence, bruits de fond). Restez passif et réceptif.</li>
+            <li><strong class="text-dream-300">4. Cycle « Toucher » (~20s) :</strong> Concentrez-vous sur les sensations physiques (poids du corps, température, contact des draps).</li>
+            <li><strong class="text-dream-300">5. Répétez 4 à 5 cycles :</strong> Faites tourner les 3 sens sans effort ni attente. Puis laissez-vous glisser naturellement vers le sommeil.</li>
+            <li><strong class="text-dream-300">6. Le rêve lucide survient souvent spontanément :</strong> Soit au moment de l'endormissement, soit plus tard dans la nuit. Beaucoup de pratiquants rapportent des faux éveils.</li>
+          </ol>
+          <p class="text-[9px] text-gray-500 italic">Sources : CosmicIron (2011, DreamViews) · ILDIS (2020, PMC7379166) · rapports communautaires</p>
+        </div>
+
+        <!-- Incubation -->
+        <div class="glass rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2"><span class="text-xl">🌙</span><h4 class="font-semibold text-dream-200 text-sm">Incubation & Séries de Rêves</h4></div>
+          <span class="inline-block text-[9px] px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300 mb-2">✅ Validé scientifiquement</span>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">L'incubation de rêves est la technique qui consiste à influencer le contenu de ses rêves par une suggestion pré-sommeil ciblée. Deirdre Barrett, professeure à Harvard, a mené l'étude de référence en 1993 : elle a demandé à des participants de se concentrer sur un problème personnel pendant 15 minutes avant de dormir. Résultat : environ 50% ont rêvé du sujet choisi, et beaucoup ont rapporté des insights utiles. L'hypothèse de la continuité (Schredl, 2003) confirme ce mécanisme : les pensées et préoccupations actives avant le sommeil influencent directement le contenu onirique. C'est le principe fondamental derrière les séries de rêves dans Rêve Mieux. En relisant vos rêves précédents avant le coucher, vous « rechargez » votre mémoire de travail avec tous les éléments de ce monde onirique, ce qui augmente considérablement les chances d'y retourner.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole avec Rêve Mieux :</p>
+          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
+            <li><strong class="text-dream-300">1. Choisissez ou créez une série :</strong> Regroupez les rêves que vous souhaitez prolonger en une série narrative dans Rêve Mieux.</li>
+            <li><strong class="text-dream-300">2. Relisez avant le coucher :</strong> 15 à 30 minutes avant de dormir, relisez les étapes de votre série. Laissez les détails, les lieux, les personnages et les émotions vous imprégner.</li>
+            <li><strong class="text-dream-300">3. Formulez votre intention :</strong> Dites-vous clairement : « Cette nuit, je veux retourner dans ce rêve et continuer l'histoire. »</li>
+            <li><strong class="text-dream-300">4. Visualisez la scène :</strong> Imaginez-vous dans le dernier lieu de la série. Ressentez les émotions, voyez les détails. Maintenez cette image en vous endormant.</li>
+            <li><strong class="text-dream-300">5. Le lendemain, notez le résultat :</strong> Même si le rêve n'est pas une continuation exacte, notez les éléments communs. Votre subconscient intègre progressivement la suggestion.</li>
+          </ol>
+          <p class="text-[9px] text-gray-500 italic">Sources : Barrett (Harvard, 1993) · Schredl (2003, hypothèse de la continuité) · Dement (1974, protocole d'incubation)</p>
+        </div>
+
       </div>
 
       <!-- ===== BASES SCIENTIFIQUES ===== -->
       <div class="glass rounded-xl p-4">
         <h3 class="text-xs font-display font-semibold text-dream-200 mb-3"><i class="fas fa-flask mr-2"></i>Bases Scientifiques</h3>
         <div class="space-y-2 text-[10px] text-gray-300">
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📊 Rappel & journal</p><p>Schredl & Erlacher (2004) : le journal augmente significativement le rappel. Effet dès 2-3 semaines.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">✨ Rêves lucides</p><p>Stumbrys et al. (2012), méta-analyse : MILD + WBTB + Reality Testing = approche la plus efficace.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">🌙 Incubation & continuité</p><p>Barrett (Harvard, 1993) : ~50% ont rêvé du sujet choisi. L'hypothèse de la continuité (Schredl, 2003) montre que les préoccupations pré-sommeil influencent directement le contenu onirique.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📖 Texte & lecture en rêve</p><p>LaBerge & Rheingold (1990) : dans ~75% des cas, un texte relu change de contenu en rêve. Les aires corticales du langage écrit sont instables pendant le REM.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD et WBTB sont validés empiriquement par des études contrôlées. SSILD est principalement communautaire et en cours de validation. Rêve Mieux distingue clairement le validé de l'exploratoire.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📊 Rappel et journal</p><p>Schredl & Erlacher (2004) : le journal augmente significativement le rappel. Effet mesurable dès 2 à 3 semaines de pratique quotidienne.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">✨ Rêves lucides</p><p>Stumbrys et al. (2012), méta-analyse de 35 études : la combinaison MILD + WBTB + Reality Testing est l'approche la plus efficace connue à ce jour.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">🌙 Incubation et continuité</p><p>Barrett (Harvard, 1993) : environ 50% des participants ont rêvé du sujet choisi. L'hypothèse de la continuité (Schredl, 2003) montre que les pensées pré-sommeil influencent directement le contenu onirique.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📖 Texte et lecture en rêve</p><p>LaBerge & Rheingold (1990) : dans environ 75% des cas, un texte relu change de contenu en rêve. Les aires corticales du langage écrit sont instables pendant le REM.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD, WBTB et Reality Testing sont validés par des études contrôlées. SSILD est principalement communautaire (résultats comparables à MILD selon l'étude ILDIS 2020, mais pas d'étude isolée). Rêve Mieux distingue clairement ce qui est validé de ce qui est exploratoire.</p></div>
         </div>
       </div>
     </div>`;
