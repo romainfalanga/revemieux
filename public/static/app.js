@@ -320,7 +320,7 @@ function renderDreamCard(d) {
   // Toutes les émotions classées par intensité décroissante
   const sortedEmotions = d.emotions?.length ? [...d.emotions].sort((a, b) => b.intensity - a.intensity) : [];
   return `
-    <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all cursor-pointer animate-fadeIn group" style="user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;" onclick="openDreamDetail(${d.id})">
+    <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all cursor-pointer animate-fadeIn" onclick="openDreamDetail(${d.id})">
       <div class="flex items-start gap-2.5">
         <div class="text-xl mt-0.5 shrink-0">${typeIcons[d.dream_type] || '🌀'}</div>
         <div class="flex-1 min-w-0">
@@ -339,9 +339,9 @@ function renderDreamCard(d) {
             ${d.tags?.length ? `<div class="flex gap-1 flex-wrap">${d.tags.slice(0, 3).map(t => `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/40 text-dream-300">${escapeHtml(t.name)}</span>`).join('')}${d.tags.length > 3 ? `<span class="text-[9px] text-gray-500">+${d.tags.length - 3}</span>` : ''}</div>` : ''}
           </div>
         </div>
-        <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 shrink-0">
-          <button onclick="event.stopPropagation(); openDreamEditor(${d.id})" class="p-1.5 text-gray-400 hover:text-dream-300"><i class="fas fa-edit text-xs"></i></button>
-          <button onclick="event.stopPropagation(); deleteDream(${d.id})" class="p-1.5 text-gray-400 hover:text-red-400"><i class="fas fa-trash text-xs"></i></button>
+        <div class="flex flex-col gap-1 shrink-0">
+          <button onclick="event.stopPropagation(); openDreamEditor(${d.id})" class="p-1.5 text-gray-400 hover:text-dream-300 transition-colors"><i class="fas fa-edit text-xs"></i></button>
+          <button onclick="event.stopPropagation(); deleteDream(${d.id})" class="p-1.5 text-gray-400 hover:text-red-400 transition-colors"><i class="fas fa-trash text-xs"></i></button>
         </div>
       </div>
     </div>`;
@@ -665,10 +665,10 @@ window.openDreamEditor = async function(id) {
         <!-- Emotions globales -->
         <div class="mb-3">
           <label class="text-[10px] text-gray-400 mb-1.5 block">Émotions globales du rêve</label>
-          <div class="flex flex-wrap gap-1.5" id="emotions-picker">
+          <div class="flex flex-wrap gap-2" id="emotions-picker">
             ${EMOTION_LIST.map(em => `
               <button type="button" onclick="toggleEmotion('${em}')" id="em-${em}"
-                class="emotion-btn px-2 py-1 rounded-full text-xs border transition-all ${selectedEmotions[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}">
+                class="emotion-btn px-2 py-1 rounded-full text-xs border transition-all whitespace-nowrap ${selectedEmotions[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}">
                 ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${selectedEmotions[em] ? ' <span class="text-[9px] opacity-70">' + selectedEmotions[em] + '/5</span>' : ''}
               </button>
             `).join('')}
@@ -981,7 +981,7 @@ function refreshEmotionButton(em) {
   if (!btn) return;
   const isSelected = !!window._editorState.emotions[em];
   const intensityLabel = isSelected ? ` <span class="text-[9px] opacity-70">${window._editorState.emotions[em]}/5</span>` : '';
-  btn.className = `emotion-btn px-2 py-1 rounded-full text-xs border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}`;
+  btn.className = `emotion-btn px-2 py-1 rounded-full text-xs border transition-all whitespace-nowrap ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}`;
   btn.innerHTML = `${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${intensityLabel}`;
 }
 
