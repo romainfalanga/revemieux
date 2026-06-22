@@ -15,7 +15,7 @@ let state = {
   stats: null,
 
   editingDream: null,
-  filters: { type: 'all', search: '', tagIds: [] }
+  filters: { type: 'all', search: '', tagIds: [], favorites: false }
 };
 
 // ========== API Helper ==========
@@ -151,7 +151,6 @@ function renderApp() {
           </div>
           <nav class="hidden sm:flex gap-1" id="main-nav-desktop">
             <button onclick="navigate('journal')" data-nav="journal" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-book-open mr-1"></i>Journal</button>
-            <button onclick="navigate('series')" data-nav="series" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-layer-group mr-1"></i>Séries</button>
             <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-eye mr-1"></i>Lucidité</button>
           </nav>
           <div class="flex items-center gap-2 shrink-0">
@@ -174,9 +173,6 @@ function renderApp() {
             <div class="w-12 h-12 bg-gradient-to-br from-dream-400 to-dream-600 rounded-full shadow-lg shadow-dream-500/30 flex items-center justify-center text-white text-lg animate-glow">
               <i class="fas fa-plus"></i>
             </div>
-          </button>
-          <button onclick="navigate('series')" data-nav="series" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
-            <i class="fas fa-layer-group text-base"></i><span>Séries</span>
           </button>
           <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
             <i class="fas fa-eye text-base"></i><span>Lucidité</span>
@@ -223,11 +219,12 @@ async function renderJournal() {
     if (state.filters.type !== 'all') params.set('type', state.filters.type);
     if (state.filters.search) params.set('search', state.filters.search);
     if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
+    if (state.filters.favorites) params.set('favorites', '1');
     const data = await api(`/dreams?${params}`);
     state.dreams = data.dreams; state.pagination = data.pagination;
   } catch (err) { main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`; return; }
 
-  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0);
+  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + (state.filters.favorites ? 1 : 0);
 
   const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
   const categoryOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
@@ -273,12 +270,20 @@ async function renderJournal() {
             <option value="hypnagogic" ${state.filters.type === 'hypnagogic' ? 'selected' : ''}>🌊 Hypnagogique</option>
             <option value="false_awakening" ${state.filters.type === 'false_awakening' ? 'selected' : ''}>🪞 Faux éveil</option>
           </select>
+          <button onclick="toggleFavoritesFilter()" class="px-3 py-2.5 ${state.filters.favorites ? 'bg-yellow-600/30 text-yellow-200 border-yellow-400/40' : 'bg-night-900/60 text-gray-400 border-dream-700/30'} border rounded-xl text-sm font-medium transition-all flex items-center gap-1.5">
+            <i class="${state.filters.favorites ? 'fas' : 'far'} fa-star text-xs ${state.filters.favorites ? 'text-yellow-400' : ''}"></i>
+            <span class="text-xs">Favoris</span>
+          </button>
           <button onclick="toggleFilterPanel()" class="px-3 py-2.5 ${activeFilterCount > 0 ? 'bg-dream-600/40 text-dream-200 border-dream-400/40' : 'bg-night-900/60 text-gray-400 border-dream-700/30'} border rounded-xl text-sm font-medium transition-all flex items-center gap-1.5">
             <i class="fas fa-filter text-xs"></i>
             <span class="text-xs">Filtres</span>
             ${activeFilterCount > 0 ? `<span class="w-4 h-4 bg-dream-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">${activeFilterCount}</span>` : ''}
           </button>
           ${activeFilterCount > 0 ? `<button onclick="clearAllFilters()" class="px-2.5 py-2.5 text-red-400/70 hover:text-red-300 text-xs transition-all"><i class="fas fa-times-circle mr-1"></i>Réinit.</button>` : ''}
+          <button onclick="navigate('series')" class="px-3 py-2.5 bg-night-900/60 text-gray-400 border border-dream-700/30 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 hover:text-dream-300 hover:border-dream-400/40">
+            <i class="fas fa-layer-group text-xs"></i>
+            <span class="text-xs">Mes séries</span>
+          </button>
           <button onclick="openDreamEditor()" class="hidden sm:flex px-4 py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl text-sm font-medium hover:from-dream-400 hover:to-dream-600 transition-all whitespace-nowrap items-center gap-1.5 ml-auto">
             <i class="fas fa-plus"></i> Nouveau rêve
           </button>
@@ -373,10 +378,17 @@ window.toggleFilterPanel = function() {
   if (panel) panel.classList.toggle('hidden');
 };
 
+window.toggleFavoritesFilter = function() {
+  state.filters.favorites = !state.filters.favorites;
+  state.pagination.page = 1;
+  renderJournal();
+};
+
 window.clearAllFilters = function() {
   state.filters.type = 'all';
   state.filters.search = '';
   state.filters.tagIds = [];
+  state.filters.favorites = false;
   state.pagination.page = 1;
   renderJournal();
 };
@@ -502,11 +514,12 @@ window.openDreamEditor = async function(id) {
   window._allTags = allTags;
 
   showModal(`
-    <div class="p-4 sm:p-6 max-h-[85vh] overflow-y-auto">
-      <div class="flex items-center justify-between mb-4">
+    <div class="flex flex-col" style="max-height:85vh;">
+      <div class="flex items-center justify-between p-4 sm:px-6 sm:pt-6 pb-2 shrink-0 border-b border-dream-700/20">
         <h2 class="text-lg font-display font-bold text-dream-100">${dream ? 'Modifier le rêve' : '🌙 Nouveau rêve'}</h2>
         <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
       </div>
+      <div class="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-3">
       <form onsubmit="saveDream(event, ${id || 'null'})" id="dream-form">
         <input type="text" name="title" value="${dream ? escapeHtml(dream.title) : ''}" placeholder="Titre du rêve..." required
           class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white font-medium placeholder-gray-500 focus:border-dream-400 focus:outline-none text-sm">
@@ -670,6 +683,7 @@ window.openDreamEditor = async function(id) {
           <i class="fas fa-save mr-2"></i>${dream ? 'Enregistrer' : 'Enregistrer ce rêve'}
         </button>
       </form>
+      </div>
     </div>
   `, '650px');
 };
@@ -1070,7 +1084,7 @@ window.openSeriesDetail = async function(id) {
         </div>
         <div class="space-y-2">
           <button onclick="closeModal(); openDreamEditorForSeries(${id})" class="w-full py-2 bg-night-800/40 text-gray-300 rounded-lg text-xs hover:bg-night-800/60 transition-all"><i class="fas fa-feather-alt mr-1"></i>Créer un nouveau rêve</button>
-          <button onclick="closeModal(); addDreamToSeries(${id})" class="w-full py-2 bg-dream-600/20 text-dream-300 rounded-lg text-xs hover:bg-dream-600/30 transition-all"><i class="fas fa-plus mr-1"></i>Ajouter un rêve existant</button>
+          <button onclick="closeModal(); openSeriesDreamSelector(${id})" class="w-full py-2 bg-dream-600/20 text-dream-300 rounded-lg text-xs hover:bg-dream-600/30 transition-all"><i class="fas fa-check-square mr-1"></i>Gérer les rêves de la série</button>
         </div>
       </div>
     `);
@@ -1152,24 +1166,66 @@ window.saveSeries = async function(e, id) {
   } catch (err) { alert(err.message); }
 };
 
-window.addDreamToSeries = async function(seriesId) {
-  const data = await api('/dreams?limit=100');
+window.openSeriesDreamSelector = async function(seriesId) {
+  let allDreams = [], seriesDreamIds = [];
+  try { allDreams = (await api('/dreams?limit=100')).dreams; } catch {}
+  try { const detail = await api(`/series/${seriesId}`); seriesDreamIds = (detail.dreams || []).map(d => d.id); } catch {}
+  window._seriesSelectorState = { seriesId, originalIds: [...seriesDreamIds], currentIds: [...seriesDreamIds] };
   showModal(`
     <div class="p-4 sm:p-6">
-      <div class="flex items-center justify-between mb-4"><h2 class="text-base font-display font-bold text-dream-100">Ajouter un rêve existant</h2><button onclick="closeModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button></div>
-      <div class="space-y-1.5 max-h-80 overflow-y-auto">
-        ${data.dreams.map(d => `
-          <div class="flex items-center gap-2 p-2.5 rounded-lg bg-night-900/40 hover:bg-night-900/60 cursor-pointer transition-all" onclick="addToSeries(${seriesId}, ${d.id}, this)">
-            <p class="text-xs font-medium text-dream-200 flex-1 truncate">${escapeHtml(d.title)}</p>
-            <p class="text-[10px] text-gray-500 shrink-0">${d.dream_date}</p>
-          </div>
-        `).join('')}
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-display font-bold text-dream-100">Gérer les rêves de la série</h2>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
       </div>
+      <p class="text-[10px] text-gray-400 mb-3">Coche les rêves à inclure dans cette série. Décoche pour les retirer.</p>
+      <div class="space-y-1 max-h-72 overflow-y-auto p-2 bg-night-900/30 rounded-lg border border-dream-700/10 mb-4">
+        ${allDreams.map(d => `
+          <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-night-900/40 cursor-pointer transition-all">
+            <input type="checkbox" value="${d.id}" class="series-selector-cb accent-dream-400" onchange="toggleSeriesSelector(${d.id})" ${seriesDreamIds.includes(d.id) ? 'checked' : ''}>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium text-dream-200 truncate">${escapeHtml(d.title)}</p>
+              <p class="text-[10px] text-gray-500">${d.dream_date}</p>
+            </div>
+            ${seriesDreamIds.includes(d.id) ? '<span class="text-[9px] text-dream-400 shrink-0">dans la série</span>' : ''}
+          </label>
+        `).join('')}
+        ${allDreams.length === 0 ? '<p class="text-xs text-gray-500 text-center py-3">Aucun rêve enregistré</p>' : ''}
+      </div>
+      <button onclick="saveSeriesDreamSelection()" class="w-full py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg font-semibold text-sm hover:from-dream-400 hover:to-dream-600 transition-all"><i class="fas fa-save mr-2"></i>Enregistrer</button>
     </div>
   `);
 };
 
-window.addToSeries = async function(seriesId, dreamId, el) { try { await api(`/series/${seriesId}/dreams`, { method: 'POST', body: JSON.stringify({ dreamId }) }); el.style.opacity = '0.5'; el.innerHTML += '<span class="text-[10px] text-emerald-400 ml-2">✓</span>'; } catch (err) { alert(err.message); } };
+window.toggleSeriesSelector = function(dreamId) {
+  const ids = window._seriesSelectorState.currentIds;
+  const idx = ids.indexOf(dreamId);
+  if (idx >= 0) ids.splice(idx, 1); else ids.push(dreamId);
+};
+
+window.saveSeriesDreamSelection = async function() {
+  const { seriesId, originalIds, currentIds } = window._seriesSelectorState;
+  try {
+    // Add new dreams
+    for (const id of currentIds) {
+      if (!originalIds.includes(id)) {
+        await api(`/series/${seriesId}/dreams`, { method: 'POST', body: JSON.stringify({ dreamId: id }) });
+      }
+    }
+    // Remove unchecked dreams
+    for (const id of originalIds) {
+      if (!currentIds.includes(id)) {
+        await api(`/series/${seriesId}/dreams/${id}`, { method: 'DELETE' });
+      }
+    }
+    // Reorder with current selection order
+    if (currentIds.length > 0) {
+      try { await api(`/series/${seriesId}/reorder`, { method: 'PUT', body: JSON.stringify({ dreamIds: currentIds }) }); } catch {}
+    }
+    closeModal();
+    showToast('Rêves de la série mis à jour');
+    if (state.currentView === 'series') renderSeries();
+  } catch (err) { alert(err.message); }
+};
 window.removeFromSeries = async function(seriesId, dreamId) {
   if (!confirm('Voulez-vous vraiment retirer ce rêve de la série ?')) return;
   try { await api(`/series/${seriesId}/dreams/${dreamId}`, { method: 'DELETE' }); closeModal(); openSeriesDetail(seriesId); } catch (err) { alert(err.message); }
@@ -1262,7 +1318,7 @@ async function renderLucidity() {
             </button>
             <div class="flex-1 min-w-0">
               <p class="text-xs font-semibold text-amber-200 truncate">Rêve Mieux · Orelsan</p>
-              <p class="text-[10px] text-gray-400">Refrain · En boucle automatique</p>
+              <p class="text-[10px] text-gray-400">Refrain · Lecture unique</p>
               <div class="mt-1.5 w-full bg-night-900/60 rounded-full h-1 overflow-hidden">
                 <div id="reve-mieux-progress" class="h-full bg-gradient-to-r from-amber-500 to-dream-400 rounded-full transition-all" style="width: 0%"></div>
               </div>
@@ -1314,7 +1370,7 @@ async function renderLucidity() {
           <strong class="text-violet-200">Comment ça marche ici :</strong> Tu définis ton heure de coucher habituelle. <strong class="text-dream-300">6 heures</strong> après (pic de sommeil paradoxal), le refrain « Rêve Mieux » se joue automatiquement à un volume ultra-faible. Comme ton cerveau a déjà associé ce refrain au questionnement « suis-je en train de rêver ? » via l'ancrage musical, le son peut s'intégrer dans ton rêve et <strong class="text-dream-300">déclencher la lucidité</strong>.
         </p>
         <p class="text-xs text-gray-300 leading-relaxed mb-3">
-          <strong class="text-emerald-200">Scénario gagnant-gagnant :</strong> Que la musique te réveille ou non, tu es gagnant. <strong class="text-dream-300">Si tu ne te réveilles pas</strong>, le son s'intègre dans ton rêve et peut déclencher un flash de lucidité. <strong class="text-dream-300">Si la musique te réveille</strong>, c'est tout aussi bénéfique : tu es exactement dans les conditions idéales d'un <strong class="text-violet-200">WBTB</strong> (Wake Back To Bed). Tu peux alors appliquer la technique MILD — formuler ton intention de devenir lucide, visualiser un rêve — et te rendormir avec une conscience accrue. L'étude de Aspy et al. (2017) montre un taux de succès de 46% pour cette combinaison.
+          <strong class="text-emerald-200">Scénario gagnant-gagnant :</strong> Que la musique te réveille ou non, tu es gagnant. <strong class="text-dream-300">Si tu ne te réveilles pas</strong>, le son s'intègre dans ton rêve et peut déclencher un flash de lucidité. <strong class="text-dream-300">Si la musique te réveille</strong>, c'est tout aussi bénéfique : tu es exactement dans les conditions idéales d'un <strong class="text-violet-200">WBTB</strong> (Wake Back To Bed). Tu peux alors appliquer la technique MILD : formuler ton intention de devenir lucide, visualiser un rêve, et te rendormir avec une conscience accrue. L'étude de Aspy et al. (2017) montre un taux de succès de 46% pour cette combinaison.
         </p>
 
         <!-- Configuration -->
@@ -1379,33 +1435,50 @@ async function renderLucidity() {
       <h3 class="text-sm font-display font-semibold text-dream-200 mb-3"><i class="fas fa-tools mr-2"></i>Techniques d'Induction</h3>
       <div class="space-y-3 mb-5">
 
-        <!-- MILD -->
+        <!-- WBTB (technique principale, intègre MILD et SSILD comme variantes) -->
         <div class="glass rounded-xl p-4">
-          <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧠</span><h4 class="font-semibold text-dream-200 text-sm">MILD (Mnemonic Induction of Lucid Dreams)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée par Stephen LaBerge (Stanford, 1980), la MILD est la technique la plus validée par la recherche. Elle repose sur la <strong class="text-dream-300">mémoire prospective</strong> : la capacité de se souvenir d'effectuer une action dans le futur. Le principe est de programmer ton esprit pour qu'il reconnaisse l'état de rêve au moment où il se produit. Aspy et al. (2017) : taux de réussite de 46% combinée au WBTB, contre 3,7% en baseline. L'étude ILDIS (2020) confirme son efficacité même chez des débutants complets. <strong class="text-dream-300">Se pratique idéalement au recoucher d'un WBTB</strong> (voir ci-dessus), mais aussi à l'endormissement du soir.</p>
-          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole :</p>
-          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Rappel du rêve :</strong> Au réveil, garde les yeux fermés et remémore-toi le rêve que tu viens de faire. Note mentalement les éléments marquants.</li>
-            <li><strong class="text-dream-300">2. Identification des signes de rêve :</strong> Repère un élément bizarre ou impossible (voler, rencontrer quelqu'un de décédé, lieu qui change). C'est ton « signe de rêve ».</li>
-            <li><strong class="text-dream-300">3. Intention :</strong> Répète-toi avec conviction : « La prochaine fois que je rêve, je me rendrai compte que je rêve. »</li>
-            <li><strong class="text-dream-300">4. Visualisation :</strong> Imagine-toi de retour dans le rêve précédent. Rejoue la scène, mais cette fois tu reconnais le signe de rêve et deviens lucide.</li>
-            <li><strong class="text-dream-300">5. Endormissement :</strong> Maintiens l'intention et la visualisation en t'endormant. Si d'autres pensées surgissent, reviens doucement à ton intention.</li>
-          </ol>
-          <p class="text-[9px] text-gray-500 italic">Sources : LaBerge (1985, Stanford) · Aspy et al. (2017, Adélaïde) · ILDIS (2020, PMC7379166)</p>
-        </div>
-
-        <!-- WBTB -->
-        <div class="glass rounded-xl p-4">
-          <div class="flex items-center gap-2 mb-2"><span class="text-xl">⏰</span><h4 class="font-semibold text-dream-200 text-sm">WBTB (Wake Back To Bed)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est un <strong class="text-dream-300">amplificateur</strong> qui se combine à toute autre technique (MILD, SSILD, etc.). Le principe : les phases REM deviennent plus longues et intenses en fin de nuit. En te réveillant après 5 à 6 heures, tu interromps ton sommeil juste avant les périodes REM les plus longues (30 à 60 min, contre 10 min en début de nuit). La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral — responsable de la conscience de soi — ce qui se maintient partiellement au retour au sommeil. Résultat : ta conscience critique est plus élevée quand tu replonges dans les rêves. Stumbrys et al. (2012) montrent que le WBTB multiplie par 5 les chances de lucidité. Aspy et al. (2017) : 46% de réussite pour WBTB + MILD, et 50% des débutants complets ont réussi leur premier rêve lucide en 5 semaines.</p>
-          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole :</p>
-          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Alarme à 5-6h après l'endormissement.</strong> C'est le moment optimal, juste avant le pic REM.</li>
+          <div class="flex items-center gap-2 mb-2"><span class="text-xl">⏰</span><h4 class="font-semibold text-dream-200 text-sm">WBTB (Wake Back To Bed) : la technique principale</h4></div>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est <strong class="text-dream-300">la technique d'induction la plus puissante</strong> connue à ce jour. Le principe : les phases REM deviennent plus longues et intenses en fin de nuit (30 à 60 min, contre 10 min en début de nuit). En te réveillant après 5 à 6 heures, tu interromps ton sommeil juste avant ces pics REM. La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral (responsable de la conscience de soi), ce qui se maintient partiellement au retour au sommeil. Résultat : ta conscience critique est bien plus élevée quand tu replonges dans les rêves. Stumbrys et al. (2012) montrent que le WBTB multiplie par 5 les chances de lucidité. Aspy et al. (2017) : 46% de réussite et 50% des débutants complets ont réussi leur premier rêve lucide en 5 semaines.</p>
+          <div class="p-3 rounded-lg bg-emerald-900/15 border border-emerald-500/20 mb-3">
+            <p class="text-[10px] font-semibold text-emerald-200 mb-1">🎵 Lien avec le TLR Nocturne (voir ci-dessus)</p>
+            <p class="text-[10px] text-gray-300 leading-relaxed">Si le refrain « Rêve Mieux » programmé par le TLR Nocturne te réveille au lieu de s'intégrer dans ton rêve, <strong class="text-emerald-300">tu es exactement dans un scénario WBTB idéal</strong>. Tu es éveillé en plein pic de sommeil paradoxal, ton cortex préfrontal se réactive, et tu peux appliquer les variantes ci-dessous pour te rendormir avec une conscience accrue. C'est en ça que le refrain « Rêve Mieux » est gagnant-gagnant : soit il déclenche la lucidité directement dans le rêve, soit il crée les conditions parfaites d'un WBTB spontané.</p>
+          </div>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole de base :</p>
+          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-3">
+            <li><strong class="text-dream-300">1. Réveil à 5-6h après l'endormissement.</strong> C'est le moment optimal, juste avant le pic REM. (Le TLR Nocturne fait ça automatiquement pour toi.)</li>
             <li><strong class="text-dream-300">2. Lève-toi physiquement</strong> (toilettes, verre d'eau) pour activer ton cortex préfrontal. 20 à 60 min d'éveil.</li>
             <li><strong class="text-dream-300">3. Pendant l'éveil :</strong> relis tes rêves récents dans Rêve Mieux, réfléchis au rêve lucide. Évite les écrans trop lumineux.</li>
-            <li><strong class="text-dream-300">4. Au recoucher, applique MILD ou SSILD</strong> (voir ci-dessous). La conscience préfrontale accrue se maintient dans le sommeil qui suit.</li>
+            <li><strong class="text-dream-300">4. Au recoucher, choisis une variante</strong> parmi les deux ci-dessous selon ta préférence.</li>
           </ol>
-          <p class="text-[9px] text-gray-500 italic">Sources : Stumbrys et al. (2012, méta-analyse) · Aspy et al. (2017) · Frontiers in Psychology (2020, PMC7332853)</p>
+
+          <div class="mt-3 space-y-3">
+            <div class="p-3 rounded-lg bg-dream-900/20 border border-dream-500/20">
+              <p class="text-xs font-semibold text-dream-200 mb-1.5">🧠 Variante MILD (Mnemonic Induction)</p>
+              <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Développée par Stephen LaBerge (Stanford, 1980), la MILD repose sur la <strong class="text-dream-300">mémoire prospective</strong> : programmer ton esprit pour reconnaître l'état de rêve. C'est la technique la plus validée scientifiquement, avec un taux de réussite de 46% combinée au WBTB (Aspy et al., 2017). L'étude ILDIS (2020) confirme son efficacité même chez des débutants complets.</p>
+              <ol class="text-[10px] text-gray-300 space-y-1">
+                <li><strong class="text-dream-300">1.</strong> Remémore-toi le rêve que tu viens de faire. Note les éléments bizarres ou impossibles.</li>
+                <li><strong class="text-dream-300">2.</strong> Répète-toi : « La prochaine fois que je rêve, je me rendrai compte que je rêve. »</li>
+                <li><strong class="text-dream-300">3.</strong> Visualise-toi dans le rêve précédent : tu reconnais le signe de rêve et tu deviens lucide.</li>
+                <li><strong class="text-dream-300">4.</strong> Maintiens cette intention en t'endormant. Si d'autres pensées surgissent, reviens à ton intention.</li>
+              </ol>
+              <p class="text-[9px] text-gray-500 italic mt-1.5">LaBerge (1985) · Aspy et al. (2017) · ILDIS (2020, PMC7379166)</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dream-900/20 border border-dream-500/20">
+              <p class="text-xs font-semibold text-dream-200 mb-1.5">🧘 Variante SSILD (Senses Initiated Lucid Dream)</p>
+              <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Créée par CosmicIron (2011), la SSILD est une alternative plus simple à MILD. Elle consiste à effectuer des cycles courts d'attention sensorielle sans effort de concentration. L'étude ILDIS (2020) a trouvé des résultats comparables à MILD. Recommandée si tu préfères une approche détendue, sans pression mentale.</p>
+              <ol class="text-[10px] text-gray-300 space-y-1">
+                <li><strong class="text-dream-300">1.</strong> Recouche-toi après ton éveil WBTB (quelques minutes d'éveil suffisent pour SSILD).</li>
+                <li><strong class="text-dream-300">2.</strong> Cycle Vue (~20s) : yeux fermés, observe les formes, couleurs ou obscurité. Ne force pas.</li>
+                <li><strong class="text-dream-300">3.</strong> Cycle Son (~20s) : porte attention aux sons environnants. Reste passif et réceptif.</li>
+                <li><strong class="text-dream-300">4.</strong> Cycle Toucher (~20s) : concentre-toi sur les sensations physiques (poids, température, draps).</li>
+                <li><strong class="text-dream-300">5.</strong> Répète 4 à 5 cycles, puis laisse-toi glisser vers le sommeil. La lucidité survient souvent spontanément.</li>
+              </ol>
+              <p class="text-[9px] text-gray-500 italic mt-1.5">CosmicIron (2011) · ILDIS (2020, PMC7379166)</p>
+            </div>
+          </div>
+
+          <p class="text-[9px] text-gray-500 italic mt-3">Sources : Stumbrys et al. (2012, méta-analyse) · Aspy et al. (2017) · LaBerge (1985) · ILDIS (2020) · Frontiers in Psychology (2020, PMC7332853)</p>
         </div>
 
         <!-- Reality Testing -->
@@ -1426,7 +1499,7 @@ async function renderLucidity() {
         <!-- Journal -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">📝</span><h4 class="font-semibold text-dream-200 text-sm">Journal de Rêves</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal est le <strong class="text-dream-300">fondement</strong> de toute pratique de rêve lucide. Sans rappel de tes rêves, même si tu deviens lucide, tu ne t'en souviendras pas au réveil. Schredl & Erlacher (2004) : la simple habitude de noter ses rêves augmente le rappel en 2 à 3 semaines. Plus tu notes, plus ton cerveau retient les rêves. Le journal permet aussi d'identifier tes « signes de rêve » récurrents — essentiel pour MILD et le Reality Testing.</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal est le <strong class="text-dream-300">fondement</strong> de toute pratique de rêve lucide. Sans rappel de tes rêves, même si tu deviens lucide, tu ne t'en souviendras pas au réveil. Schredl & Erlacher (2004) : la simple habitude de noter ses rêves augmente le rappel en 2 à 3 semaines. Plus tu notes, plus ton cerveau retient les rêves. Le journal permet aussi d'identifier tes « signes de rêve » récurrents, essentiel pour MILD et le Reality Testing.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Bonnes pratiques :</p>
           <ul class="text-[10px] text-gray-300 space-y-1.5 mb-2">
             <li><strong class="text-dream-300">Au réveil, ne bouge pas.</strong> Reste immobile, yeux fermés. Les souvenirs s'effacent très vite avec le mouvement.</li>
@@ -1436,22 +1509,6 @@ async function renderLucidity() {
             <li><strong class="text-dream-300">Relis tes anciens rêves :</strong> La relecture consolide les souvenirs et t'aide à repérer tes signes de rêve récurrents.</li>
           </ul>
           <p class="text-[9px] text-gray-500 italic">Sources : Schredl & Erlacher (2004) · Schredl (2002) · Cleveland Clinic (2024)</p>
-        </div>
-
-        <!-- SSILD -->
-        <div class="glass rounded-xl p-4">
-          <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧘</span><h4 class="font-semibold text-dream-200 text-sm">SSILD (Senses Initiated Lucid Dream)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Créée en 2011 par CosmicIron, la SSILD est une alternative simple à MILD. Elle consiste à effectuer des cycles courts d'attention sensorielle (vue, ouïe, toucher) en position allongée, sans effort de concentration. L'objectif n'est pas de rester éveillé consciemment (comme le WILD), mais de créer un état propice à l'apparition spontanée de lucidité. L'étude ILDIS (2020, Consciousness and Cognition) a trouvé que SSILD produit des résultats comparables à MILD. La technique est recommandée aux débutants pour sa simplicité et l'absence de pression mentale.</p>
-          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole <span class="text-gray-400">(à pratiquer après un WBTB — voir ci-dessus)</span> :</p>
-          <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Après ton réveil WBTB, recouche-toi.</strong> Contrairement au WBTB classique (20-60 min d'éveil), quelques minutes suffisent pour SSILD.</li>
-            <li><strong class="text-dream-300">2. Cycle « Vue » (~20s) :</strong> Les yeux fermés, observe ce que tu vois (obscurité, formes, couleurs). Ne force pas, observe simplement.</li>
-            <li><strong class="text-dream-300">3. Cycle « Son » (~20s) :</strong> Porte attention aux sons (bourdonnement d'oreilles, silence, bruits de fond). Reste passif et réceptif.</li>
-            <li><strong class="text-dream-300">4. Cycle « Toucher » (~20s) :</strong> Concentre-toi sur les sensations physiques (poids du corps, température, contact des draps).</li>
-            <li><strong class="text-dream-300">5. Répète 4 à 5 cycles</strong> des 3 sens sans effort ni attente, puis laisse-toi glisser vers le sommeil.</li>
-            <li><strong class="text-dream-300">6. La lucidité survient souvent spontanément,</strong> soit à l'endormissement, soit plus tard dans la nuit. Beaucoup de pratiquants rapportent des faux éveils.</li>
-          </ol>
-          <p class="text-[9px] text-gray-500 italic">Sources : CosmicIron (2011, DreamViews) · ILDIS (2020, PMC7379166) · rapports communautaires</p>
         </div>
 
         <!-- Incubation -->
@@ -1494,11 +1551,18 @@ let reveMieuxAnimFrame = null;
 window.toggleReveMieuxPlayer = function() {
   if (!reveMieuxAudio) {
     reveMieuxAudio = new Audio('/static/reve-mieux-refrain.mp3');
-    reveMieuxAudio.loop = true;
+    reveMieuxAudio.loop = false;
     reveMieuxAudio.addEventListener('ended', () => {
-      // Sécurité : si loop ne fonctionne pas sur certains navigateurs
-      reveMieuxAudio.currentTime = 0;
-      reveMieuxAudio.play();
+      // Lecture terminée : remettre le bouton en mode play
+      const icon = document.getElementById('reve-mieux-play-icon');
+      const btn = document.getElementById('reve-mieux-play-btn');
+      if (icon) icon.className = 'fas fa-play';
+      if (btn) btn.classList.remove('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+      const progress = document.getElementById('reve-mieux-progress');
+      if (progress) progress.style.width = '0%';
+      const timeEl = document.getElementById('reve-mieux-time');
+      if (timeEl) timeEl.textContent = '0:00';
+      if (reveMieuxAnimFrame) cancelAnimationFrame(reveMieuxAnimFrame);
     });
   }
   const icon = document.getElementById('reve-mieux-play-icon');
@@ -1773,10 +1837,17 @@ function updateTLRDisplay() {
 function playTLRRefrain() {
   if (!reveMieuxAudio) {
     reveMieuxAudio = new Audio('/static/reve-mieux-refrain.mp3');
-    reveMieuxAudio.loop = true;
+    reveMieuxAudio.loop = false;
     reveMieuxAudio.addEventListener('ended', () => {
-      reveMieuxAudio.currentTime = 0;
-      reveMieuxAudio.play().catch(() => {});
+      const icon = document.getElementById('reve-mieux-play-icon');
+      const btn = document.getElementById('reve-mieux-play-btn');
+      if (icon) icon.className = 'fas fa-play';
+      if (btn) btn.classList.remove('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+      const progress = document.getElementById('reve-mieux-progress');
+      if (progress) progress.style.width = '0%';
+      const timeEl = document.getElementById('reve-mieux-time');
+      if (timeEl) timeEl.textContent = '0:00';
+      if (reveMieuxAnimFrame) cancelAnimationFrame(reveMieuxAnimFrame);
     });
   }
   const volumeMap = { 1: 0.03, 2: 0.08, 3: 0.15 };

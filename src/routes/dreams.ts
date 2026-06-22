@@ -13,6 +13,7 @@ dreamRoutes.get('/', async (c) => {
   const type = c.req.query('type')
   const search = c.req.query('search')
   const tagsParam = c.req.query('tags') // comma-separated tag IDs
+  const favorites = c.req.query('favorites')
   const offset = (page - 1) * limit
 
   // Parse tag IDs
@@ -31,6 +32,9 @@ dreamRoutes.get('/', async (c) => {
   if (search) {
     where += ' AND (d.title LIKE ? OR d.content LIKE ?)'
     params.push(`%${search}%`, `%${search}%`)
+  }
+  if (favorites === '1') {
+    where += ' AND d.is_favorite = 1'
   }
 
   // If tag filtering is active, we need to find dreams that have ALL selected tags (intersection)
