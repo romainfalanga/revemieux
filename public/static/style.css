@@ -103,8 +103,8 @@ html, body {
   transition: all 0.2s;
   cursor: pointer;
 }
-.emotion-btn:hover { transform: scale(1.15); }
-.emotion-btn.selected { transform: scale(1.2); box-shadow: 0 0 12px rgba(139, 92, 246, 0.5); }
+.emotion-btn:hover { filter: brightness(1.2); }
+.emotion-btn.selected { box-shadow: 0 0 12px rgba(139, 92, 246, 0.5); }
 
 /* Voice recording animation */
 .recording-pulse {
