@@ -25,7 +25,9 @@ async function api(path, options = {}) {
   const res = await fetch(`${API}${path}`, { ...options, headers: { ...headers, ...options.headers } });
   const data = await res.json();
   if (!res.ok) {
-    if (res.status === 401) { logout(); throw new Error('Session expirée'); }
+    // Ne pas logout sur les routes d'auth (login/register) : c'est une erreur de formulaire, pas une session expirée
+    const isAuthRoute = path.startsWith('/auth/login') || path.startsWith('/auth/register');
+    if (res.status === 401 && !isAuthRoute) { logout(); throw new Error('Session expirée, reconnectez-vous'); }
     throw new Error(data.error || 'Erreur serveur');
   }
   return data;
@@ -69,7 +71,7 @@ function renderAuth() {
           </div>
           <input type="email" name="login" placeholder="Email" required class="w-full mb-3 px-4 py-3 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none transition-colors">
           <input type="password" name="password" placeholder="Mot de passe" required minlength="6" class="w-full mb-4 px-4 py-3 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none transition-colors">
-          <div id="auth-error" class="text-red-400 text-sm mb-3 hidden"></div>
+          <div id="auth-error" class="text-red-300 text-sm mb-3 hidden px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg"></div>
           <button type="submit" id="auth-btn" class="w-full py-3 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg font-semibold hover:from-dream-400 hover:to-dream-600 transition-all shadow-lg shadow-dream-500/20">Se connecter</button>
         </form>
         <div class="mt-6 p-3 bg-dream-900/20 rounded-lg border border-dream-700/20">
@@ -94,7 +96,11 @@ window.handleAuth = async function(e) {
   e.preventDefault();
   const form = new FormData(e.target);
   const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-btn');
   errEl.classList.add('hidden');
+  // Disable button pendant la requête
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>' + (authMode === 'login' ? 'Connexion...' : 'Inscription...');
   try {
     let data;
     if (authMode === 'login') {
@@ -108,7 +114,25 @@ window.handleAuth = async function(e) {
     localStorage.setItem('ds_token', data.token);
     renderApp();
   } catch (err) {
-    errEl.textContent = err.message; errEl.classList.remove('hidden');
+    // Messages d'erreur contextuels et clairs
+    let msg = err.message;
+    if (authMode === 'login') {
+      if (msg.includes('Identifiants incorrects')) msg = 'Email ou mot de passe incorrect. Vérifiez vos identifiants.';
+      else if (msg.includes('Identifiant et mot de passe requis')) msg = 'Veuillez remplir tous les champs.';
+    } else {
+      if (msg.includes('existe déjà')) msg = 'Un compte avec cet email ou nom d\'utilisateur existe déjà. Essayez de vous connecter.';
+      else if (msg.includes('au moins 6')) msg = 'Le mot de passe doit contenir au moins 6 caractères.';
+      else if (msg.includes('requis')) msg = 'Veuillez remplir tous les champs obligatoires.';
+    }
+    errEl.innerHTML = '<i class="fas fa-exclamation-circle mr-1.5"></i>' + msg;
+    errEl.classList.remove('hidden');
+    // Animation shake sur le formulaire
+    const formEl = document.getElementById('auth-form');
+    formEl.classList.add('animate-shake');
+    setTimeout(() => formEl.classList.remove('animate-shake'), 500);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'Se connecter' : "S'inscrire";
   }
 };
 
