@@ -271,7 +271,7 @@ async function renderJournal() {
         ${(state.filters.type !== 'all' || state.filters.tagIds.length > 0) ? `
         <div class="flex flex-wrap gap-1 items-center">
           <span class="text-[9px] text-gray-500 mr-1">Filtres actifs :</span>
-          ${state.filters.type !== 'all' ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${{normal:'🌀 Normal',lucid:'✨ Lucide',nightmare:'👹 Cauchemar',recurring:'🔄 Récurrent',hypnagogic:'🌊 Hypnago.',false_awakening:'🪞 Faux éveil'}[state.filters.type] || state.filters.type} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="filterType('all')"></i></span>` : ''}
+          ${state.filters.type !== 'all' ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).icon||''} ${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).label||state.filters.type} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="filterType('all')"></i></span>` : ''}
           ${state.filters.tagIds.map(tid => {
             const tag = Object.values(groupedTags).flat().find(t => t.id === tid);
             return tag ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style="background:${tag.color}30; color:${tag.color}; border:1px solid ${tag.color}50">${escapeHtml(tag.name)} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleTagFilter(${tid})"></i></span>` : '';
@@ -289,7 +289,7 @@ async function renderJournal() {
         <div class="mb-3">
           <p class="text-[9px] text-gray-500 font-semibold uppercase mb-1.5">Type de rêve</p>
           <div class="flex flex-wrap gap-1.5">
-            ${[{v:'all',icon:'🔮',l:'Tous'},{v:'normal',icon:'🌀',l:'Normal'},{v:'lucid',icon:'✨',l:'Lucide'},{v:'nightmare',icon:'👹',l:'Cauchemar'},{v:'recurring',icon:'🔄',l:'Récurrent'},{v:'hypnagogic',icon:'🌊',l:'Hypnago.'},{v:'false_awakening',icon:'🪞',l:'Faux éveil'}].map(t => `
+            ${[{v:'all',icon:'🔮',l:'Tous'}, ...DREAM_TYPES.map(t=>({v:t.value,icon:t.icon,l:t.label}))].map(t => `
               <button onclick="filterType('${t.v}')"
                 class="px-2 py-1 rounded-lg text-[10px] font-medium border transition-all ${state.filters.type === t.v ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200 hover:border-dream-700/40'}">
                 ${t.icon} ${t.l}
@@ -319,8 +319,8 @@ async function renderJournal() {
 }
 
 function renderDreamCard(d) {
-  const typeIcons = { normal: '🌀', lucid: '✨', nightmare: '👹', recurring: '🔄', hypnagogic: '🌊', false_awakening: '🪞' };
-  const typeLabels = { normal: 'Normal', lucid: 'Lucide', nightmare: 'Cauchemar', recurring: 'Récurrent', hypnagogic: 'Hypnago.', false_awakening: 'Faux éveil' };
+  const typeIcons = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.icon]));
+  const typeLabels = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.label]));
   const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
   const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -384,7 +384,7 @@ window.openDreamDetail = async function(id) {
 };
 
 function renderDreamDetailModal(d) {
-  const typeLabels = { normal: 'Normal', lucid: 'Lucide', nightmare: 'Cauchemar', recurring: 'Récurrent', hypnagogic: 'Hypnagogique', false_awakening: 'Faux éveil' };
+  const typeLabels = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.label]));
   const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   return `
@@ -446,12 +446,16 @@ function renderDreamDetailModal(d) {
 
 // ========== DREAM EDITOR ==========
 const DREAM_TYPES = [
-  { value: 'normal', icon: '🌀', label: 'Normal' },
-  { value: 'lucid', icon: '✨', label: 'Lucide' },
-  { value: 'nightmare', icon: '👹', label: 'Cauchemar' },
-  { value: 'recurring', icon: '🔄', label: 'Récurrent' },
-  { value: 'hypnagogic', icon: '🌊', label: 'Hypnago.' },
-  { value: 'false_awakening', icon: '🪞', label: 'Faux éveil' }
+  { value: 'normal', icon: '🌀', label: 'Normal', desc: 'Reve standard survenant pendant le sommeil REM. Contenu principalement visuel, souvent influencé par les experiences de la journee (65% du contenu selon Schredl et al., 2003). La plupart des reves normaux sont oublies dans les 5 minutes suivant le reveil.' },
+  { value: 'lucid', icon: '✨', label: 'Lucide', desc: 'Reve dans lequel le dormeur prend conscience qu\'il reve, parfois avec la capacite de controler le contenu. Verifie scientifiquement par Stephen LaBerge (Stanford, 1981). 55% des gens en font au moins un dans leur vie, 23% mensuellement (Saunders et al., 2016).' },
+  { value: 'nightmare', icon: '👹', label: 'Cauchemar', desc: 'Reve intensement perturbant impliquant des menaces a la survie ou au bien-etre emotionnel, assez vif pour reveiller le dormeur. Survient en REM, 2e moitie de nuit. 85% des adultes en font au moins un par an (AASM). Frequence accrue chez les personnes stressees ou souffrant de TSPT (71%, Pigeon et al., 2013).' },
+  { value: 'recurring', icon: '🔄', label: 'Récurrent', desc: 'Reves qui se repetent avec un contenu, des themes ou des schemas emotionnels similaires. 60 a 75% des adultes en font l\'experience (Zadra, 1996). Tonalite emotionnelle massivement negative. Souvent lies au stress psychologique, ils peuvent diminuer une fois la source de stress resolue.' },
+  { value: 'vivid', icon: '🎨', label: 'Vivide', desc: 'Reves d\'une clarte sensorielle et emotionnelle exceptionnelle, proches de la perception eveillée. Lies au rebond REM (apres privation de sommeil), au stress, a certains medicaments ou a la grossesse. Le cerveau compense le deficit REM en entrant plus vite et plus longtemps en REM les nuits suivantes (Walker, 2017).' },
+  { value: 'hypnagogic', icon: '🌊', label: 'Hypnago.', desc: 'Hallucinations vives (visuelles, auditives, tactiles) survenant lors de la transition eveil-sommeil (stade 1 NREM). 25 a 37% de la population en fait regulierement. L\'EEG montre un melange d\'ondes alpha et theta. Plus frequentes avec la privation de sommeil et le stress (Ohayon et al., 1996).' },
+  { value: 'false_awakening', icon: '🪞', label: 'Faux éveil', desc: 'Reve dans lequel on croit s\'etre reveille et avoir commence sa routine matinale, alors qu\'on dort encore. Survient en REM. Type 1 : banal (routine normale). Type 2 : atmosphere etrange ou menacante. Co-occurre souvent avec les reves lucides et la paralysie du sommeil (Green & McCreery, 1994).' },
+  { value: 'sleep_paralysis', icon: '😶‍🌫️', label: 'Paralysie', desc: 'Etat de conscience avec incapacite de bouger ou parler, survenant a l\'endormissement ou au reveil. Souvent accompagne d\'hallucinations (presence menacante, pression thoracique). 20 a 40% des gens en font l\'experience au moins une fois (Sharpless & Barber, 2011). Lie a la persistance de l\'atonie musculaire du REM dans l\'eveil.' },
+  { value: 'night_terror', icon: '🫣', label: 'Terreur noct.', desc: 'Episodes de peur intense, cris et agitation survenant pendant le sommeil profond NREM (1er tiers de la nuit). Le dormeur ne se reveille pas completement et n\'a aucun souvenir le lendemain. 1 a 6.5% des enfants, plus rare chez l\'adulte. Differentes des cauchemars : pas de souvenir, pas en REM (AASM / Mayo Clinic).' },
+  { value: 'prophetic', icon: '🔮', label: 'Prémonitoire', desc: 'Reves qui semblent predire des evenements futurs. Aucune preuve scientifique de capacite paranormale, mais plusieurs explications validees : reconnaissance de patterns inconscients, biais de confirmation (on retient les coincidences), et probabilite statistique (4 a 6 reves par nuit sur une vie). Utiles pour la reflexion personnelle.' }
 ];
 
 const EMOTION_LIST = ['joy', 'fear', 'anxiety', 'wonder', 'sadness', 'anger', 'confusion', 'peace', 'excitement', 'love', 'nostalgia'];
@@ -519,12 +523,24 @@ window.openDreamEditor = async function(id) {
 
         <!-- Type de rêve — BOUTONS -->
         <div class="mb-3">
-          <label class="text-[10px] text-gray-400 mb-1.5 block">Type de rêve</label>
-          <div class="grid grid-cols-3 gap-1.5" id="dream-type-picker">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <label class="text-[10px] text-gray-400">Type de rêve</label>
+            <button type="button" onclick="toggleDreamTypeInfo()" class="text-gray-500 hover:text-dream-300 transition-all" title="Informations sur les types de rêves"><i class="fas fa-info-circle text-[10px]"></i></button>
+          </div>
+          <div id="dream-type-info" class="hidden mb-2 p-2.5 rounded-lg bg-night-900/60 border border-dream-700/20 max-h-40 overflow-y-auto">
+            <p class="text-[9px] text-gray-400 mb-2 font-semibold uppercase">Guide des types de rêves (sources scientifiques)</p>
+            ${DREAM_TYPES.map(t => `
+              <div class="mb-1.5 last:mb-0">
+                <p class="text-[10px] font-medium text-dream-200">${t.icon} ${t.label}</p>
+                <p class="text-[9px] text-gray-400 leading-relaxed">${t.desc}</p>
+              </div>
+            `).join('')}
+          </div>
+          <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5" id="dream-type-picker">
             ${DREAM_TYPES.map(t => `
               <button type="button" onclick="selectDreamType('${t.value}')" data-type="${t.value}"
-                class="dream-type-btn flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-xs font-medium border transition-all ${currentType === t.value ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200 hover:border-dream-700/40'}">
-                <span>${t.icon}</span><span>${t.label}</span>
+                class="dream-type-btn flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${currentType === t.value ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200 hover:border-dream-700/40'}">
+                <span>${t.icon}</span><span class="truncate">${t.label}</span>
               </button>
             `).join('')}
           </div>
@@ -812,8 +828,13 @@ window.selectDreamType = function(type) {
   document.querySelector('input[name="dreamType"]').value = type;
   document.querySelectorAll('.dream-type-btn').forEach(btn => {
     const isSelected = btn.dataset.type === type;
-    btn.className = `dream-type-btn flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-xs font-medium border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200 hover:border-dream-700/40'}`;
+    btn.className = `dream-type-btn flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200 hover:border-dream-700/40'}`;
   });
+};
+
+window.toggleDreamTypeInfo = function() {
+  const panel = document.getElementById('dream-type-info');
+  if (panel) panel.classList.toggle('hidden');
 };
 
 function renderTagChip(t) {

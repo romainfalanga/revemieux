@@ -89,6 +89,10 @@ html, body {
 .badge-normal { background: linear-gradient(135deg, #6366f1, #4f46e5); }
 .badge-hypnagogic { background: linear-gradient(135deg, #06b6d4, #0891b2); }
 .badge-false_awakening { background: linear-gradient(135deg, #ec4899, #db2777); }
+.badge-vivid { background: linear-gradient(135deg, #f472b6, #e879f9); }
+.badge-sleep_paralysis { background: linear-gradient(135deg, #64748b, #475569); }
+.badge-night_terror { background: linear-gradient(135deg, #991b1b, #7f1d1d); }
+.badge-prophetic { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
 
 /* Graph nodes */
 .graph-node { cursor: pointer; transition: all 0.2s; }
