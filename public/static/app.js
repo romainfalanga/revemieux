@@ -1722,6 +1722,13 @@ function formatCountdown(ms) {
   return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
+function formatCountdownHM(ms) {
+  if (ms <= 0) return null;
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `${h}h${String(m).padStart(2,'0')}`;
+}
+
 window.toggleTLR = async function() {
   if (isTLRActive()) {
     // Désactiver
@@ -1789,8 +1796,8 @@ function updateSWNotification() {
   
   sendSWMessage({
     type: 'TLR_UPDATE',
-    sleepCountdown: sleepDiff > 0 ? formatCountdown(sleepDiff) : null,
-    triggerCountdown: triggerDiff > 0 ? formatCountdown(triggerDiff) : null,
+    sleepCountdown: sleepDiff > 0 ? formatCountdownHM(sleepDiff) : null,
+    triggerCountdown: triggerDiff > 0 ? formatCountdownHM(triggerDiff) : null,
     status: triggerDiff <= 0 ? 'triggered' : (sleepDiff <= 0 ? 'sleeping' : 'waiting')
   });
 }
