@@ -320,29 +320,29 @@ function renderDreamCard(d) {
   // Toutes les émotions classées par intensité décroissante
   const sortedEmotions = d.emotions?.length ? [...d.emotions].sort((a, b) => b.intensity - a.intensity) : [];
   return `
-    <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all cursor-pointer animate-fadeIn" onclick="openDreamDetail(${d.id})">
-      <div class="flex items-start gap-2.5">
-        <div class="text-xl mt-0.5 shrink-0">${typeIcons[d.dream_type] || '🌀'}</div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-1.5 mb-1 flex-wrap">
-            <h3 class="font-semibold text-dream-100 text-sm truncate max-w-[55vw] sm:max-w-none">${escapeHtml(d.title)}</h3>
-          </div>
-          <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
-            <span class="badge-${d.dream_type} text-[9px] px-1.5 py-0.5 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
-            ${d.lucidity_level > 0 ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
-            ${d.clarity ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity}/5</span>` : ''}
-            ${sortedEmotions.length ? sortedEmotions.map((e, i) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full ${i === 0 ? 'bg-dream-600/30 text-dream-200 font-medium' : 'bg-dream-800/20 text-dream-300/70'}">${emotionEmojis[e.emotion] || ''} ${emotionLabels[e.emotion] || e.emotion} ${e.intensity}/5</span>`).join('') : ''}
-          </div>
-          <p class="text-xs text-gray-400 mb-2 line-clamp-2">${escapeHtml(preview)}</p>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] text-gray-500"><i class="far fa-calendar mr-1"></i>${dateStr}</span>
-            ${d.tags?.length ? `<div class="flex gap-1 flex-wrap">${d.tags.slice(0, 3).map(t => `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/40 text-dream-300">${escapeHtml(t.name)}</span>`).join('')}${d.tags.length > 3 ? `<span class="text-[9px] text-gray-500">+${d.tags.length - 3}</span>` : ''}</div>` : ''}
+    <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all animate-fadeIn">
+      <div class="cursor-pointer" onclick="openDreamDetail(${d.id})">
+        <div class="flex items-start gap-2.5">
+          <div class="text-xl mt-0.5 shrink-0">${typeIcons[d.dream_type] || '🌀'}</div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-semibold text-dream-100 text-sm truncate max-w-[55vw] sm:max-w-none mb-1">${escapeHtml(d.title)}</h3>
+            <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+              <span class="badge-${d.dream_type} text-[9px] px-1.5 py-0.5 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
+              ${d.lucidity_level > 0 ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
+              ${d.clarity ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity}/5</span>` : ''}
+            </div>
+            ${sortedEmotions.length ? `<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">${sortedEmotions.map((e, i) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full ${i === 0 ? 'bg-dream-600/30 text-dream-200 font-medium' : 'bg-dream-800/20 text-dream-300/70'}">${emotionEmojis[e.emotion] || ''} ${emotionLabels[e.emotion] || e.emotion} ${e.intensity}/5</span>`).join('')}</div>` : ''}
+            <p class="text-xs text-gray-400 mb-2 line-clamp-2">${escapeHtml(preview)}</p>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[10px] text-gray-500"><i class="far fa-calendar mr-1"></i>${dateStr}</span>
+              ${d.tags?.length ? `<div class="flex gap-1 flex-wrap">${d.tags.slice(0, 3).map(t => `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/40 text-dream-300">${escapeHtml(t.name)}</span>`).join('')}${d.tags.length > 3 ? `<span class="text-[9px] text-gray-500">+${d.tags.length - 3}</span>` : ''}</div>` : ''}
+            </div>
           </div>
         </div>
-        <div class="flex flex-col gap-1 shrink-0">
-          <button onclick="event.stopPropagation(); openDreamEditor(${d.id})" class="p-1.5 text-gray-400 hover:text-dream-300 transition-colors"><i class="fas fa-edit text-xs"></i></button>
-          <button onclick="event.stopPropagation(); deleteDream(${d.id})" class="p-1.5 text-gray-400 hover:text-red-400 transition-colors"><i class="fas fa-trash text-xs"></i></button>
-        </div>
+      </div>
+      <div class="flex items-center gap-1 mt-2 pt-2 border-t border-dream-700/10">
+        <button onclick="openDreamEditor(${d.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-dream-300 hover:bg-dream-600/10 rounded-lg transition-all"><i class="fas fa-edit mr-1"></i>Modifier</button>
+        <button onclick="deleteDream(${d.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-red-400 hover:bg-red-600/10 rounded-lg transition-all"><i class="fas fa-trash mr-1"></i>Supprimer</button>
       </div>
     </div>`;
 }
@@ -665,13 +665,14 @@ window.openDreamEditor = async function(id) {
         <!-- Emotions globales -->
         <div class="mb-3">
           <label class="text-[10px] text-gray-400 mb-1.5 block">Émotions globales du rêve</label>
-          <div class="flex flex-wrap gap-2" id="emotions-picker">
-            ${EMOTION_LIST.map(em => `
-              <button type="button" onclick="toggleEmotion('${em}')" id="em-${em}"
-                class="emotion-btn px-2 py-1 rounded-full text-xs border transition-all whitespace-nowrap ${selectedEmotions[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}">
-                ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${selectedEmotions[em] ? ' <span class="text-[9px] opacity-70">' + selectedEmotions[em] + '/5</span>' : ''}
-              </button>
-            `).join('')}
+          <div class="flex flex-wrap gap-1.5" id="emotions-picker">
+            ${EMOTION_LIST.map(em => {
+              const sel = selectedEmotions[em];
+              return `<button type="button" onclick="toggleEmotion('${em}')" id="em-${em}"
+                class="emotion-btn inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-all ${sel ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}">
+                <span>${EMOTION_EMOJIS[em]}</span><span>${EMOTION_LABELS[em]}</span>${sel ? `<span class="w-4 h-4 rounded-full bg-dream-400/30 text-[8px] font-bold flex items-center justify-center text-dream-200">${sel}</span>` : ''}
+              </button>`;
+            }).join('')}
           </div>
           <div id="emotion-intensity-panel" class="hidden mt-2 p-2.5 rounded-lg bg-night-900/50 border border-dream-700/20"></div>
         </div>
@@ -980,9 +981,9 @@ function refreshEmotionButton(em) {
   const btn = document.getElementById(`em-${em}`);
   if (!btn) return;
   const isSelected = !!window._editorState.emotions[em];
-  const intensityLabel = isSelected ? ` <span class="text-[9px] opacity-70">${window._editorState.emotions[em]}/5</span>` : '';
-  btn.className = `emotion-btn px-2 py-1 rounded-full text-xs border transition-all whitespace-nowrap ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}`;
-  btn.innerHTML = `${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${intensityLabel}`;
+  const val = window._editorState.emotions[em];
+  btn.className = `emotion-btn inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}`;
+  btn.innerHTML = `<span>${EMOTION_EMOJIS[em]}</span><span>${EMOTION_LABELS[em]}</span>${isSelected ? `<span class="w-4 h-4 rounded-full bg-dream-400/30 text-[8px] font-bold flex items-center justify-center text-dream-200">${val}</span>` : ''}`;
 }
 
 function showEmotionIntensityPanel(em) {
@@ -1206,7 +1207,7 @@ async function renderSeries() {
           ${state.series.map(s => `
             <div class="glass rounded-xl p-4 hover:border-dream-400/30 transition-all cursor-pointer" onclick="openSeriesDetail(${s.id})">
               <div class="flex items-center gap-2 mb-2">
-                <div class="w-3 h-3 rounded-full shrink-0" style="background:${s.color}"></div>
+                <span class="text-base shrink-0">📚</span>
                 <h3 class="font-semibold text-dream-100 text-sm flex-1 truncate">${escapeHtml(s.name)}</h3>
                 <span class="text-[10px] text-gray-500 shrink-0">${s.dream_count || 0} rêve(s)</span>
               </div>
@@ -1239,7 +1240,7 @@ window.openSeriesDetail = async function(id) {
     showModal(`
       <div class="p-4 sm:p-6">
         <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2"><div class="w-4 h-4 rounded-full" style="background:${series.color}"></div><h2 class="text-lg font-display font-bold text-dream-100">${escapeHtml(series.name)}</h2></div>
+          <div class="flex items-center gap-2"><span class="text-lg">📚</span><h2 class="text-lg font-display font-bold text-dream-100">${escapeHtml(series.name)}</h2></div>
           <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         </div>
         ${series.description ? `<p class="text-sm text-gray-400 mb-4">${escapeHtml(series.description)}</p>` : ''}
@@ -1264,6 +1265,7 @@ window.openSeriesDetail = async function(id) {
         <div class="space-y-2">
           <button onclick="closeModal(); openDreamEditorForSeries(${id})" class="w-full py-2 bg-night-800/40 text-gray-300 rounded-lg text-xs hover:bg-night-800/60 transition-all"><i class="fas fa-feather-alt mr-1"></i>Créer un nouveau rêve</button>
           <button onclick="closeModal(); openSeriesDreamSelector(${id})" class="w-full py-2 bg-dream-600/20 text-dream-300 rounded-lg text-xs hover:bg-dream-600/30 transition-all"><i class="fas fa-check-square mr-1"></i>Gérer les rêves de la série</button>
+          <button onclick="closeModal(); openSeriesEditor({id:${id}, name:'${escapeHtml(series.name).replace(/'/g, "\\'")}', description:'${escapeHtml(series.description || '').replace(/'/g, "\\'")}', color:'${series.color}'})" class="w-full py-2 bg-amber-600/15 text-amber-300 rounded-lg text-xs hover:bg-amber-600/25 transition-all"><i class="fas fa-pen mr-1"></i>Modifier la série</button>
         </div>
       </div>
     `);
@@ -1302,7 +1304,7 @@ window.openSeriesEditor = async function(series) {
       <form onsubmit="saveSeries(event, ${series?.id || 'null'})">
         <input type="text" name="name" value="${series?.name || ''}" placeholder="Nom de la série" required class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none text-sm">
         <textarea name="description" rows="2" placeholder="Description (optionnel)" class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none text-sm">${series?.description || ''}</textarea>
-        <div class="mb-3"><label class="text-xs text-gray-400 mb-1 block">Couleur</label><input type="color" name="color" value="${series?.color || '#8b5cf6'}" class="w-12 h-8 rounded cursor-pointer bg-transparent"></div>
+        <input type="hidden" name="color" value="${series?.color || '#8b5cf6'}">
         ${allDreams.length ? `
         <div class="mb-4">
           <label class="text-xs text-gray-400 mb-2 block">Sélectionner des rêves</label>
