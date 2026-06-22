@@ -1,6 +1,6 @@
 // ============================================
 // Rêve Mieux — Application Frontend SPA
-// Journal et Cartographie des Rêves Lucides
+// Journal de Rêves Lucides
 // ============================================
 
 const API = '/api';
@@ -13,7 +13,7 @@ let state = {
   tags: [],
   series: [],
   stats: null,
-  graphData: null,
+
   editingDream: null,
   filters: { type: 'all', search: '', tagIds: [] }
 };
@@ -58,7 +58,7 @@ function renderAuth() {
         <div class="text-center mb-8">
           <div class="text-5xl mb-3 animate-float">🌙</div>
           <h1 class="text-3xl font-display font-bold bg-gradient-to-r from-dream-300 to-dream-500 bg-clip-text text-transparent">Rêve Mieux</h1>
-          <p class="text-gray-400 mt-2 text-sm">Journal & Cartographie des Rêves Lucides</p>
+          <p class="text-gray-400 mt-2 text-sm">Journal de Rêves Lucides</p>
         </div>
         <div class="flex mb-6 bg-night-900/50 rounded-lg p-1">
           <button onclick="showAuthTab('login')" id="tab-login" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-dream-600 text-white">Connexion</button>
@@ -151,7 +151,6 @@ function renderApp() {
           </div>
           <nav class="hidden sm:flex gap-1" id="main-nav-desktop">
             <button onclick="navigate('journal')" data-nav="journal" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-book-open mr-1"></i>Journal</button>
-            <button onclick="navigate('map')" data-nav="map" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-project-diagram mr-1"></i>Carte</button>
             <button onclick="navigate('series')" data-nav="series" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-layer-group mr-1"></i>Séries</button>
             <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-eye mr-1"></i>Lucidité</button>
           </nav>
@@ -170,9 +169,6 @@ function renderApp() {
         <div class="flex justify-around items-end py-1.5 px-1">
           <button onclick="navigate('journal')" data-nav="journal" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
             <i class="fas fa-book-open text-base"></i><span>Journal</span>
-          </button>
-          <button onclick="navigate('map')" data-nav="map" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
-            <i class="fas fa-project-diagram text-base"></i><span>Carte</span>
           </button>
           <button onclick="openDreamEditor()" class="flex flex-col items-center -mt-4">
             <div class="w-12 h-12 bg-gradient-to-br from-dream-400 to-dream-600 rounded-full shadow-lg shadow-dream-500/30 flex items-center justify-center text-white text-lg animate-glow">
@@ -209,7 +205,6 @@ window.navigate = function(view) {
   main.innerHTML = '<div class="flex justify-center py-12"><div class="animate-spin text-dream-400 text-2xl"><i class="fas fa-circle-notch"></i></div></div>';
   switch (view) {
     case 'journal': renderJournal(); break;
-    case 'map': renderMap(); break;
     case 'series': renderSeries(); break;
     case 'lucidity': renderLucidity(); break;
   }
@@ -332,7 +327,7 @@ function renderDreamCard(d) {
   // Émotion dominante (la plus intense)
   const topEmotion = d.emotions?.length ? d.emotions.reduce((best, e) => (!best || e.intensity > best.intensity) ? e : best, null) : null;
   return `
-    <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all cursor-pointer animate-fadeIn group" onclick="openDreamDetail(${d.id})">
+    <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all cursor-pointer animate-fadeIn group" style="user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;" onclick="openDreamDetail(${d.id})">
       <div class="flex items-start gap-2.5">
         <div class="text-xl mt-0.5 shrink-0">${typeIcons[d.dream_type] || '🌀'}</div>
         <div class="flex-1 min-w-0">
@@ -449,7 +444,6 @@ function renderDreamDetailModal(d) {
       ${d.series?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Séries</h4><div class="flex flex-wrap gap-1.5">${d.series.map(s => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${s.color}20; color:${s.color}">${escapeHtml(s.name)}</span>`).join('')}</div></div>` : ''}
       <div class="flex gap-2 pt-3 border-t border-dream-700/20">
         <button onclick="closeModal(); openDreamEditor(${d.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
-        <button onclick="closeModal(); openConnectionEditor(${d.id}, '${escapeHtml(d.title).replace(/'/g, "\\'")}')" class="flex-1 py-2 bg-night-800/50 text-gray-300 rounded-lg hover:bg-night-800/70 transition-all text-xs font-medium"><i class="fas fa-link mr-1"></i>Connecter</button>
         <button onclick="toggleFavorite(${d.id}, ${d.is_favorite})" class="py-2 px-3 bg-night-800/50 text-gray-300 rounded-lg hover:bg-night-800/70 transition-all text-sm"><i class="${d.is_favorite ? 'fas' : 'far'} fa-star text-yellow-400"></i></button>
       </div>
     </div>`;
@@ -995,87 +989,6 @@ window.toggleFavorite = async function(id, current) {
   } catch (err) { alert(err.message); }
 };
 
-// ========== VOICE RECORDING ==========
-
-
-// ========== CONNECTION EDITOR ==========
-window.openConnectionEditor = async function(dreamId, dreamTitle) {
-  const data = await api('/dreams?limit=100');
-  const otherDreams = data.dreams.filter(d => d.id !== dreamId);
-  showModal(`
-    <div class="p-4 sm:p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-base font-display font-bold text-dream-100"><i class="fas fa-link mr-2"></i>Connecter</h2>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
-      </div>
-      <p class="text-xs text-gray-400 mb-3">Connecter "<span class="text-dream-300">${escapeHtml(dreamTitle)}</span>" à :</p>
-      <div class="space-y-2 max-h-80 overflow-y-auto mb-4">
-        ${otherDreams.map(d => `
-          <div class="flex items-center gap-2 p-2.5 rounded-lg bg-night-900/40 hover:bg-night-900/60 cursor-pointer transition-all" onclick="createConnection(${dreamId}, ${d.id}, this)">
-            <div class="flex-1 min-w-0"><p class="text-xs font-medium text-dream-200 truncate">${escapeHtml(d.title)}</p><p class="text-[10px] text-gray-500">${d.dream_date}</p></div>
-            <select onclick="event.stopPropagation()" id="conn-type-${d.id}" class="text-[10px] px-1.5 py-1 bg-night-900/60 border border-dream-700/30 rounded text-gray-400">
-              <option value="related">🔗 Lié</option><option value="sequel">➡️ Suite</option><option value="continuation">📖 Continuation</option>
-              <option value="shared_character">👤 Perso commun</option><option value="shared_place">📍 Lieu commun</option><option value="shared_theme">💡 Thème commun</option>
-            </select>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `);
-};
-
-window.createConnection = async function(fromId, toId, el) {
-  const type = document.getElementById(`conn-type-${toId}`).value;
-  try { await api('/connections', { method: 'POST', body: JSON.stringify({ dreamFromId: fromId, dreamToId: toId, connectionType: type }) }); el.style.opacity = '0.5'; el.style.pointerEvents = 'none'; el.querySelector('.flex-1').innerHTML += '<span class="text-[10px] text-emerald-400 ml-2">✓ Connecté</span>'; } catch (err) { alert(err.message); }
-};
-
-// ========== MAP VIEW ==========
-async function renderMap() {
-  const main = document.getElementById('main-content');
-  try {
-    const data = await api('/connections/graph'); state.graphData = data;
-    if (data.nodes.length === 0) { main.innerHTML = `<div class="text-center py-12 animate-slideUp"><div class="text-5xl mb-4">🗺️</div><h3 class="text-lg font-display font-semibold text-dream-200 mb-2">Carte vide</h3><p class="text-gray-400 mb-6 max-w-md mx-auto text-sm">Notez vos rêves et créez des connexions pour voir émerger votre carte onirique.</p></div>`; return; }
-    main.innerHTML = `
-      <div class="animate-slideUp h-full">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-          <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-project-diagram mr-2"></i>Carte des Rêves</h2>
-          <div class="flex gap-2 text-[10px] flex-wrap">
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>Normal</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Lucide</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400"></span>Cauchemar</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Récurrent</span>
-          </div>
-        </div>
-        <div id="graph-container" class="glass rounded-xl overflow-hidden graph-map-container"></div>
-        <div id="graph-tooltip" class="fixed hidden glass rounded-lg p-3 text-sm z-50 pointer-events-none max-w-xs"></div>
-      </div>`;
-    renderForceGraph(data);
-  } catch (err) { main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`; }
-}
-
-function renderForceGraph(data) {
-  const container = document.getElementById('graph-container');
-  const width = container.clientWidth, height = container.clientHeight;
-  const typeColors = { normal: '#818cf8', lucid: '#34d399', nightmare: '#f87171', recurring: '#fbbf24', hypnagogic: '#22d3ee', false_awakening: '#f472b6' };
-  const connColors = { related: '#6366f1', sequel: '#10b981', continuation: '#8b5cf6', shared_character: '#f59e0b', shared_place: '#06b6d4', shared_theme: '#ec4899' };
-  const svg = d3.select('#graph-container').append('svg').attr('width', width).attr('height', height).attr('viewBox', [0, 0, width, height]);
-  const defs = svg.append('defs'); const filter = defs.append('filter').attr('id', 'glow'); filter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'coloredBlur'); const feMerge = filter.append('feMerge'); feMerge.append('feMergeNode').attr('in', 'coloredBlur'); feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
-  const g = svg.append('g');
-  svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', (event) => g.attr('transform', event.transform)));
-  const simulation = d3.forceSimulation(data.nodes).force('link', d3.forceLink(data.links).id(d => d.id).distance(100).strength(0.5)).force('charge', d3.forceManyBody().strength(-200)).force('center', d3.forceCenter(width / 2, height / 2)).force('collision', d3.forceCollide().radius(30));
-  const link = g.append('g').selectAll('line').data(data.links).join('line').attr('stroke', d => connColors[d.connection_type] || '#6366f1').attr('stroke-opacity', 0.4).attr('stroke-width', d => (d.strength || 3) * 0.5);
-  const node = g.append('g').selectAll('g').data(data.nodes).join('g').attr('class', 'graph-node')
-    .call(d3.drag().on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }).on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; }).on('end', (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
-  node.append('circle').attr('r', d => 8 + (d.lucidity || 0) * 2 + (d.series?.length || 0) * 2).attr('fill', d => typeColors[d.type] || '#818cf8').attr('stroke', d => d.favorite ? '#fbbf24' : 'rgba(255,255,255,0.1)').attr('stroke-width', d => d.favorite ? 2 : 1).style('filter', 'url(#glow)');
-  node.append('text').text(d => d.title.length > 18 ? d.title.substring(0, 16) + '…' : d.title).attr('dy', d => 20 + (d.lucidity || 0) * 2).attr('text-anchor', 'middle').attr('fill', 'rgba(200,200,220,0.8)').attr('font-size', '10px');
-  const tooltip = document.getElementById('graph-tooltip');
-  node.on('mouseover', (event, d) => { tooltip.classList.remove('hidden'); tooltip.innerHTML = `<p class="font-semibold text-dream-200">${escapeHtml(d.title)}</p><p class="text-xs text-gray-400">${d.date} • ${d.type}</p>`; })
-    .on('mousemove', (event) => { tooltip.style.left = (event.pageX + 15) + 'px'; tooltip.style.top = (event.pageY - 10) + 'px'; })
-    .on('mouseout', () => { tooltip.classList.add('hidden'); })
-    .on('click', (event, d) => { openDreamDetail(d.id); });
-  simulation.on('tick', () => { link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y); node.attr('transform', d => `translate(${d.x},${d.y})`); });
-}
-
 // ========== SERIES VIEW ==========
 async function renderSeries() {
   const main = document.getElementById('main-content');
@@ -1398,7 +1311,10 @@ async function renderLucidity() {
           La <strong class="text-violet-300">Targeted Lucidity Reactivation</strong> (TLR), développée par l'Université de Northwestern (Konkoly et al., 2024, <em>Consciousness and Cognition</em>), consiste à rejouer pendant le sommeil paradoxal un son préalablement associé à l'entraînement au rêve lucide. L'étude a montré que les participants utilisant l'app TLR sont passés de <strong class="text-dream-300">0,74 à 2,11 rêves lucides/semaine</strong>, et 7 participants ont rapporté 14 rêves lucides directement déclenchés par le son.
         </p>
         <p class="text-xs text-gray-300 leading-relaxed mb-3">
-          <strong class="text-violet-200">Comment ça marche ici :</strong> Vous définissez votre heure de coucher habituelle. <strong class="text-dream-300">6 heures</strong> après (pic de sommeil paradoxal), le refrain « Rêve Mieux » se jouera automatiquement à un volume ultra-faible. Comme votre cerveau a déjà associé ce refrain au questionnement « suis-je en train de rêver ? » via l'ancrage musical, le son peut s'intégrer dans votre rêve et <strong class="text-dream-300">déclencher la lucidité</strong> sans vous réveiller.
+          <strong class="text-violet-200">Comment ça marche ici :</strong> Tu définis ton heure de coucher habituelle. <strong class="text-dream-300">6 heures</strong> après (pic de sommeil paradoxal), le refrain « Rêve Mieux » se joue automatiquement à un volume ultra-faible. Comme ton cerveau a déjà associé ce refrain au questionnement « suis-je en train de rêver ? » via l'ancrage musical, le son peut s'intégrer dans ton rêve et <strong class="text-dream-300">déclencher la lucidité</strong>.
+        </p>
+        <p class="text-xs text-gray-300 leading-relaxed mb-3">
+          <strong class="text-emerald-200">Scénario gagnant-gagnant :</strong> Que la musique te réveille ou non, tu es gagnant. <strong class="text-dream-300">Si tu ne te réveilles pas</strong>, le son s'intègre dans ton rêve et peut déclencher un flash de lucidité. <strong class="text-dream-300">Si la musique te réveille</strong>, c'est tout aussi bénéfique : tu es exactement dans les conditions idéales d'un <strong class="text-violet-200">WBTB</strong> (Wake Back To Bed). Tu peux alors appliquer la technique MILD — formuler ton intention de devenir lucide, visualiser un rêve — et te rendormir avec une conscience accrue. L'étude de Aspy et al. (2017) montre un taux de succès de 46% pour cette combinaison.
         </p>
 
         <!-- Configuration -->
@@ -1466,14 +1382,14 @@ async function renderLucidity() {
         <!-- MILD -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧠</span><h4 class="font-semibold text-dream-200 text-sm">MILD (Mnemonic Induction of Lucid Dreams)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée par Stephen LaBerge à l'Université de Stanford en 1980, la MILD est la technique d'induction la plus étudiée et la plus validée par la recherche. Elle repose sur la mémoire prospective : la capacité de se souvenir d'effectuer une action dans le futur. Le principe est de programmer votre esprit pour qu'il reconnaisse l'état de rêve au moment où il se produit. Une étude australienne de 2017 (Aspy et al.) a montré un taux de réussite de 46% quand elle est combinée au WBTB, contre 3,7% en baseline. L'étude ILDIS de 2020 confirme que MILD augmente significativement la fréquence des rêves lucides, y compris chez des débutants complets.</p>
-          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée par Stephen LaBerge (Stanford, 1980), la MILD est la technique la plus validée par la recherche. Elle repose sur la <strong class="text-dream-300">mémoire prospective</strong> : la capacité de se souvenir d'effectuer une action dans le futur. Le principe est de programmer ton esprit pour qu'il reconnaisse l'état de rêve au moment où il se produit. Aspy et al. (2017) : taux de réussite de 46% combinée au WBTB, contre 3,7% en baseline. L'étude ILDIS (2020) confirme son efficacité même chez des débutants complets. <strong class="text-dream-300">Se pratique idéalement au recoucher d'un WBTB</strong> (voir ci-dessus), mais aussi à l'endormissement du soir.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Rappel du rêve :</strong> Au réveil (naturel ou par alarme), gardez les yeux fermés et remémorez-vous le rêve que vous veniez de faire. Notez mentalement les éléments marquants.</li>
-            <li><strong class="text-dream-300">2. Identification des signes de rêve :</strong> Repérez dans ce rêve un élément bizarre ou impossible (voler, rencontrer quelqu'un de décédé, lieu qui change). C'est votre « signe de rêve ».</li>
-            <li><strong class="text-dream-300">3. Formulation de l'intention :</strong> Répétez-vous avec conviction : « La prochaine fois que je rêve, je me rendrai compte que je rêve. » Accompagnez cette phrase d'une visualisation.</li>
-            <li><strong class="text-dream-300">4. Visualisation :</strong> Imaginez-vous de retour dans le rêve précédent. Rejouez la scène mentalement, mais cette fois, vous reconnaissez le signe de rêve et devenez lucide.</li>
-            <li><strong class="text-dream-300">5. Endormissement :</strong> Maintenez l'intention et la visualisation en vous endormant. Si d'autres pensées surgissent, revenez doucement à votre intention.</li>
+            <li><strong class="text-dream-300">1. Rappel du rêve :</strong> Au réveil, garde les yeux fermés et remémore-toi le rêve que tu viens de faire. Note mentalement les éléments marquants.</li>
+            <li><strong class="text-dream-300">2. Identification des signes de rêve :</strong> Repère un élément bizarre ou impossible (voler, rencontrer quelqu'un de décédé, lieu qui change). C'est ton « signe de rêve ».</li>
+            <li><strong class="text-dream-300">3. Intention :</strong> Répète-toi avec conviction : « La prochaine fois que je rêve, je me rendrai compte que je rêve. »</li>
+            <li><strong class="text-dream-300">4. Visualisation :</strong> Imagine-toi de retour dans le rêve précédent. Rejoue la scène, mais cette fois tu reconnais le signe de rêve et deviens lucide.</li>
+            <li><strong class="text-dream-300">5. Endormissement :</strong> Maintiens l'intention et la visualisation en t'endormant. Si d'autres pensées surgissent, reviens doucement à ton intention.</li>
           </ol>
           <p class="text-[9px] text-gray-500 italic">Sources : LaBerge (1985, Stanford) · Aspy et al. (2017, Adélaïde) · ILDIS (2020, PMC7379166)</p>
         </div>
@@ -1481,14 +1397,13 @@ async function renderLucidity() {
         <!-- WBTB -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">⏰</span><h4 class="font-semibold text-dream-200 text-sm">WBTB (Wake Back To Bed)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est la technique la plus puissante quand elle est combinée à MILD. Le principe exploite l'architecture du sommeil : les phases de sommeil paradoxal (REM) deviennent plus longues et plus intenses en fin de nuit. En vous réveillant après 5 à 6 heures, vous interrompez votre sommeil juste avant les périodes REM les plus longues. La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral (responsable de la conscience de soi et de la pensée critique), ce qui se maintient partiellement lors du retour au sommeil. L'étude de Stumbrys et al. (2012) a montré que cette technique multiplie par 5 les chances de lucidité. L'étude de Aspy et al. (2017) rapporte un taux de succès de 46% pour la combinaison WBTB + MILD, et 50% des participants n'ayant jamais fait de rêve lucide ont réussi leur premier en seulement 5 semaines.</p>
-          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est un <strong class="text-dream-300">amplificateur</strong> qui se combine à toute autre technique (MILD, SSILD, etc.). Le principe : les phases REM deviennent plus longues et intenses en fin de nuit. En te réveillant après 5 à 6 heures, tu interromps ton sommeil juste avant les périodes REM les plus longues (30 à 60 min, contre 10 min en début de nuit). La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral — responsable de la conscience de soi — ce qui se maintient partiellement au retour au sommeil. Résultat : ta conscience critique est plus élevée quand tu replonges dans les rêves. Stumbrys et al. (2012) montrent que le WBTB multiplie par 5 les chances de lucidité. Aspy et al. (2017) : 46% de réussite pour WBTB + MILD, et 50% des débutants complets ont réussi leur premier rêve lucide en 5 semaines.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Programmez une alarme :</strong> Réglez un réveil pour 5 à 6 heures après l'endormissement. C'est le moment optimal (juste avant le pic de REM).</li>
-            <li><strong class="text-dream-300">2. Levez-vous :</strong> Sortez du lit pour garantir un vrai éveil. Allez aux toilettes, buvez un verre d'eau. Le but est d'activer votre cortex préfrontal.</li>
-            <li><strong class="text-dream-300">3. Restez éveillé 20 à 60 min :</strong> Lisez ou réfléchissez sur le rêve lucide. Relisez vos rêves récents dans Rêve Mieux. Évitez les écrans lumineux intenses.</li>
-            <li><strong class="text-dream-300">4. Appliquez MILD au recoucher :</strong> En vous recouchant, formulez votre intention et visualisez un rêve lucide. La conscience accrue du cortex préfrontal se maintient dans le sommeil qui suit.</li>
-            <li><strong class="text-dream-300">5. Laissez le REM travailler :</strong> Les périodes REM du matin durent 30 à 60 minutes (contre 10 min en début de nuit). Vous avez une large fenêtre pour devenir lucide.</li>
+            <li><strong class="text-dream-300">1. Alarme à 5-6h après l'endormissement.</strong> C'est le moment optimal, juste avant le pic REM.</li>
+            <li><strong class="text-dream-300">2. Lève-toi physiquement</strong> (toilettes, verre d'eau) pour activer ton cortex préfrontal. 20 à 60 min d'éveil.</li>
+            <li><strong class="text-dream-300">3. Pendant l'éveil :</strong> relis tes rêves récents dans Rêve Mieux, réfléchis au rêve lucide. Évite les écrans trop lumineux.</li>
+            <li><strong class="text-dream-300">4. Au recoucher, applique MILD ou SSILD</strong> (voir ci-dessous). La conscience préfrontale accrue se maintient dans le sommeil qui suit.</li>
           </ol>
           <p class="text-[9px] text-gray-500 italic">Sources : Stumbrys et al. (2012, méta-analyse) · Aspy et al. (2017) · Frontiers in Psychology (2020, PMC7332853)</p>
         </div>
@@ -1496,14 +1411,14 @@ async function renderLucidity() {
         <!-- Reality Testing -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">✋</span><h4 class="font-semibold text-dream-200 text-sm">Reality Testing (Technique de Réflexion)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Formalisée par Paul Tholey en 1983 sous le nom de « Reflexionstechnik » (technique de réflexion), cette méthode repose sur un principe simple : si vous prenez l'habitude de questionner la réalité régulièrement pendant la journée, ce réflexe finit par se déclencher aussi en rêve. L'élément clé est la qualité de l'interrogation, pas la quantité. Il ne suffit pas de faire le geste mécaniquement : vous devez sincèrement vous demander « suis-je en train de rêver ? » et examiner votre environnement avec attention critique. C'est cette attitude de questionnement conscient qui crée le conditionnement. Une étude de 2017 (Aspy et al.) a montré un taux de succès de 47,5% quand le Reality Testing est pratiqué avec intention, contre un effet négligeable quand il est fait par habitude mécanique.</p>
-          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Formalisée par Paul Tholey (1983), cette méthode repose sur un principe simple : si tu prends l'habitude de questionner la réalité pendant la journée, ce réflexe finit par se déclencher aussi en rêve. L'élément clé est la <strong class="text-dream-300">qualité</strong> de l'interrogation, pas la quantité. Il ne suffit pas de faire le geste mécaniquement : tu dois sincèrement te demander « suis-je en train de rêver ? » et examiner ton environnement avec attention critique. Aspy et al. (2017) : taux de succès de 47,5% quand le Reality Testing est pratiqué avec intention, effet négligeable quand il est fait par habitude mécanique.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Choisissez vos déclencheurs :</strong> Associez vos tests à des moments récurrents (passer une porte, regarder l'heure, entendre un son particulier).</li>
-            <li><strong class="text-dream-300">2. Questionnez-vous sincèrement :</strong> Demandez-vous « suis-je en train de rêver en ce moment ? » avec une vraie intention. Examinez votre environnement.</li>
-            <li><strong class="text-dream-300">3. Effectuez un test physique :</strong> Comptez vos doigts, pincez-vous le nez et essayez de respirer, ou relisez un texte deux fois.</li>
-            <li><strong class="text-dream-300">4. Visez 10 à 15 tests par jour :</strong> La régularité est essentielle. Plus le réflexe est ancré, plus il a de chances d'apparaître dans vos rêves.</li>
-            <li><strong class="text-dream-300">5. Observez les incohérences :</strong> En rêve, les résultats seront anormaux : doigts en trop, air passant à travers le nez pincé, texte qui se modifie.</li>
+            <li><strong class="text-dream-300">1. Choisis tes déclencheurs :</strong> Associe tes tests à des moments récurrents (passer une porte, regarder l'heure, entendre un son particulier).</li>
+            <li><strong class="text-dream-300">2. Questionne-toi sincèrement :</strong> « Suis-je en train de rêver ? » avec une vraie intention. Examine ton environnement.</li>
+            <li><strong class="text-dream-300">3. Test physique :</strong> Compte tes doigts, pince-toi le nez et essaie de respirer, ou relis un texte deux fois.</li>
+            <li><strong class="text-dream-300">4. Vise 10 à 15 tests par jour.</strong> La régularité est essentielle. Plus le réflexe est ancré, plus il apparaîtra dans tes rêves.</li>
+            <li><strong class="text-dream-300">5. En rêve, les résultats seront anormaux :</strong> doigts en trop, air passant à travers le nez pincé, texte qui change.</li>
           </ol>
           <p class="text-[9px] text-gray-500 italic">Sources : Tholey (1983, Reflexionstechnik) · Aspy et al. (2017) · Erlacher & Schredl (2008)</p>
         </div>
@@ -1511,14 +1426,14 @@ async function renderLucidity() {
         <!-- Journal -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">📝</span><h4 class="font-semibold text-dream-200 text-sm">Journal de Rêves</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal de rêves est le fondement absolu de toute pratique de rêve lucide. Sans rappel de vos rêves, même si vous devenez lucide, vous ne vous en souviendrez pas au réveil. Les recherches de Schredl et Erlacher (2004) ont montré que la simple habitude de noter ses rêves augmente de façon mesurable la fréquence de rappel en seulement 2 à 3 semaines. Plus vous notez, plus votre cerveau comprend que les rêves sont importants et les retient. Le journal permet aussi d'identifier vos « signes de rêve » récurrents (lieux, personnages, situations qui reviennent souvent dans vos rêves), ce qui est essentiel pour la technique MILD et le Reality Testing.</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal est le <strong class="text-dream-300">fondement</strong> de toute pratique de rêve lucide. Sans rappel de tes rêves, même si tu deviens lucide, tu ne t'en souviendras pas au réveil. Schredl & Erlacher (2004) : la simple habitude de noter ses rêves augmente le rappel en 2 à 3 semaines. Plus tu notes, plus ton cerveau retient les rêves. Le journal permet aussi d'identifier tes « signes de rêve » récurrents — essentiel pour MILD et le Reality Testing.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Bonnes pratiques :</p>
           <ul class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">Au réveil, ne bougez pas :</strong> Restez immobile et gardez les yeux fermés. Les souvenirs de rêve s'effacent très rapidement avec le mouvement.</li>
-            <li><strong class="text-dream-300">Notez dans les 5 premières minutes :</strong> Même un fragment, une émotion ou une image. La rapidité est essentielle, les souvenirs s'effacent vite.</li>
-            <li><strong class="text-dream-300">Écrivez au présent :</strong> « Je marche dans une forêt » plutôt que « J'étais dans une forêt ». Cela augmente l'immersion et le rappel.</li>
-            <li><strong class="text-dream-300">Utilisez les étapes de Rêve Mieux :</strong> Découpez vos rêves en scènes distinctes avec les émotions de chaque moment. Cette structuration renforce la mémorisation.</li>
-            <li><strong class="text-dream-300">Relisez vos anciens rêves :</strong> La relecture régulière consolide les souvenirs et vous aide à repérer vos signes de rêve récurrents.</li>
+            <li><strong class="text-dream-300">Au réveil, ne bouge pas.</strong> Reste immobile, yeux fermés. Les souvenirs s'effacent très vite avec le mouvement.</li>
+            <li><strong class="text-dream-300">Note dans les 5 premières minutes.</strong> Même un fragment, une émotion ou une image.</li>
+            <li><strong class="text-dream-300">Écris au présent :</strong> « Je marche dans une forêt » plutôt que « J'étais dans une forêt ». Cela augmente l'immersion et le rappel.</li>
+            <li><strong class="text-dream-300">Utilise les étapes de Rêve Mieux :</strong> Découpe tes rêves en scènes distinctes avec les émotions de chaque moment.</li>
+            <li><strong class="text-dream-300">Relis tes anciens rêves :</strong> La relecture consolide les souvenirs et t'aide à repérer tes signes de rêve récurrents.</li>
           </ul>
           <p class="text-[9px] text-gray-500 italic">Sources : Schredl & Erlacher (2004) · Schredl (2002) · Cleveland Clinic (2024)</p>
         </div>
@@ -1526,15 +1441,15 @@ async function renderLucidity() {
         <!-- SSILD -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">🧘</span><h4 class="font-semibold text-dream-200 text-sm">SSILD (Senses Initiated Lucid Dream)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Développée en 2011 par un rêveur lucide connu sous le pseudonyme CosmicIron, la SSILD est devenue l'une des techniques les plus populaires dans la communauté. Elle consiste à effectuer des cycles courts d'attention sensorielle (vue, ouïe, toucher) en position allongée, sans effort de concentration. L'objectif est de créer un état propice à l'apparition spontanée de rêves lucides. Bien qu'aucune étude en laboratoire n'ait testé SSILD de manière isolée, l'étude ILDIS (2020, publiée dans Consciousness and Cognition) a trouvé que SSILD produisait des résultats comparables à MILD. Les communautés de rêveurs lucides rapportent des taux de succès de 20 à 30%. La technique est souvent recommandée aux débutants pour sa simplicité.</p>
-          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole détaillé :</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Créée en 2011 par CosmicIron, la SSILD est une alternative simple à MILD. Elle consiste à effectuer des cycles courts d'attention sensorielle (vue, ouïe, toucher) en position allongée, sans effort de concentration. L'objectif n'est pas de rester éveillé consciemment (comme le WILD), mais de créer un état propice à l'apparition spontanée de lucidité. L'étude ILDIS (2020, Consciousness and Cognition) a trouvé que SSILD produit des résultats comparables à MILD. La technique est recommandée aux débutants pour sa simplicité et l'absence de pression mentale.</p>
+          <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole <span class="text-gray-400">(à pratiquer après un WBTB — voir ci-dessus)</span> :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Préparez un WBTB :</strong> Dormez environ 5 heures, puis réveillez-vous brièvement (quelques minutes suffisent). Recouchez-vous.</li>
-            <li><strong class="text-dream-300">2. Cycle « Vue » (~20s) :</strong> Les yeux fermés, portez attention à ce que vous voyez (obscurité, formes, couleurs). Ne forcez pas, observez simplement.</li>
-            <li><strong class="text-dream-300">3. Cycle « Son » (~20s) :</strong> Portez attention aux sons (bourdonnement d'oreilles, silence, bruits de fond). Restez passif et réceptif.</li>
-            <li><strong class="text-dream-300">4. Cycle « Toucher » (~20s) :</strong> Concentrez-vous sur les sensations physiques (poids du corps, température, contact des draps).</li>
-            <li><strong class="text-dream-300">5. Répétez 4 à 5 cycles :</strong> Faites tourner les 3 sens sans effort ni attente. Puis laissez-vous glisser naturellement vers le sommeil.</li>
-            <li><strong class="text-dream-300">6. Le rêve lucide survient souvent spontanément :</strong> Soit au moment de l'endormissement, soit plus tard dans la nuit. Beaucoup de pratiquants rapportent des faux éveils.</li>
+            <li><strong class="text-dream-300">1. Après ton réveil WBTB, recouche-toi.</strong> Contrairement au WBTB classique (20-60 min d'éveil), quelques minutes suffisent pour SSILD.</li>
+            <li><strong class="text-dream-300">2. Cycle « Vue » (~20s) :</strong> Les yeux fermés, observe ce que tu vois (obscurité, formes, couleurs). Ne force pas, observe simplement.</li>
+            <li><strong class="text-dream-300">3. Cycle « Son » (~20s) :</strong> Porte attention aux sons (bourdonnement d'oreilles, silence, bruits de fond). Reste passif et réceptif.</li>
+            <li><strong class="text-dream-300">4. Cycle « Toucher » (~20s) :</strong> Concentre-toi sur les sensations physiques (poids du corps, température, contact des draps).</li>
+            <li><strong class="text-dream-300">5. Répète 4 à 5 cycles</strong> des 3 sens sans effort ni attente, puis laisse-toi glisser vers le sommeil.</li>
+            <li><strong class="text-dream-300">6. La lucidité survient souvent spontanément,</strong> soit à l'endormissement, soit plus tard dans la nuit. Beaucoup de pratiquants rapportent des faux éveils.</li>
           </ol>
           <p class="text-[9px] text-gray-500 italic">Sources : CosmicIron (2011, DreamViews) · ILDIS (2020, PMC7379166) · rapports communautaires</p>
         </div>
@@ -1542,14 +1457,14 @@ async function renderLucidity() {
         <!-- Incubation -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">🌙</span><h4 class="font-semibold text-dream-200 text-sm">Incubation & Séries de Rêves</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">L'incubation de rêves est la technique qui consiste à influencer le contenu de ses rêves par une suggestion pré-sommeil ciblée. Deirdre Barrett, professeure à Harvard, a mené l'étude de référence en 1993 : elle a demandé à des participants de se concentrer sur un problème personnel pendant 15 minutes avant de dormir. Résultat : environ 50% ont rêvé du sujet choisi, et beaucoup ont rapporté des insights utiles. L'hypothèse de la continuité (Schredl, 2003) confirme ce mécanisme : les pensées et préoccupations actives avant le sommeil influencent directement le contenu onirique. C'est le principe fondamental derrière les séries de rêves dans Rêve Mieux. En relisant vos rêves précédents avant le coucher, vous « rechargez » votre mémoire de travail avec tous les éléments de ce monde onirique, ce qui augmente considérablement les chances d'y retourner.</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">L'incubation consiste à influencer le contenu de tes rêves par une suggestion pré-sommeil ciblée. Barrett (Harvard, 1993) : environ 50% des participants ont rêvé du sujet choisi. L'hypothèse de la continuité (Schredl, 2003) confirme que les pensées actives avant le sommeil influencent le contenu onirique. C'est le principe des <strong class="text-dream-300">séries de rêves</strong> dans Rêve Mieux : en relisant tes rêves précédents avant le coucher, tu « recharges » ta mémoire de travail avec ce monde onirique, augmentant les chances d'y retourner.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole avec Rêve Mieux :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
-            <li><strong class="text-dream-300">1. Choisissez ou créez une série :</strong> Regroupez les rêves que vous souhaitez prolonger en une série narrative dans Rêve Mieux.</li>
-            <li><strong class="text-dream-300">2. Relisez avant le coucher :</strong> 15 à 30 minutes avant de dormir, relisez les étapes de votre série. Laissez les détails, les lieux, les personnages et les émotions vous imprégner.</li>
-            <li><strong class="text-dream-300">3. Formulez votre intention :</strong> Dites-vous clairement : « Cette nuit, je veux retourner dans ce rêve et continuer l'histoire. »</li>
-            <li><strong class="text-dream-300">4. Visualisez la scène :</strong> Imaginez-vous dans le dernier lieu de la série. Ressentez les émotions, voyez les détails. Maintenez cette image en vous endormant.</li>
-            <li><strong class="text-dream-300">5. Le lendemain, notez le résultat :</strong> Même si le rêve n'est pas une continuation exacte, notez les éléments communs. Votre subconscient intègre progressivement la suggestion.</li>
+            <li><strong class="text-dream-300">1. Crée ou choisis une série :</strong> Regroupe les rêves que tu veux prolonger dans une série narrative.</li>
+            <li><strong class="text-dream-300">2. Relis avant le coucher (15-30 min) :</strong> Laisse les détails, les lieux, les personnages et les émotions t'imprégner.</li>
+            <li><strong class="text-dream-300">3. Formule ton intention :</strong> « Cette nuit, je veux retourner dans ce rêve et continuer l'histoire. »</li>
+            <li><strong class="text-dream-300">4. Visualise la scène :</strong> Imagine-toi dans le dernier lieu de la série. Ressens les émotions, vois les détails. Maintiens cette image en t'endormant.</li>
+            <li><strong class="text-dream-300">5. Le lendemain, note le résultat.</strong> Même si ce n'est pas une continuation exacte, note les éléments communs. Ton subconscient intègre progressivement la suggestion.</li>
           </ol>
           <p class="text-[9px] text-gray-500 italic">Sources : Barrett (Harvard, 1993) · Schredl (2003, hypothèse de la continuité) · Dement (1974, protocole d'incubation)</p>
         </div>
