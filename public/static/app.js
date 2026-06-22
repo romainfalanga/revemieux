@@ -178,6 +178,22 @@ function renderApp() {
       <button onclick="openDreamEditor()" id="fab-add" class="hidden sm:flex fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-dream-400 to-dream-600 rounded-full shadow-lg shadow-dream-500/30 items-center justify-center text-white text-xl hover:scale-110 transition-transform animate-glow">
         <i class="fas fa-plus"></i>
       </button>
+
+      <!-- Mini-player flottant permanent -->
+      <div id="floating-player" style="position:fixed;bottom:65px;right:12px;z-index:9998;" class="sm:bottom-6 sm:right-24">
+        <button onclick="toggleReveMieuxPlayer()" id="floating-play-btn"
+          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all"
+          style="background:linear-gradient(135deg,rgba(245,158,11,0.85),rgba(139,92,246,0.85));backdrop-filter:blur(8px);"
+          title="Refrain Rêve Mieux">
+          <i id="floating-play-icon" class="fas fa-play text-sm"></i>
+        </button>
+        <div id="floating-progress-ring" class="absolute inset-0 pointer-events-none">
+          <svg width="44" height="44" viewBox="0 0 44 44" class="w-full h-full -rotate-90">
+            <circle cx="22" cy="22" r="20" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+            <circle id="floating-progress-circle" cx="22" cy="22" r="20" fill="none" stroke="rgba(245,158,11,0.9)" stroke-width="2" stroke-linecap="round" stroke-dasharray="125.66" stroke-dashoffset="125.66"/>
+          </svg>
+        </div>
+      </div>
     </div>
     <div id="modal-container"></div>
   `;
@@ -1719,7 +1735,7 @@ function renderIntentionCard(i) {
         <div class="text-xl mt-0.5 shrink-0">${typeIcon}</div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-1.5 mb-1">
-            <h3 class="font-semibold ${isRealized ? 'text-emerald-200' : 'text-dream-100'} text-sm truncate flex-1">${escapeHtml(i.title)}</h3>
+            <h3 class="font-semibold ${isRealized ? 'text-emerald-200' : 'text-dream-100'} text-sm truncate flex-1 select-none">${escapeHtml(i.title)}</h3>
             ${isRealized ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300 shrink-0">Réalisée</span>' : ''}
             ${isArchived ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-600/30 text-gray-400 shrink-0">Archivée</span>' : ''}
           </div>
@@ -1728,13 +1744,13 @@ function renderIntentionCard(i) {
             ${isContinuation && i.source_dream_title ? `<span class="text-[9px] text-gray-500 truncate max-w-[40vw]"><i class="fas fa-link mr-0.5"></i>${escapeHtml(i.source_dream_title)}</span>` : ''}
             ${isRealized && i.realized_dream_title ? `<span class="text-[9px] text-emerald-400/70 truncate max-w-[40vw]"><i class="fas fa-check mr-0.5"></i>${escapeHtml(i.realized_dream_title)}</span>` : ''}
           </div>
-          ${i.description ? `<p class="text-xs text-gray-400 mb-1.5 line-clamp-2">${escapeHtml(i.description)}</p>` : ''}
-          <span class="text-[10px] text-gray-500"><i class="far fa-calendar mr-1"></i>${dateStr}</span>
+          ${i.description ? `<p class="text-xs text-gray-400 mb-1.5 line-clamp-2 select-none">${escapeHtml(i.description)}</p>` : ''}
+          <span class="text-[10px] text-gray-500 select-none"><i class="far fa-calendar mr-1"></i>${dateStr}</span>
         </div>
       </div>
       <div class="flex items-center gap-1 mt-2 pt-2 border-t border-dream-700/10">
+        <button onclick="viewIntentionDetail(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-dream-300 hover:bg-dream-600/10 rounded-lg transition-all"><i class="fas fa-eye mr-1"></i>Voir</button>
         ${!isRealized && !isArchived ? `<button onclick="openIntentionEditor(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-dream-300 hover:bg-dream-600/10 rounded-lg transition-all"><i class="fas fa-edit mr-1"></i>Modifier</button>` : ''}
-        ${!isRealized && !isArchived ? `<button onclick="archiveIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-amber-300 hover:bg-amber-600/10 rounded-lg transition-all"><i class="fas fa-archive mr-1"></i>Archiver</button>` : ''}
         ${isArchived ? `<button onclick="reactivateIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-indigo-300 hover:bg-indigo-600/10 rounded-lg transition-all"><i class="fas fa-redo mr-1"></i>Réactiver</button>` : ''}
         ${isRealized ? `<button onclick="unrealizeIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-amber-300 hover:bg-amber-600/10 rounded-lg transition-all"><i class="fas fa-undo mr-1"></i>Réactiver</button>` : ''}
         <button onclick="deleteIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-red-400 hover:bg-red-600/10 rounded-lg transition-all"><i class="fas fa-trash mr-1"></i>Supprimer</button>
@@ -1856,6 +1872,42 @@ window.saveIntention = async function(e, id) {
 
 window.archiveIntention = async function(id) {
   try { await api(`/intentions/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'archived' }) }); showToast('Intention archivée'); renderIntentions(); } catch (err) { alert(err.message); }
+};
+
+window.viewIntentionDetail = function(id) {
+  // Find the intention in current data and show detail modal
+  (async () => {
+    let intentions = [];
+    try { intentions = (await api('/intentions')).intentions; } catch { return; }
+    const i = intentions.find(x => x.id === id);
+    if (!i) return;
+    const isContinuation = i.type === 'dream_continuation';
+    const typeIcon = isContinuation ? '🌙' : '✨';
+    const typeLabel = isContinuation ? 'Suite de rêve' : 'Nouveau rêve';
+    const statusLabel = i.status === 'realized' ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-600/30 text-emerald-300">Réalisée</span>' : i.status === 'archived' ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-gray-600/30 text-gray-400">Archivée</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-600/25 text-indigo-300">Active</span>';
+    const dateStr = new Date(i.created_at).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    showModal(`
+      <div class="p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-display font-semibold text-dream-100">${typeIcon} ${escapeHtml(i.title)}</h3>
+          <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isContinuation ? 'bg-violet-600/25 text-violet-300' : 'bg-indigo-600/25 text-indigo-300'}">${typeLabel}</span>
+          ${statusLabel}
+        </div>
+        ${isContinuation && i.source_dream_title ? `<p class="text-xs text-gray-400 mb-3"><i class="fas fa-link mr-1 text-dream-400"></i>Rêve source : <strong class="text-dream-200">${escapeHtml(i.source_dream_title)}</strong></p>` : ''}
+        ${i.description ? `<div class="glass rounded-xl p-3 mb-3"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(i.description)}</p></div>` : '<p class="text-xs text-gray-500 italic mb-3">Aucune description</p>'}
+        ${i.realized_dream_title ? `<p class="text-xs text-emerald-400/70 mb-3"><i class="fas fa-check mr-1"></i>Réalisée dans : ${escapeHtml(i.realized_dream_title)}</p>` : ''}
+        <p class="text-[10px] text-gray-500 mb-4"><i class="far fa-calendar mr-1"></i>${dateStr}</p>
+        <div class="flex gap-2">
+          <button onclick="closeModal()" class="flex-1 py-2 bg-night-800/40 text-gray-300 rounded-lg hover:bg-night-800/60 transition-all text-xs font-medium">Fermer</button>
+          ${i.status === 'active' ? `<button onclick="closeModal(); openIntentionEditor(${i.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>` : ''}
+          ${isContinuation && i.source_dream_id ? `<button onclick="closeModal(); openDreamDetail(${i.source_dream_id})" class="flex-1 py-2 bg-indigo-600/20 text-indigo-300 rounded-lg hover:bg-indigo-600/30 transition-all text-xs font-medium"><i class="fas fa-book-open mr-1"></i>Voir le rêve</button>` : ''}
+        </div>
+      </div>
+    `, '500px');
+  })();
 };
 
 window.reactivateIntention = async function(id) {
@@ -2013,12 +2065,7 @@ async function renderLucidity() {
             <input type="time" id="tlr-bedtime" value="${getTLRBedtime()}" onchange="saveTLRBedtime(this.value)"
               class="px-3 py-1.5 bg-night-900/60 border border-violet-700/30 rounded-lg text-white text-sm focus:border-violet-400 focus:outline-none">
           </div>
-          <div class="flex items-center gap-3">
-            <label class="text-xs text-gray-400 shrink-0 w-36">Ce soir (optionnel) :</label>
-            <input type="time" id="tlr-tonight-override" value="${getTLRTonightOverride()}" onchange="saveTLRTonightOverride(this.value)"
-              class="px-3 py-1.5 bg-night-900/60 border border-violet-700/30 rounded-lg text-white text-sm focus:border-violet-400 focus:outline-none">
-            <button onclick="clearTLRTonightOverride()" class="text-[10px] text-gray-500 hover:text-red-400 transition-all" title="Effacer"><i class="fas fa-times"></i></button>
-          </div>
+
           <div class="flex items-center gap-3">
             <label class="text-xs text-gray-400 shrink-0 w-36">Volume nocturne :</label>
             <div class="flex gap-1.5" id="tlr-volume-picker">
@@ -2181,35 +2228,53 @@ window.doRealityCheck = async function(type) { try { await api('/reality-checks'
 let reveMieuxAudio = null;
 let reveMieuxAnimFrame = null;
 
+function syncPlayerUI(playing) {
+  // Sync page player (if on lucidity page)
+  const icon = document.getElementById('reve-mieux-play-icon');
+  const btn = document.getElementById('reve-mieux-play-btn');
+  if (playing) {
+    if (icon) icon.className = 'fas fa-pause';
+    if (btn) btn.classList.add('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+  } else {
+    if (icon) icon.className = 'fas fa-play';
+    if (btn) btn.classList.remove('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+  }
+  // Sync floating player
+  const fIcon = document.getElementById('floating-play-icon');
+  const fBtn = document.getElementById('floating-play-btn');
+  if (playing) {
+    if (fIcon) fIcon.className = 'fas fa-pause text-sm';
+    if (fBtn) fBtn.style.background = 'linear-gradient(135deg,rgba(245,158,11,1),rgba(139,92,246,1))';
+  } else {
+    if (fIcon) fIcon.className = 'fas fa-play text-sm';
+    if (fBtn) fBtn.style.background = 'linear-gradient(135deg,rgba(245,158,11,0.85),rgba(139,92,246,0.85))';
+  }
+}
+
 window.toggleReveMieuxPlayer = function() {
   if (!reveMieuxAudio) {
     reveMieuxAudio = new Audio('/static/reve-mieux-refrain.mp3');
     reveMieuxAudio.loop = false;
     reveMieuxAudio.addEventListener('ended', () => {
-      // Lecture terminée : remettre le bouton en mode play
-      const icon = document.getElementById('reve-mieux-play-icon');
-      const btn = document.getElementById('reve-mieux-play-btn');
-      if (icon) icon.className = 'fas fa-play';
-      if (btn) btn.classList.remove('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+      syncPlayerUI(false);
       const progress = document.getElementById('reve-mieux-progress');
       if (progress) progress.style.width = '0%';
       const timeEl = document.getElementById('reve-mieux-time');
       if (timeEl) timeEl.textContent = '0:00';
+      // Reset floating progress ring
+      const circle = document.getElementById('floating-progress-circle');
+      if (circle) circle.style.strokeDashoffset = '125.66';
       if (reveMieuxAnimFrame) cancelAnimationFrame(reveMieuxAnimFrame);
     });
   }
-  const icon = document.getElementById('reve-mieux-play-icon');
-  const btn = document.getElementById('reve-mieux-play-btn');
   if (reveMieuxAudio.paused) {
     reveMieuxAudio.play().then(() => {
-      icon.className = 'fas fa-pause';
-      btn.classList.add('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+      syncPlayerUI(true);
       updateReveMieuxProgress();
     }).catch(() => {});
   } else {
     reveMieuxAudio.pause();
-    icon.className = 'fas fa-play';
-    btn.classList.remove('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+    syncPlayerUI(false);
     if (reveMieuxAnimFrame) cancelAnimationFrame(reveMieuxAnimFrame);
   }
 };
@@ -2218,13 +2283,17 @@ function updateReveMieuxProgress() {
   if (!reveMieuxAudio || reveMieuxAudio.paused) return;
   const progress = document.getElementById('reve-mieux-progress');
   const timeEl = document.getElementById('reve-mieux-time');
-  if (progress && reveMieuxAudio.duration) {
-    const pct = (reveMieuxAudio.currentTime / reveMieuxAudio.duration) * 100;
-    progress.style.width = pct + '%';
-  }
+  const pct = reveMieuxAudio.duration ? (reveMieuxAudio.currentTime / reveMieuxAudio.duration) : 0;
+  if (progress) progress.style.width = (pct * 100) + '%';
   if (timeEl) {
     const cur = Math.floor(reveMieuxAudio.currentTime);
     timeEl.textContent = Math.floor(cur / 60) + ':' + String(cur % 60).padStart(2, '0');
+  }
+  // Update floating progress ring
+  const circle = document.getElementById('floating-progress-circle');
+  if (circle) {
+    const circumference = 125.66; // 2 * PI * 20
+    circle.style.strokeDashoffset = circumference * (1 - pct);
   }
   reveMieuxAnimFrame = requestAnimationFrame(updateReveMieuxProgress);
 }
@@ -2317,7 +2386,7 @@ window.setTLRVolume = function(v) {
 function isTLRActive() { return localStorage.getItem('tlr_active') === '1'; }
 
 function getEffectiveBedtime() {
-  return getTLRTonightOverride() || getTLRBedtime();
+  return getTLRBedtime();
 }
 
 function getBedtimeDate() {

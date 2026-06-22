@@ -87,7 +87,7 @@ function refreshNotification() {
   }
   body += 'Désactiver : page Lucidité';
 
-  self.registration.showNotification('Rêve Mieux', {
+  self.registration.showNotification('▶ Rêve Mieux — Tap pour le refrain', {
     body: body,
     icon: '/static/icon-192.png',
     badge: '/static/icon-192.png',
