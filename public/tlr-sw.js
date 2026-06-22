@@ -1,12 +1,15 @@
 // TLR Service Worker - Notification persistante pour Rêve Mieux
 // Gère les notifications sur écran de verrouillage
 // La notification ne peut être retirée QUE depuis la page Lucidité (toggleTLR)
+// v1.2.0 : calcul autonome des countdowns via timestamps absolus
 
-const SW_VERSION = '1.1.0';
+const SW_VERSION = '1.2.0';
 
-// État interne : la dernière notification connue (pour la re-créer si swipée)
-let lastNotifData = null;
+// État interne
 let tlrActive = false;
+let bedtimeTimestamp = null;
+let triggerTimestamp = null;
+let refreshTimer = null;
 
 // Installation
 self.addEventListener('install', (event) => {
@@ -26,12 +29,16 @@ self.addEventListener('message', (event) => {
   switch (data.type) {
     case 'TLR_UPDATE':
       tlrActive = true;
-      lastNotifData = data;
-      showTLRNotification(data);
+      bedtimeTimestamp = data.bedtimeTimestamp;
+      triggerTimestamp = data.triggerTimestamp;
+      refreshNotification();
+      startAutoRefresh();
       break;
     case 'TLR_STOP':
       tlrActive = false;
-      lastNotifData = null;
+      bedtimeTimestamp = null;
+      triggerTimestamp = null;
+      stopAutoRefresh();
       closeTLRNotification();
       break;
     case 'TLR_TRIGGER':
@@ -40,42 +47,69 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Affichage / mise à jour de la notification persistante
-async function showTLRNotification(data) {
-  try {
-    const { sleepCountdown, triggerCountdown, status } = data;
+// Formatage du countdown en XhMM
+function formatCountdownHM(ms) {
+  if (ms <= 0) return null;
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return h + 'h' + String(m).padStart(2, '0');
+}
 
-    let body = 'Est-ce que tu rêves ?\n';
+// Calcul et affichage de la notification avec countdowns à jour
+function refreshNotification() {
+  if (!tlrActive || !bedtimeTimestamp || !triggerTimestamp) return;
 
-    if (sleepCountdown) {
-      body += 'Dodo dans ' + sleepCountdown + '\n';
+  const now = Date.now();
+  const sleepDiff = bedtimeTimestamp - now;
+  const triggerDiff = triggerTimestamp - now;
+
+  let body = 'Est-ce que tu rêves ?\n';
+
+  if (sleepDiff > 0) {
+    body += 'Dodo dans ' + formatCountdownHM(sleepDiff) + '\n';
+  } else {
+    body += 'Bonne nuit !\n';
+  }
+
+  if (triggerDiff > 0) {
+    body += 'Déclencheur lucide dans ' + formatCountdownHM(triggerDiff) + '\n';
+  } else {
+    body += 'Déclencheur en cours...\n';
+  }
+  body += 'Désactiver : page Lucidité';
+
+  self.registration.showNotification('Rêve Mieux', {
+    body: body,
+    icon: '/static/icon-192.png',
+    badge: '/static/icon-192.png',
+    tag: 'tlr-persistent',
+    renotify: false,
+    requireInteraction: true,
+    silent: true,
+    ongoing: true,
+    actions: [
+      { action: 'reality-check', title: 'Reality Check' }
+    ],
+    data: { url: '/', type: 'tlr-persistent' }
+  }).catch(() => {});
+}
+
+// Auto-refresh toutes les 60 secondes (autonome, même app fermée)
+function startAutoRefresh() {
+  stopAutoRefresh();
+  refreshTimer = setInterval(() => {
+    if (tlrActive) {
+      refreshNotification();
     } else {
-      body += 'Bonne nuit !\n';
+      stopAutoRefresh();
     }
+  }, 60000);
+}
 
-    if (triggerCountdown) {
-      body += 'Déclencheur lucide dans ' + triggerCountdown + '\n';
-    } else {
-      body += 'Déclencheur en cours...\n';
-    }
-    body += 'Désactiver : page Lucidité → Désactiver TLR';
-
-    await self.registration.showNotification('Rêve Mieux', {
-      body: body,
-      icon: '/static/icon-192.png',
-      badge: '/static/icon-192.png',
-      tag: 'tlr-persistent',
-      renotify: false,
-      requireInteraction: true,
-      silent: true,
-      ongoing: true,
-      actions: [
-        { action: 'reality-check', title: '✋ Reality Check' }
-      ],
-      data: { url: '/', type: 'tlr-persistent' }
-    });
-  } catch (err) {
-    // Silently fail if notifications not supported
+function stopAutoRefresh() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
   }
 }
 
@@ -108,15 +142,11 @@ self.addEventListener('notificationclick', (event) => {
   const notifType = event.notification.data?.type;
 
   if (event.action === 'reality-check') {
-    // Ne PAS fermer la notif persistante, juste envoyer le RC
     if (notifType === 'tlr-persistent') {
-      // Re-show immédiatement pour qu'elle reste
       event.notification.close();
       event.waitUntil(
         (async () => {
-          // Re-créer la notif pour qu'elle reste fixée
-          if (tlrActive && lastNotifData) await showTLRNotification(lastNotifData);
-          // Envoyer le reality check à l'app
+          if (tlrActive) refreshNotification();
           const clients = await self.clients.matchAll({ type: 'window' });
           clients.forEach(client => client.postMessage({ type: 'REALITY_CHECK_FROM_SW' }));
           if (clients.length > 0) {
@@ -137,9 +167,7 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
       (async () => {
-        // Re-créer immédiatement la notif
-        if (tlrActive && lastNotifData) await showTLRNotification(lastNotifData);
-        // Ouvrir / focus l'app
+        if (tlrActive) refreshNotification();
         const clients = await self.clients.matchAll({ type: 'window' });
         if (clients.length > 0) {
           clients[0].focus();
@@ -164,18 +192,14 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Quand la notification est swipée/dismissée par l'utilisateur : la re-créer
+// Quand la notification est swipée/dismissée : la re-créer
 self.addEventListener('notificationclose', (event) => {
   const notifType = event.notification.data?.type;
 
-  // Si c'est la notif TLR persistante et que TLR est toujours actif → la re-créer
-  if (notifType === 'tlr-persistent' && tlrActive && lastNotifData) {
+  if (notifType === 'tlr-persistent' && tlrActive) {
     event.waitUntil(
-      // Petit délai pour éviter un flash visuel
       new Promise(resolve => setTimeout(resolve, 500)).then(() => {
-        if (tlrActive && lastNotifData) {
-          return showTLRNotification(lastNotifData);
-        }
+        if (tlrActive) refreshNotification();
       })
     );
   }

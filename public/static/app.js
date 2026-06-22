@@ -15,7 +15,7 @@ let state = {
   stats: null,
 
   editingDream: null,
-  filters: { type: 'all', search: '', tagIds: [], favorites: false }
+  filters: { type: 'all', search: '', tagIds: [] }
 };
 
 // ========== API Helper ==========
@@ -219,12 +219,11 @@ async function renderJournal() {
     if (state.filters.type !== 'all') params.set('type', state.filters.type);
     if (state.filters.search) params.set('search', state.filters.search);
     if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
-    if (state.filters.favorites) params.set('favorites', '1');
     const data = await api(`/dreams?${params}`);
     state.dreams = data.dreams; state.pagination = data.pagination;
   } catch (err) { main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`; return; }
 
-  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + (state.filters.favorites ? 1 : 0);
+  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0);
 
   const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
   const categoryOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
@@ -270,10 +269,6 @@ async function renderJournal() {
             <option value="hypnagogic" ${state.filters.type === 'hypnagogic' ? 'selected' : ''}>🌊 Hypnagogique</option>
             <option value="false_awakening" ${state.filters.type === 'false_awakening' ? 'selected' : ''}>🪞 Faux éveil</option>
           </select>
-          <button onclick="toggleFavoritesFilter()" class="px-3 py-2.5 ${state.filters.favorites ? 'bg-yellow-600/30 text-yellow-200 border-yellow-400/40' : 'bg-night-900/60 text-gray-400 border-dream-700/30'} border rounded-xl text-sm font-medium transition-all flex items-center gap-1.5">
-            <i class="${state.filters.favorites ? 'fas' : 'far'} fa-star text-xs ${state.filters.favorites ? 'text-yellow-400' : ''}"></i>
-            <span class="text-xs">Favoris</span>
-          </button>
           <button onclick="toggleFilterPanel()" class="px-3 py-2.5 ${activeFilterCount > 0 ? 'bg-dream-600/40 text-dream-200 border-dream-400/40' : 'bg-night-900/60 text-gray-400 border-dream-700/30'} border rounded-xl text-sm font-medium transition-all flex items-center gap-1.5">
             <i class="fas fa-filter text-xs"></i>
             <span class="text-xs">Filtres</span>
@@ -338,7 +333,6 @@ function renderDreamCard(d) {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-1.5 mb-1 flex-wrap">
             <h3 class="font-semibold text-dream-100 text-sm truncate max-w-[55vw] sm:max-w-none">${escapeHtml(d.title)}</h3>
-            ${d.is_favorite ? '<i class="fas fa-star text-yellow-400 text-[10px]"></i>' : ''}
           </div>
           <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
             <span class="badge-${d.dream_type} text-[9px] px-1.5 py-0.5 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
@@ -378,17 +372,10 @@ window.toggleFilterPanel = function() {
   if (panel) panel.classList.toggle('hidden');
 };
 
-window.toggleFavoritesFilter = function() {
-  state.filters.favorites = !state.filters.favorites;
-  state.pagination.page = 1;
-  renderJournal();
-};
-
 window.clearAllFilters = function() {
   state.filters.type = 'all';
   state.filters.search = '';
   state.filters.tagIds = [];
-  state.filters.favorites = false;
   state.pagination.page = 1;
   renderJournal();
 };
@@ -408,7 +395,6 @@ function renderDreamDetailModal(d) {
         <div class="flex items-center gap-2 flex-wrap">
           <span class="badge-${d.dream_type} text-[10px] px-2 py-1 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
           ${d.lucidity_level > 0 ? `<span class="text-[10px] px-2 py-1 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
-          ${d.is_favorite ? '<i class="fas fa-star text-yellow-400"></i>' : ''}
         </div>
         <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
       </div>
@@ -456,7 +442,6 @@ function renderDreamDetailModal(d) {
       ${d.series?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Séries</h4><div class="flex flex-wrap gap-1.5">${d.series.map(s => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${s.color}20; color:${s.color}">${escapeHtml(s.name)}</span>`).join('')}</div></div>` : ''}
       <div class="flex gap-2 pt-3 border-t border-dream-700/20">
         <button onclick="closeModal(); openDreamEditor(${d.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>
-        <button onclick="toggleFavorite(${d.id}, ${d.is_favorite})" class="py-2 px-3 bg-night-800/50 text-gray-300 rounded-lg hover:bg-night-800/70 transition-all text-sm"><i class="${d.is_favorite ? 'fas' : 'far'} fa-star text-yellow-400"></i></button>
       </div>
     </div>`;
 }
@@ -993,16 +978,6 @@ window.deleteDream = async function(id) {
   try { await api(`/dreams/${id}`, { method: 'DELETE' }); renderJournal(); } catch (err) { alert(err.message); }
 };
 
-window.toggleFavorite = async function(id, current) {
-  try {
-    const dream = await api(`/dreams/${id}`);
-    dream.isFavorite = !current; dream.dreamDate = dream.dream_date; dream.dreamType = dream.dream_type;
-    dream.lucidityLevel = dream.lucidity_level; dream.sleepQuality = 0;
-    await api(`/dreams/${id}`, { method: 'PUT', body: JSON.stringify(dream) });
-    closeModal(); openDreamDetail(id);
-  } catch (err) { alert(err.message); }
-};
-
 // ========== SERIES VIEW ==========
 async function renderSeries() {
   const main = document.getElementById('main-content');
@@ -1010,7 +985,10 @@ async function renderSeries() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <div class="flex items-center justify-between mb-5">
-        <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-layer-group mr-2"></i>Séries</h2>
+        <div class="flex items-center gap-3">
+          <button onclick="navigate('journal')" class="p-2 text-gray-400 hover:text-dream-300 transition-all rounded-lg hover:bg-night-900/40" title="Retour au journal"><i class="fas fa-arrow-left"></i></button>
+          <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-layer-group mr-2"></i>Mes séries</h2>
+        </div>
         <button onclick="openSeriesEditor()" class="px-3 py-2 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg text-xs font-medium hover:from-dream-400 hover:to-dream-600 transition-all">
           <i class="fas fa-plus mr-1"></i>Nouvelle série
         </button>
@@ -1447,7 +1425,7 @@ async function renderLucidity() {
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-3">
             <li><strong class="text-dream-300">1. Réveil à 5-6h après l'endormissement.</strong> C'est le moment optimal, juste avant le pic REM. (Le TLR Nocturne fait ça automatiquement pour toi.)</li>
             <li><strong class="text-dream-300">2. Lève-toi physiquement</strong> (toilettes, verre d'eau) pour activer ton cortex préfrontal. 20 à 60 min d'éveil.</li>
-            <li><strong class="text-dream-300">3. Pendant l'éveil :</strong> relis tes rêves récents dans Rêve Mieux, réfléchis au rêve lucide. Évite les écrans trop lumineux.</li>
+            <li><strong class="text-dream-300">3. Pendant l'éveil :</strong> ne touche surtout pas ton téléphone. Repense mentalement à tes rêves récents, formule ton intention de devenir lucide et visualise-toi en train de reconnaître un rêve. Reste dans un état calme, sans écran ni lumière vive.</li>
             <li><strong class="text-dream-300">4. Au recoucher, choisis une variante</strong> parmi les deux ci-dessous selon ta préférence.</li>
           </ol>
 
@@ -1769,15 +1747,11 @@ function restartTLRCounters() { stopTLRCounters(); startTLRCounters(); }
 
 function updateSWNotification() {
   if (!isTLRActive()) return;
-  const now = new Date();
-  const sleepDiff = getBedtimeDate() - now;
-  const triggerDiff = getTriggerDate() - now;
-  
+  // Envoyer les timestamps absolus au SW pour qu'il calcule les countdowns en autonomie
   sendSWMessage({
     type: 'TLR_UPDATE',
-    sleepCountdown: sleepDiff > 0 ? formatCountdownHM(sleepDiff) : null,
-    triggerCountdown: triggerDiff > 0 ? formatCountdownHM(triggerDiff) : null,
-    status: triggerDiff <= 0 ? 'triggered' : (sleepDiff <= 0 ? 'sleeping' : 'waiting')
+    bedtimeTimestamp: getBedtimeDate().getTime(),
+    triggerTimestamp: getTriggerDate().getTime()
   });
 }
 
