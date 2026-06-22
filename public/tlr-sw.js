@@ -88,7 +88,8 @@ function refreshNotification() {
     silent: true,
     ongoing: true,
     actions: [
-      { action: 'reality-check', title: 'Reality Check' }
+      { action: 'reality-check', title: 'Reality Check' },
+      { action: 'play-refrain', title: '▶ Refrain' }
     ],
     data: { url: '/', type: 'tlr-persistent' }
   }).catch(() => {});
@@ -159,6 +160,23 @@ self.addEventListener('notificationclick', (event) => {
     } else {
       event.notification.close();
     }
+    return;
+  }
+
+  if (event.action === 'play-refrain') {
+    event.notification.close();
+    event.waitUntil(
+      (async () => {
+        if (tlrActive) refreshNotification();
+        const clients = await self.clients.matchAll({ type: 'window' });
+        clients.forEach(client => client.postMessage({ type: 'PLAY_REFRAIN_FROM_SW' }));
+        if (clients.length > 0) {
+          clients[0].focus();
+        } else {
+          await self.clients.openWindow('/');
+        }
+      })()
+    );
     return;
   }
 

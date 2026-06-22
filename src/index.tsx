@@ -8,6 +8,7 @@ import { seriesRoutes } from './routes/series'
 import { statsRoutes } from './routes/stats'
 import { incubationRoutes } from './routes/incubation'
 import { realityCheckRoutes } from './routes/reality-checks'
+import { intentionRoutes } from './routes/intentions'
 import { renderApp } from './renderer'
 
 type Bindings = {
@@ -32,6 +33,7 @@ app.route('/api/series', seriesRoutes)
 app.route('/api/stats', statsRoutes)
 app.route('/api/incubation', incubationRoutes)
 app.route('/api/reality-checks', realityCheckRoutes)
+app.route('/api/intentions', intentionRoutes)
 
 // SPA - serve the app for all non-API routes
 app.get('*', (c) => {
