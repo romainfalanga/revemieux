@@ -115,6 +115,22 @@ seriesRoutes.post('/:id/dreams', async (c) => {
   }
 })
 
+// Réordonner les rêves d'une série
+seriesRoutes.put('/:id/reorder', async (c) => {
+  const seriesId = parseInt(c.req.param('id'))
+  const { dreamIds } = await c.req.json()
+  
+  if (!Array.isArray(dreamIds)) return c.json({ error: 'dreamIds requis' }, 400)
+  
+  for (let i = 0; i < dreamIds.length; i++) {
+    await c.env.DB.prepare(
+      'UPDATE series_dreams SET order_index = ? WHERE series_id = ? AND dream_id = ?'
+    ).bind(i, seriesId, dreamIds[i]).run()
+  }
+  
+  return c.json({ message: 'Ordre mis à jour' })
+})
+
 // Retirer un rêve d'une série
 seriesRoutes.delete('/:id/dreams/:dreamId', async (c) => {
   const seriesId = parseInt(c.req.param('id'))

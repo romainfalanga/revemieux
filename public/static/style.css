@@ -175,3 +175,66 @@
   stroke: rgba(139, 92, 246, 0.6);
   stroke-width: 1px;
 }
+
+/* ========== Mobile Bottom Nav — flush to screen bottom ========== */
+.mobile-bottom-nav {
+  bottom: 0 !important;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(10, 8, 25, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ========== Dream Map Container — full available height ========== */
+.graph-map-container {
+  /* On mobile: viewport minus header (~52px) minus bottom nav (~64px) minus padding/title (~80px) */
+  height: calc(100dvh - 200px);
+  min-height: 320px;
+  max-height: 75vh;
+}
+@media (min-width: 640px) {
+  .graph-map-container {
+    /* On desktop: more room, no bottom nav */
+    height: calc(100dvh - 180px);
+    min-height: 400px;
+    max-height: 80vh;
+  }
+}
+
+/* ========== Dream type picker buttons ========== */
+.dream-type-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.dream-type-btn:active {
+  transform: scale(0.95);
+}
+
+/* ========== Tag chip styles ========== */
+.tag-chip {
+  -webkit-tap-highlight-color: transparent;
+}
+.tag-chip i:active {
+  transform: scale(1.3);
+}
+
+/* ========== Existing tags picker ========== */
+.existing-tag-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.existing-tag-btn:active {
+  transform: scale(0.92);
+}
+
+/* ========== Series dream checkbox list ========== */
+.series-dream-checkbox {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  cursor: pointer;
+}
