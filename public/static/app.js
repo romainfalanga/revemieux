@@ -15,7 +15,7 @@ let state = {
   stats: null,
   graphData: null,
   editingDream: null,
-  filters: { type: 'all', search: '' }
+  filters: { type: 'all', search: '', tagIds: [] }
 };
 
 // ========== API Helper ==========
@@ -139,10 +139,10 @@ function renderApp() {
       </header>
 
       <!-- Main Content -->
-      <main id="main-content" class="flex-1 overflow-y-auto max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 sm:pb-6"></main>
+      <main id="main-content" class="flex-1 overflow-y-auto max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 sm:pb-6" style="padding-bottom:5rem;"></main>
 
-      <!-- Mobile Bottom Nav -->
-      <nav class="sm:hidden mobile-bottom-nav" id="main-nav-mobile">
+      <!-- Mobile Bottom Nav — inline styles for bulletproof positioning -->
+      <nav id="main-nav-mobile" class="sm:hidden" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(10,8,25,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(139,92,246,0.2);padding-bottom:env(safe-area-inset-bottom,0px);margin:0;transform:translateZ(0);">
         <div class="flex justify-around items-end py-1.5 px-1">
           <button onclick="navigate('journal')" data-nav="journal" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
             <i class="fas fa-book-open text-base"></i><span>Journal</span>
@@ -194,13 +194,47 @@ window.navigate = function(view) {
 // ========== JOURNAL VIEW ==========
 async function renderJournal() {
   const main = document.getElementById('main-content');
+
+  // Load user tags grouped by category for the filter UI
+  let groupedTags = {};
+  try { groupedTags = (await api('/tags/grouped')).grouped || {}; } catch {}
+
   try {
     const params = new URLSearchParams({ page: state.pagination.page, limit: state.pagination.limit });
     if (state.filters.type !== 'all') params.set('type', state.filters.type);
     if (state.filters.search) params.set('search', state.filters.search);
+    if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
     const data = await api(`/dreams?${params}`);
     state.dreams = data.dreams; state.pagination = data.pagination;
   } catch (err) { main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`; return; }
+
+  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0);
+
+  const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
+  const categoryOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
+  const hasAnyTags = Object.keys(groupedTags).length > 0;
+
+  // Build tag filter chips grouped by category
+  let tagFilterHTML = '';
+  if (hasAnyTags) {
+    tagFilterHTML = categoryOrder
+      .filter(cat => groupedTags[cat]?.length > 0)
+      .map(cat => `
+        <div class="mb-2">
+          <p class="text-[9px] text-gray-500 font-semibold uppercase mb-1">${categoryLabels[cat] || cat}</p>
+          <div class="flex flex-wrap gap-1">
+            ${groupedTags[cat].map(t => {
+              const isActive = state.filters.tagIds.includes(t.id);
+              return `<button onclick="toggleTagFilter(${t.id})"
+                class="px-2 py-0.5 rounded-full text-[10px] font-medium transition-all cursor-pointer ${isActive ? 'ring-1 ring-white/40 shadow-sm' : 'opacity-70 hover:opacity-100'}"
+                style="background:${isActive ? t.color + '40' : t.color + '15'}; color:${t.color}; border: 1px solid ${isActive ? t.color + '80' : t.color + '25'}"
+                >${escapeHtml(t.name)}${isActive ? ' <i class="fas fa-times text-[8px] ml-0.5"></i>' : ''}</button>`;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+  }
+
   main.innerHTML = `
     <div class="animate-slideUp">
       <div class="flex flex-col gap-3 mb-5">
@@ -210,7 +244,7 @@ async function renderJournal() {
             class="w-full pl-10 pr-4 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-xl text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none"
             oninput="debounceSearch(this.value)">
         </div>
-        <div class="flex gap-2 items-center">
+        <div class="flex gap-2 items-center flex-wrap">
           <select onchange="filterType(this.value)" class="flex-1 sm:flex-none px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-xl text-gray-300 text-sm focus:border-dream-400 focus:outline-none appearance-auto">
             <option value="all" ${state.filters.type === 'all' ? 'selected' : ''}>Tous les types</option>
             <option value="normal" ${state.filters.type === 'normal' ? 'selected' : ''}>🌀 Normal</option>
@@ -220,20 +254,43 @@ async function renderJournal() {
             <option value="hypnagogic" ${state.filters.type === 'hypnagogic' ? 'selected' : ''}>🌊 Hypnagogique</option>
             <option value="false_awakening" ${state.filters.type === 'false_awakening' ? 'selected' : ''}>🪞 Faux éveil</option>
           </select>
-          <button onclick="openDreamEditor()" class="hidden sm:flex px-4 py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl text-sm font-medium hover:from-dream-400 hover:to-dream-600 transition-all whitespace-nowrap items-center gap-1.5">
+          <button onclick="toggleFilterPanel()" class="px-3 py-2.5 ${activeFilterCount > 0 ? 'bg-dream-600/40 text-dream-200 border-dream-400/40' : 'bg-night-900/60 text-gray-400 border-dream-700/30'} border rounded-xl text-sm font-medium transition-all flex items-center gap-1.5">
+            <i class="fas fa-filter text-xs"></i>
+            <span class="text-xs">Filtres</span>
+            ${activeFilterCount > 0 ? `<span class="w-4 h-4 bg-dream-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">${activeFilterCount}</span>` : ''}
+          </button>
+          ${activeFilterCount > 0 ? `<button onclick="clearAllFilters()" class="px-2.5 py-2.5 text-red-400/70 hover:text-red-300 text-xs transition-all"><i class="fas fa-times-circle mr-1"></i>Réinit.</button>` : ''}
+          <button onclick="openDreamEditor()" class="hidden sm:flex px-4 py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl text-sm font-medium hover:from-dream-400 hover:to-dream-600 transition-all whitespace-nowrap items-center gap-1.5 ml-auto">
             <i class="fas fa-plus"></i> Nouveau rêve
           </button>
         </div>
+        <!-- Active tag filters display -->
+        ${state.filters.tagIds.length > 0 ? `
+        <div class="flex flex-wrap gap-1 items-center">
+          <span class="text-[9px] text-gray-500 mr-1">Filtres actifs :</span>
+          ${state.filters.tagIds.map(tid => {
+            const tag = Object.values(groupedTags).flat().find(t => t.id === tid);
+            return tag ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style="background:${tag.color}30; color:${tag.color}; border:1px solid ${tag.color}50">${escapeHtml(tag.name)} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleTagFilter(${tid})"></i></span>` : '';
+          }).join('')}
+        </div>` : ''}
       </div>
+
+      <!-- Expandable filter panel -->
+      <div id="filter-panel" class="hidden mb-4 glass rounded-xl p-3 animate-slideUp">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-semibold text-dream-200"><i class="fas fa-filter mr-1.5"></i>Filtrer par tags</h4>
+          <button onclick="toggleFilterPanel()" class="text-gray-400 hover:text-white text-xs"><i class="fas fa-times"></i></button>
+        </div>
+        ${hasAnyTags ? tagFilterHTML : '<p class="text-[10px] text-gray-500 italic py-2 text-center">Aucun tag créé. Ajoutez des tags à vos rêves pour les utiliser comme filtres.</p>'}
+      </div>
+
       <div id="dreams-list" class="space-y-3">
         ${state.dreams.length === 0 ? `
           <div class="text-center py-12">
-            <div class="text-5xl mb-4 animate-float">🌙</div>
-            <h3 class="text-lg font-display font-semibold text-dream-200 mb-2">Votre journal est vide</h3>
-            <p class="text-gray-400 mb-6 max-w-md mx-auto text-sm">Commencez à noter vos rêves dès le réveil.</p>
-            <button onclick="openDreamEditor()" class="px-6 py-3 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl font-medium">
-              <i class="fas fa-feather-alt mr-2"></i>Noter mon premier rêve
-            </button>
+            <div class="text-5xl mb-4 animate-float">${activeFilterCount > 0 ? '🔍' : '🌙'}</div>
+            <h3 class="text-lg font-display font-semibold text-dream-200 mb-2">${activeFilterCount > 0 ? 'Aucun rêve trouvé' : 'Votre journal est vide'}</h3>
+            <p class="text-gray-400 mb-6 max-w-md mx-auto text-sm">${activeFilterCount > 0 ? 'Essayez de modifier vos filtres pour élargir la recherche.' : 'Commencez à noter vos rêves dès le réveil.'}</p>
+            ${activeFilterCount > 0 ? `<button onclick="clearAllFilters()" class="px-6 py-3 bg-night-800/60 text-gray-300 rounded-xl font-medium hover:bg-night-800/80 transition-all"><i class="fas fa-times-circle mr-2"></i>Réinitialiser les filtres</button>` : `<button onclick="openDreamEditor()" class="px-6 py-3 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl font-medium"><i class="fas fa-feather-alt mr-2"></i>Noter mon premier rêve</button>`}
           </div>
         ` : state.dreams.map(d => renderDreamCard(d)).join('')}
       </div>
@@ -277,6 +334,27 @@ let searchTimeout;
 window.debounceSearch = function(val) { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { state.filters.search = val; state.pagination.page = 1; renderJournal(); }, 400); };
 window.filterType = function(val) { state.filters.type = val; state.pagination.page = 1; renderJournal(); };
 window.goToPage = function(p) { state.pagination.page = p; renderJournal(); };
+
+// Tag-based filtering
+window.toggleTagFilter = function(tagId) {
+  const idx = state.filters.tagIds.indexOf(tagId);
+  if (idx >= 0) { state.filters.tagIds.splice(idx, 1); } else { state.filters.tagIds.push(tagId); }
+  state.pagination.page = 1;
+  renderJournal();
+};
+
+window.toggleFilterPanel = function() {
+  const panel = document.getElementById('filter-panel');
+  if (panel) panel.classList.toggle('hidden');
+};
+
+window.clearAllFilters = function() {
+  state.filters.type = 'all';
+  state.filters.search = '';
+  state.filters.tagIds = [];
+  state.pagination.page = 1;
+  renderJournal();
+};
 
 // ========== DREAM DETAIL ==========
 window.openDreamDetail = async function(id) {
@@ -1128,37 +1206,104 @@ async function renderLucidity() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <h2 class="text-base font-display font-semibold text-dream-200 mb-5"><i class="fas fa-eye mr-2"></i>Aide à la Lucidité</h2>
-      <div class="glass rounded-xl p-4 mb-5 text-center">
-        <h3 class="text-lg font-display font-bold text-dream-100 mb-2">Contrôle de Réalité</h3>
-        <p class="text-xs text-gray-400 mb-4">Regardez vos mains. Comptez vos doigts. Quelque chose est étrange ?</p>
+
+      <!-- ===== CONTRÔLES DE RÉALITÉ ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-lg font-display font-bold text-dream-100 mb-2 text-center">Contrôle de Réalité</h3>
+        <p class="text-xs text-gray-400 mb-4 text-center">Effectuez un test maintenant. En rêve, ces actions produisent des résultats anormaux.</p>
         <div class="flex gap-2 justify-center flex-wrap mb-4">
-          <button onclick="doRealityCheck('hands')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">✋ Mains</button>
-          <button onclick="doRealityCheck('text')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">📖 Texte</button>
-          <button onclick="doRealityCheck('time')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">⏰ Heure</button>
+          <button onclick="doRealityCheck('hands')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">✋ Compter ses doigts</button>
+          <button onclick="doRealityCheck('text')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">📖 Lire un texte</button>
+          <button onclick="doRealityCheck('time')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">⏰ Regarder l'heure</button>
           <button onclick="doRealityCheck('nose')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">👃 Nez pincé</button>
-          <button onclick="doRealityCheck('gravity')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">🪶 Gravité</button>
-          <button onclick="doRealityCheck('light_switch')" class="px-3 py-2 glass rounded-xl text-xs hover:border-dream-400/40 transition-all">💡 Interrupteur</button>
         </div>
-        <div class="flex items-center justify-center gap-4 text-xs">
+        <div class="flex items-center justify-center gap-4 text-xs mb-5">
           <span class="text-dream-300"><strong>${rcStats.today}</strong> aujourd'hui</span>
           <span class="text-gray-400"><strong>${rcStats.total}</strong> au total</span>
         </div>
+        <!-- Explications scientifiques des reality checks -->
+        <div class="space-y-2">
+          <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
+            <p class="text-xs font-semibold text-dream-200 mb-1">✋ Compter ses doigts</p>
+            <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Regardez attentivement vos mains et comptez vos doigts un par un, en vous demandant sincèrement si vous rêvez.</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> En rêve, le cortex visuel primaire fonctionne de façon altérée (Hobson, 2009). Le cerveau peine à maintenir une représentation stable des détails — vos doigts peuvent apparaître en nombre incorrect, déformés ou flous. La répétition quotidienne crée un réflexe qui se déclenche aussi en rêve (Tholey, 1983).</p>
+          </div>
+          <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
+            <p class="text-xs font-semibold text-dream-200 mb-1">📖 Lire un texte</p>
+            <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Lisez un texte (panneau, écran, livre), détournez le regard, puis relisez-le. Demandez-vous : le texte est-il resté identique ?</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> Les travaux de Stephen LaBerge à Stanford (1985) ont démontré que les aires de Broca et Wernicke — responsables du langage écrit — fonctionnent de manière instable pendant le sommeil paradoxal. Le texte se transforme, se brouille ou change de contenu entre deux lectures. C'est l'un des indicateurs de rêve les plus fiables, avec un taux de détection de ~75% (LaBerge & Rheingold, 1990).</p>
+          </div>
+          <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
+            <p class="text-xs font-semibold text-dream-200 mb-1">⏰ Regarder l'heure</p>
+            <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Regardez une horloge ou une montre, détournez le regard, puis regardez à nouveau. L'heure est-elle cohérente ?</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> Comme pour le texte, les représentations numériques sont instables en rêve. Le cortex préfrontal — qui gère la logique temporelle et séquentielle — est partiellement désactivé pendant le sommeil REM (Hobson et al., 2000). Les chiffres se transforment ou n'ont aucun sens.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
+            <p class="text-xs font-semibold text-dream-200 mb-1">👃 Nez pincé</p>
+            <p class="text-[10px] text-gray-400"><strong>Quoi faire :</strong> Pincez-vous le nez fermement avec vos doigts, bouche fermée, et essayez de respirer par le nez. En êtes-vous incapable ?</p>
+            <p class="text-[10px] text-gray-400 mt-1"><strong>Pourquoi :</strong> C'est le reality check le plus fiable (~95% de succès selon les communautés de rêveurs lucides). En rêve, le corps physique continue de respirer normalement — la sensation de blocage nasal n'est pas reproduite par le cerveau onirique. Vous respirerez à travers vos doigts, preuve immédiate que vous rêvez. Scientifiquement, c'est lié à la dissociation somato-sensorielle pendant le REM (LaBerge, 2004).</p>
+          </div>
+        </div>
       </div>
+
+      <!-- ===== MISSION STATEMENT — OBJECTIFS DE RÊVE MIEUX ===== -->
+      <div class="glass rounded-xl p-5 mb-5 border border-dream-500/20" style="background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.05));">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-2xl">🎯</span>
+          <h3 class="text-base font-display font-bold text-dream-100">La philosophie Rêve Mieux</h3>
+        </div>
+        <p class="text-sm text-gray-300 leading-relaxed mb-4">
+          Rêve Mieux poursuit un double objectif scientifiquement fondé :
+        </p>
+        <div class="space-y-3 mb-4">
+          <div class="flex items-start gap-3">
+            <span class="text-lg mt-0.5 shrink-0">✨</span>
+            <div>
+              <p class="text-sm font-semibold text-dream-200 mb-1">Augmenter la fréquence de vos rêves lucides</p>
+              <p class="text-xs text-gray-400">En combinant les contrôles de réalité quotidiens, la tenue d'un journal détaillé et les techniques d'induction validées (MILD, WBTB), vous entraînez votre cerveau à reconnaître l'état de rêve. Les recherches de Stumbrys et al. (2012) montrent que cette approche combinée est la plus efficace.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-lg mt-0.5 shrink-0">🧭</span>
+            <div>
+              <p class="text-sm font-semibold text-dream-200 mb-1">Choisir la trajectoire de vos rêves</p>
+              <p class="text-xs text-gray-400">Grâce aux <strong class="text-dream-300">séries de rêves</strong>, vous pouvez structurer vos rêves en arcs narratifs. Avant de dormir, relisez les étapes précédentes d'une série — votre subconscient absorbe tous les éléments (lieux, personnages, émotions) et augmente significativement les chances de poursuivre cette histoire onirique.</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-3 rounded-lg bg-dream-900/20 border border-dream-700/15">
+          <p class="text-xs text-gray-300 leading-relaxed">
+            <i class="fas fa-lightbulb text-amber-400 mr-1.5"></i>
+            <strong class="text-dream-200">La stratégie clé :</strong> La relecture immersive de vos rêves avant le sommeil agit comme une incubation naturelle. En replongeant dans l'ambiance, les détails et les émotions de vos rêves précédents, vous « programmez » votre esprit pour continuer l'exploration. Barrett (1993) a montré que la suggestion pré-sommeil ciblée permet de rêver du sujet choisi dans ~50% des cas — et ce taux augmente avec la richesse des détails mémorisés.
+          </p>
+        </div>
+        <div class="mt-3 text-center">
+          <button onclick="navigate('series')" class="px-4 py-2 bg-dream-600/30 text-dream-300 rounded-lg text-xs font-medium hover:bg-dream-600/50 transition-all">
+            <i class="fas fa-layer-group mr-1.5"></i>Voir mes séries de rêves
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== TECHNIQUES D'INDUCTION ===== -->
+      <h3 class="text-sm font-display font-semibold text-dream-200 mb-3"><i class="fas fa-tools mr-2"></i>Techniques d'Induction</h3>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🧠</div><h4 class="font-semibold text-dream-200 text-sm mb-2">MILD</h4><p class="text-[10px] text-gray-400 mb-2">Répétez : "La prochaine fois que je rêve, je me rendrai compte que je rêve."</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Mémorisez votre dernier rêve</li><li>2. Répétez votre intention</li><li>3. Visualisez-vous devenant lucide</li><li>4. Endormez-vous avec cette intention</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">LaBerge (1985)</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">⏰</div><h4 class="font-semibold text-dream-200 text-sm mb-2">WBTB</h4><p class="text-[10px] text-gray-400 mb-2">Réveil après 5-6h, rester éveillé 20-60 min, puis MILD.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Réveil après 5h</li><li>2. Restez éveillé 20-60 min</li><li>3. MILD au recoucher</li><li>4. Le REM facilite la lucidité</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Stumbrys et al. (2012)</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">✋</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Reality Testing</h4><p class="text-[10px] text-gray-400 mb-2">Tests réguliers créent un réflexe dans les rêves.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Questionnez la réalité 10-15x/jour</li><li>2. Comptez vos doigts</li><li>3. Poussez un doigt dans votre paume</li><li>4. Relisez un texte deux fois</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Tholey (1983)</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">📝</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Journal de Rêves</h4><p class="text-[10px] text-gray-400 mb-2">La base. Noter au réveil améliore le rappel.</p><ul class="text-[10px] text-gray-300 space-y-1"><li>• Écrivez dans les 5 min du réveil</li><li>• Notez même les fragments</li><li>• Utilisez le présent</li><li>• Identifiez vos signes de rêve</li></ul><p class="text-[9px] text-gray-500 mt-2 italic">Schredl (2002)</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🧘</div><h4 class="font-semibold text-dream-200 text-sm mb-2">SSILD</h4><p class="text-[10px] text-gray-400 mb-2">Rotation de l'attention entre les sens.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Après WBTB, allongez-vous</li><li>2. Vision (yeux fermés) ~20s</li><li>3. Ouïe ~20s</li><li>4. Sensations corporelles ~20s</li><li>5. Répétez 4-5 cycles</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Exploratoire</p></div>
-        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🌙</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Incubation</h4><p class="text-[10px] text-gray-400 mb-2">Suggestion pré-sommeil pour influencer les rêves.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Intention claire et positive</li><li>2. Visualisez la scène</li><li>3. Répétez au coucher</li><li>4. Gardez l'image en s'endormant</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Barrett (1993) — ~50% de succès.</p></div>
+        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🧠</div><h4 class="font-semibold text-dream-200 text-sm mb-2">MILD</h4><p class="text-[10px] text-gray-400 mb-2">Mnemonic Induction of Lucid Dreams — l'intention consciente avant le sommeil.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Au réveil, mémorisez votre dernier rêve</li><li>2. Répétez : « La prochaine fois que je rêve, je saurai que je rêve »</li><li>3. Visualisez-vous devenant lucide dans ce rêve</li><li>4. Endormez-vous en maintenant cette intention</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">LaBerge (1985) — Technique la plus validée scientifiquement</p></div>
+        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">⏰</div><h4 class="font-semibold text-dream-200 text-sm mb-2">WBTB</h4><p class="text-[10px] text-gray-400 mb-2">Wake Back To Bed — exploiter le pic de sommeil paradoxal en fin de nuit.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Dormez 5-6h puis réveillez-vous</li><li>2. Restez éveillé 20-60 min (lisez sur le rêve lucide)</li><li>3. Recouchez-vous en appliquant MILD</li><li>4. Les phases REM longues du matin facilitent la lucidité</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Stumbrys et al. (2012) — Multiplie par 5 les chances de lucidité</p></div>
+        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">✋</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Reality Testing</h4><p class="text-[10px] text-gray-400 mb-2">L'habitude éveillée se transfert dans le rêve par conditionnement.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Questionnez la réalité 10-15x/jour avec intention</li><li>2. Comptez vos doigts attentivement</li><li>3. Essayez de respirer nez pincé</li><li>4. Lisez un texte, détournez le regard, relisez</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Tholey (1983) — Base de la « technique de réflexion »</p></div>
+        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">📝</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Journal de Rêves</h4><p class="text-[10px] text-gray-400 mb-2">Le fondement. Sans rappel de rêves, pas de lucidité possible.</p><ul class="text-[10px] text-gray-300 space-y-1"><li>• Écrivez dans les 5 min du réveil</li><li>• Notez même les fragments les plus flous</li><li>• Utilisez le présent pour plus d'immersion</li><li>• Identifiez vos « signes de rêve » récurrents</li></ul><p class="text-[9px] text-gray-500 mt-2 italic">Schredl (2002) — Effet mesurable dès 2-3 semaines</p></div>
+        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🧘</div><h4 class="font-semibold text-dream-200 text-sm mb-2">SSILD</h4><p class="text-[10px] text-gray-400 mb-2">Senses Initiated Lucid Dream — rotation attentionnelle sensorielle.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Après WBTB, allongez-vous détendu</li><li>2. Portez attention à la vision (yeux fermés) ~20s</li><li>3. Portez attention aux sons ~20s</li><li>4. Portez attention aux sensations corporelles ~20s</li><li>5. Répétez 4-5 cycles puis endormez-vous</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Technique communautaire — En cours de validation</p></div>
+        <div class="glass rounded-xl p-4"><div class="text-xl mb-2">🌙</div><h4 class="font-semibold text-dream-200 text-sm mb-2">Incubation & Séries</h4><p class="text-[10px] text-gray-400 mb-2">Programmez le contenu de vos rêves par suggestion pré-sommeil.</p><ol class="text-[10px] text-gray-300 space-y-1"><li>1. Relisez votre série de rêves avant le coucher</li><li>2. Formulez une intention claire et positive</li><li>3. Visualisez la scène et ses détails</li><li>4. Gardez l'image et l'ambiance en vous endormant</li></ol><p class="text-[9px] text-gray-500 mt-2 italic">Barrett (Harvard, 1993) — ~50% de succès sur le sujet ciblé</p></div>
       </div>
+
+      <!-- ===== BASES SCIENTIFIQUES ===== -->
       <div class="glass rounded-xl p-4">
         <h3 class="text-xs font-display font-semibold text-dream-200 mb-3"><i class="fas fa-flask mr-2"></i>Bases Scientifiques</h3>
         <div class="space-y-2 text-[10px] text-gray-300">
           <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📊 Rappel & journal</p><p>Schredl & Erlacher (2004) : le journal augmente significativement le rappel. Effet dès 2-3 semaines.</p></div>
           <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">✨ Rêves lucides</p><p>Stumbrys et al. (2012), méta-analyse : MILD + WBTB + Reality Testing = approche la plus efficace.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">🌙 Incubation</p><p>Barrett (Harvard, 1993) : ~50% ont rêvé du sujet choisi.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD et WBTB validés empiriquement. SSILD principalement communautaire. Rêve Mieux distingue clairement le validé de l'exploratoire.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">🌙 Incubation & continuité</p><p>Barrett (Harvard, 1993) : ~50% ont rêvé du sujet choisi. L'hypothèse de la continuité (Schredl, 2003) montre que les préoccupations pré-sommeil influencent directement le contenu onirique.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📖 Texte & lecture en rêve</p><p>LaBerge & Rheingold (1990) : dans ~75% des cas, un texte relu change de contenu en rêve. Les aires corticales du langage écrit sont instables pendant le REM.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD et WBTB sont validés empiriquement par des études contrôlées. SSILD est principalement communautaire et en cours de validation. Rêve Mieux distingue clairement le validé de l'exploratoire.</p></div>
         </div>
       </div>
     </div>`;

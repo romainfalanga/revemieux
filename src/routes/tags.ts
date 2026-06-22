@@ -24,6 +24,24 @@ tagRoutes.get('/', async (c) => {
   return c.json({ tags: tags.results })
 })
 
+// Tags groupés par catégorie (pour le filtre journal)
+tagRoutes.get('/grouped', async (c) => {
+  const userId = c.get('userId')
+  const tags = await c.env.DB.prepare(
+    'SELECT * FROM tags WHERE user_id = ? ORDER BY category ASC, usage_count DESC, name ASC'
+  ).bind(userId).all<any>()
+
+  // Group by category
+  const grouped: Record<string, any[]> = {}
+  for (const tag of tags.results) {
+    const cat = tag.category || 'custom'
+    if (!grouped[cat]) grouped[cat] = []
+    grouped[cat].push(tag)
+  }
+
+  return c.json({ grouped })
+})
+
 // Créer un tag
 tagRoutes.post('/', async (c) => {
   const userId = c.get('userId')

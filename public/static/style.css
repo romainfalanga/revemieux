@@ -1,6 +1,15 @@
 /* Rêve Mieux — Styles Globaux */
 /* ============================== */
 
+/* Base reset for mobile nav to work */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Scrollbar personnalisée */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: rgba(15, 10, 30, 0.5); }
@@ -169,22 +178,14 @@
 .heatmap-cell:hover { stroke: rgba(139, 92, 246, 0.6); stroke-width: 1px; }
 
 /* ========== Mobile Bottom Nav ========== */
-/* Approach: use the app-shell flex layout so nav is always the last child
-   at the very bottom of the viewport — no position:fixed needed inside the shell. */
-.mobile-bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 40;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: rgba(10, 8, 25, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(139, 92, 246, 0.15);
-  /* Force the nav to the very bottom */
-  margin: 0;
-  transform: translateZ(0); /* GPU layer for reliable positioning */
+/* Main styles are now inline on the element for max specificity.
+   This class is kept as a safety net only. */
+#main-nav-mobile {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
 }
 
 /* ========== Dream Map Container ========== */

@@ -5,15 +5,22 @@ type Variables = { userId: number }
 
 export const dreamRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
-// Lister les rêves (avec pagination et filtres)
+// Lister les rêves (avec pagination et filtres avancés: type, search, tags)
 dreamRoutes.get('/', async (c) => {
   const userId = c.get('userId')
   const page = parseInt(c.req.query('page') || '1')
   const limit = parseInt(c.req.query('limit') || '20')
   const type = c.req.query('type')
   const search = c.req.query('search')
+  const tagsParam = c.req.query('tags') // comma-separated tag IDs
   const offset = (page - 1) * limit
 
+  // Parse tag IDs
+  const tagIds: number[] = tagsParam
+    ? tagsParam.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+    : []
+
+  // Build the WHERE clause for the base dream selection
   let where = 'WHERE d.user_id = ?'
   const params: any[] = [userId]
 
@@ -26,10 +33,27 @@ dreamRoutes.get('/', async (c) => {
     params.push(`%${search}%`, `%${search}%`)
   }
 
+  // If tag filtering is active, we need to find dreams that have ALL selected tags (intersection)
+  let tagFilterSubquery = ''
+  if (tagIds.length > 0) {
+    // Subquery: dreams that have ALL the specified tag IDs
+    const placeholders = tagIds.map(() => '?').join(',')
+    tagFilterSubquery = ` AND d.id IN (
+      SELECT dt_filter.dream_id FROM dream_tags dt_filter
+      WHERE dt_filter.tag_id IN (${placeholders})
+      GROUP BY dt_filter.dream_id
+      HAVING COUNT(DISTINCT dt_filter.tag_id) = ?
+    )`
+    params.push(...tagIds, tagIds.length)
+  }
+
+  const fullWhere = where + tagFilterSubquery
+
   const countResult = await c.env.DB.prepare(
-    `SELECT COUNT(*) as total FROM dreams d ${where}`
+    `SELECT COUNT(*) as total FROM dreams d ${fullWhere}`
   ).bind(...params).first<any>()
 
+  const queryParams = [...params, limit, offset]
   const dreams = await c.env.DB.prepare(`
     SELECT d.*, 
       GROUP_CONCAT(DISTINCT de.emotion || ':' || de.intensity) as emotions,
@@ -38,11 +62,11 @@ dreamRoutes.get('/', async (c) => {
     LEFT JOIN dream_emotions de ON de.dream_id = d.id
     LEFT JOIN dream_tags dt ON dt.dream_id = d.id
     LEFT JOIN tags t ON t.id = dt.tag_id
-    ${where}
+    ${fullWhere}
     GROUP BY d.id
     ORDER BY d.dream_date DESC, d.created_at DESC
     LIMIT ? OFFSET ?
-  `).bind(...params, limit, offset).all<any>()
+  `).bind(...queryParams).all<any>()
 
   const parsed = dreams.results.map(d => ({
     ...d,
