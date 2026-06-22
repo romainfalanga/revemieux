@@ -669,10 +669,11 @@ window.openDreamEditor = async function(id) {
             ${EMOTION_LIST.map(em => `
               <button type="button" onclick="toggleEmotion('${em}')" id="em-${em}"
                 class="emotion-btn px-2 py-1 rounded-full text-xs border transition-all ${selectedEmotions[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}">
-                ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}
+                ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${selectedEmotions[em] ? ' <span class="text-[9px] opacity-70">' + selectedEmotions[em] + '/5</span>' : ''}
               </button>
             `).join('')}
           </div>
+          <div id="emotion-intensity-panel" class="hidden mt-2 p-2.5 rounded-lg bg-night-900/50 border border-dream-700/20"></div>
         </div>
 
         <!-- Tags -->
@@ -683,16 +684,24 @@ window.openDreamEditor = async function(id) {
           </div>
           ${allTags.length ? `
           <div class="mb-2">
-            <span class="text-[9px] text-gray-500 mb-1 block">Tags existants :</span>
-            <div class="flex flex-wrap gap-1 p-2 bg-night-900/30 rounded-lg border border-dream-700/10 max-h-28 overflow-y-auto">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[9px] text-gray-500">Tags existants :</span>
+              <button type="button" onclick="toggleTagManageMode()" id="tag-manage-btn" class="text-[9px] text-gray-500 hover:text-dream-300 transition-all" title="Gérer les tags"><i class="fas fa-pen text-[8px] mr-0.5"></i>Gérer</button>
+            </div>
+            <div id="existing-tags-container" class="flex flex-wrap gap-1 p-2 bg-night-900/30 rounded-lg border border-dream-700/10 max-h-28 overflow-y-auto">
               ${allTags.map(t => `
-                <button type="button" onclick="pickExistingTag(${t.id})"
-                  id="pick-tag-${t.id}"
-                  class="existing-tag-btn px-2 py-0.5 rounded-full text-[10px] transition-all cursor-pointer ${selectedTags.find(st => st.name === t.name) ? 'opacity-40 pointer-events-none' : 'hover:scale-105'}"
-                  style="background:${t.color}15; color:${t.color}; border: 1px solid ${t.color}30"
-                  ${selectedTags.find(st => st.name === t.name) ? 'disabled' : ''}>
-                  ${TAG_CATEGORIES.find(c => c.value === t.category)?.icon || '🏷️'} ${escapeHtml(t.name)}
-                </button>
+                <span class="existing-tag-item inline-flex items-center gap-0.5" id="tag-item-${t.id}">
+                  <button type="button" onclick="pickExistingTag(${t.id})"
+                    id="pick-tag-${t.id}"
+                    class="existing-tag-btn px-2 py-0.5 rounded-full text-[10px] transition-all cursor-pointer ${selectedTags.find(st => st.name === t.name) ? 'opacity-40 pointer-events-none' : 'hover:scale-105'}"
+                    style="background:${t.color}15; color:${t.color}; border: 1px solid ${t.color}30"
+                    ${selectedTags.find(st => st.name === t.name) ? 'disabled' : ''}>
+                    ${TAG_CATEGORIES.find(c => c.value === t.category)?.icon || '🏷️'} ${escapeHtml(t.name)}
+                  </button>
+                  <button type="button" onclick="deleteExistingTag(${t.id}, '${escapeHtml(t.name).replace(/'/g, "\\'")}')"
+                    class="tag-delete-btn hidden w-4 h-4 rounded-full bg-red-600/40 text-red-300 text-[8px] flex items-center justify-center hover:bg-red-600/60 transition-all shrink-0"
+                    title="Supprimer ce tag définitivement"><i class="fas fa-times"></i></button>
+                </span>
               `).join('')}
             </div>
           </div>` : ''}
@@ -753,19 +762,20 @@ function renderPhaseEditor(idx, phase) {
           oninput="updatePhase(${idx}, 'title', this.value)">
         <button type="button" onclick="removePhase(${idx})" class="text-gray-500 hover:text-red-400 p-1 shrink-0"><i class="fas fa-times text-xs"></i></button>
       </div>
-      <textarea rows="2" placeholder="Que se passe-t-il dans cette scène ?"
-        class="w-full px-2 py-1.5 bg-night-900/60 border border-dream-700/20 rounded text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none mb-2"
-        oninput="updatePhase(${idx}, 'content', this.value)">${escapeHtml(phase.content || '')}</textarea>
+      <textarea rows="4" placeholder="Que se passe-t-il dans cette scène ?"
+        class="w-full px-2 py-1.5 bg-night-900/60 border border-dream-700/20 rounded text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-y mb-2 min-h-[5rem]"
+        oninput="updatePhase(${idx}, 'content', this.value); autoGrowTextarea(this)">${escapeHtml(phase.content || '')}</textarea>
       <div class="mb-1.5">
         <span class="text-[9px] text-gray-500">Émotions :</span>
         <div class="flex flex-wrap gap-1 mt-1">
           ${EMOTION_LIST.map(em => `
             <button type="button" onclick="togglePhaseEmotion(${idx}, '${em}')" id="phase-em-${idx}-${em}"
               class="px-1.5 py-0.5 rounded-full text-[9px] border transition-all ${phase.emotions?.[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-500'}">
-              ${EMOTION_EMOJIS[em]}
+              ${EMOTION_EMOJIS[em]}${phase.emotions?.[em] ? ' <span class="opacity-70">' + phase.emotions[em] + '/5</span>' : ''}
             </button>
           `).join('')}
         </div>
+        <div id="phase-emotion-panel-${idx}" class="hidden mt-1.5 p-2 rounded-lg bg-night-900/50 border border-dream-700/20"></div>
       </div>
       <div>
         <div class="flex items-center justify-between">
@@ -805,12 +815,47 @@ window.togglePhaseEmotion = function(idx, em) {
   const phase = window._editorState.phases[idx];
   if (!phase) return;
   if (!phase.emotions) phase.emotions = {};
-  if (phase.emotions[em]) delete phase.emotions[em]; else phase.emotions[em] = 3;
-  const btn = document.getElementById(`phase-em-${idx}-${em}`);
-  if (btn) {
-    const isSelected = !!phase.emotions[em];
-    btn.className = `px-1.5 py-0.5 rounded-full text-[9px] border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-500'}`;
+  if (phase.emotions[em]) {
+    delete phase.emotions[em];
+    refreshPhaseEmotionButton(idx, em);
+    const panel = document.getElementById(`phase-emotion-panel-${idx}`);
+    if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
+  } else {
+    phase.emotions[em] = 3;
+    refreshPhaseEmotionButton(idx, em);
+    showPhaseEmotionIntensityPanel(idx, em);
   }
+};
+
+function refreshPhaseEmotionButton(idx, em) {
+  const phase = window._editorState.phases[idx];
+  const btn = document.getElementById(`phase-em-${idx}-${em}`);
+  if (!btn) return;
+  const isSelected = !!phase?.emotions?.[em];
+  const intensityLabel = isSelected ? ` <span class="opacity-70">${phase.emotions[em]}/5</span>` : '';
+  btn.className = `px-1.5 py-0.5 rounded-full text-[9px] border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-500'}`;
+  btn.innerHTML = `${EMOTION_EMOJIS[em]}${intensityLabel}`;
+}
+
+function showPhaseEmotionIntensityPanel(idx, em) {
+  const panel = document.getElementById(`phase-emotion-panel-${idx}`);
+  if (!panel) return;
+  const phase = window._editorState.phases[idx];
+  const intensity = phase?.emotions?.[em] || 3;
+  panel.dataset.emotion = em;
+  panel.classList.remove('hidden');
+  panel.innerHTML = `
+    <div class="flex items-center gap-2">
+      <span class="text-xs">${EMOTION_EMOJIS[em]}</span>
+      <input type="range" min="1" max="5" value="${intensity}" class="flex-1 accent-dream-400"
+        oninput="setPhaseEmotionIntensity(${idx}, '${em}', parseInt(this.value)); this.nextElementSibling.textContent = this.value + '/5'">
+      <span class="text-[10px] text-dream-300 w-8 text-right">${intensity}/5</span>
+    </div>`;
+}
+
+window.setPhaseEmotionIntensity = function(idx, em, val) {
+  const phase = window._editorState.phases[idx];
+  if (phase?.emotions) { phase.emotions[em] = val; refreshPhaseEmotionButton(idx, em); }
 };
 
 window.addPhaseInterpretation = function(idx) {
@@ -913,10 +958,47 @@ window.toggleSeriesInEditor = function(seriesId) {
 };
 
 window.toggleEmotion = function(em) {
-  if (window._editorState.emotions[em]) { delete window._editorState.emotions[em]; } else { window._editorState.emotions[em] = 3; }
+  if (window._editorState.emotions[em]) {
+    delete window._editorState.emotions[em];
+    refreshEmotionButton(em);
+    // Fermer le panel si c'est l'émotion active
+    const panel = document.getElementById('emotion-intensity-panel');
+    if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
+  } else {
+    window._editorState.emotions[em] = 3;
+    refreshEmotionButton(em);
+    showEmotionIntensityPanel(em);
+  }
+};
+
+function refreshEmotionButton(em) {
   const btn = document.getElementById(`em-${em}`);
+  if (!btn) return;
   const isSelected = !!window._editorState.emotions[em];
+  const intensityLabel = isSelected ? ` <span class="text-[9px] opacity-70">${window._editorState.emotions[em]}/5</span>` : '';
   btn.className = `emotion-btn px-2 py-1 rounded-full text-xs border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200 selected' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}`;
+  btn.innerHTML = `${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${intensityLabel}`;
+}
+
+function showEmotionIntensityPanel(em) {
+  const panel = document.getElementById('emotion-intensity-panel');
+  if (!panel) return;
+  const intensity = window._editorState.emotions[em] || 3;
+  panel.dataset.emotion = em;
+  panel.classList.remove('hidden');
+  panel.innerHTML = `
+    <div class="flex items-center gap-3">
+      <span class="text-sm">${EMOTION_EMOJIS[em]}</span>
+      <span class="text-xs text-dream-200 font-medium w-16">${EMOTION_LABELS[em]}</span>
+      <input type="range" min="1" max="5" value="${intensity}" class="flex-1 accent-dream-400"
+        oninput="setEmotionIntensity('${em}', parseInt(this.value)); this.nextElementSibling.textContent = this.value + '/5'">
+      <span class="text-xs text-dream-300 w-8 text-right">${intensity}/5</span>
+    </div>`;
+}
+
+window.setEmotionIntensity = function(em, val) {
+  window._editorState.emotions[em] = val;
+  refreshEmotionButton(em);
 };
 
 // Tag management — pick existing
@@ -987,6 +1069,39 @@ window.removeTag = function(name) {
     const pickBtn = document.getElementById(`pick-tag-${tag.id}`);
     if (pickBtn) { pickBtn.classList.remove('opacity-40', 'pointer-events-none'); pickBtn.disabled = false; }
   }
+};
+
+window._tagManageMode = false;
+window.toggleTagManageMode = function() {
+  window._tagManageMode = !window._tagManageMode;
+  const btn = document.getElementById('tag-manage-btn');
+  if (btn) {
+    btn.innerHTML = window._tagManageMode
+      ? '<i class="fas fa-check text-[8px] mr-0.5"></i>Terminé'
+      : '<i class="fas fa-pen text-[8px] mr-0.5"></i>Gérer';
+    btn.className = `text-[9px] transition-all ${window._tagManageMode ? 'text-dream-300' : 'text-gray-500 hover:text-dream-300'}`;
+  }
+  document.querySelectorAll('.tag-delete-btn').forEach(b => {
+    b.classList.toggle('hidden', !window._tagManageMode);
+    if (window._tagManageMode) b.classList.add('inline-flex');
+    else b.classList.remove('inline-flex');
+  });
+};
+
+window.deleteExistingTag = async function(tagId, tagName) {
+  if (!confirm(`Supprimer le tag "${tagName}" définitivement ? Il sera retiré de tous les rêves.`)) return;
+  try {
+    await api(`/tags/${tagId}`, { method: 'DELETE' });
+    // Retirer de _allTags
+    window._allTags = (window._allTags || []).filter(t => t.id !== tagId);
+    // Retirer des tags sélectionnés si présent
+    window._editorState.tags = window._editorState.tags.filter(t => t.id !== tagId);
+    updateTagsDisplay();
+    // Retirer de l'UI
+    const item = document.getElementById(`tag-item-${tagId}`);
+    if (item) item.remove();
+    showToast('🗑️ Tag supprimé');
+  } catch (err) { alert(err.message); }
 };
 
 function updateTagsDisplay() {
@@ -1931,6 +2046,8 @@ function showToast(msg) { const t = document.createElement('div'); t.className =
 
 // ========== UTILITIES ==========
 function escapeHtml(str) { if (!str) return ''; const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+
+function autoGrowTextarea(el) { el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, 80) + 'px'; }
 
 // ========== INIT ==========
 checkAuth();
