@@ -97,9 +97,8 @@ function refreshNotification() {
     silent: true,
     ongoing: true,
     actions: [
-      { action: 'rc-hands', title: '✋ Doigts' },
-      { action: 'rc-text', title: '📖 Lire' },
-      { action: 'rc-time', title: '⏰ Heure' }
+      { action: 'rc-check', title: '✅ Check Validé' },
+      { action: 'play-refrain', title: '🎵 Écouter Rêve Mieux' }
     ],
     data: { url: '/', type: 'tlr-persistent' }
   }).catch(() => {});
@@ -169,18 +168,33 @@ async function closeTLRNotification() {
 self.addEventListener('notificationclick', (event) => {
   const notifType = event.notification.data?.type;
 
-  // Reality Check actions — record RC directly from SW (no unlock needed)
-  if (event.action === 'rc-hands' || event.action === 'rc-text' || event.action === 'rc-time') {
-    const checkType = event.action === 'rc-hands' ? 'hands' : event.action === 'rc-text' ? 'text' : 'time';
-    // Close and immediately re-show notification (keeps it persistent)
+  // Check Validé — record RC directly from SW (no unlock needed)
+  if (event.action === 'rc-check') {
     event.notification.close();
     event.waitUntil(
       (async () => {
-        await recordRealityCheck(checkType);
+        await recordRealityCheck('general');
         if (tlrActive) refreshNotification();
-        // Notify app if open
         const clients = await self.clients.matchAll({ type: 'window' });
-        clients.forEach(client => client.postMessage({ type: 'REALITY_CHECK_FROM_SW', checkType }));
+        clients.forEach(client => client.postMessage({ type: 'REALITY_CHECK_FROM_SW', checkType: 'general' }));
+      })()
+    );
+    return;
+  }
+
+  // Écouter Rêve Mieux — open app and auto-play refrain
+  if (event.action === 'play-refrain') {
+    event.notification.close();
+    event.waitUntil(
+      (async () => {
+        if (tlrActive) refreshNotification();
+        const clients = await self.clients.matchAll({ type: 'window' });
+        if (clients.length > 0) {
+          clients[0].focus();
+          clients[0].postMessage({ type: 'PLAY_REFRAIN_FROM_SW' });
+        } else {
+          await self.clients.openWindow('/?autoplay=refrain');
+        }
       })()
     );
     return;

@@ -180,20 +180,29 @@ function renderApp() {
       </button>
 
       <!-- Mini-player flottant permanent -->
-      <!-- Mobile: au-dessus du menu (bottom ~85px), centré sur le bouton Lucidité (right:12px) -->
-      <!-- Desktop: aligné horizontalement au FAB (right:6=24px), juste au-dessus (bottom:88px) -->
-      <div id="floating-player" class="fixed z-[9998]" style="bottom:85px;right:12px;">
-        <button onclick="toggleReveMieuxPlayer()" id="floating-play-btn"
-          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all"
-          style="background:linear-gradient(135deg,rgba(245,158,11,0.85),rgba(139,92,246,0.85));backdrop-filter:blur(8px);"
-          title="Refrain Rêve Mieux">
-          <i id="floating-play-icon" class="fas fa-play text-sm"></i>
+      <!-- Boutons flottants : RC + Player, colonne verticale alignée -->
+      <div id="floating-player" class="fixed z-[9998] flex flex-col items-center gap-2" style="bottom:85px;right:12px;">
+        <!-- Bouton Reality Check -->
+        <button onclick="quickRealityCheck()" id="floating-rc-btn"
+          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
+          style="background:linear-gradient(135deg,rgba(16,185,129,0.85),rgba(6,182,212,0.85));backdrop-filter:blur(8px);"
+          title="Reality Check validé">
+          <i class="fas fa-check text-sm"></i>
         </button>
-        <div id="floating-progress-ring" class="absolute inset-0 pointer-events-none">
-          <svg width="44" height="44" viewBox="0 0 44 44" class="w-full h-full -rotate-90">
-            <circle cx="22" cy="22" r="20" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
-            <circle id="floating-progress-circle" cx="22" cy="22" r="20" fill="none" stroke="rgba(245,158,11,0.9)" stroke-width="2" stroke-linecap="round" stroke-dasharray="125.66" stroke-dashoffset="125.66"/>
-          </svg>
+        <!-- Bouton Refrain -->
+        <div class="relative">
+          <button onclick="toggleReveMieuxPlayer()" id="floating-play-btn"
+            class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all"
+            style="background:linear-gradient(135deg,rgba(245,158,11,0.85),rgba(139,92,246,0.85));backdrop-filter:blur(8px);"
+            title="Refrain Rêve Mieux">
+            <i id="floating-play-icon" class="fas fa-play text-sm"></i>
+          </button>
+          <div id="floating-progress-ring" class="absolute inset-0 pointer-events-none">
+            <svg width="44" height="44" viewBox="0 0 44 44" class="w-full h-full -rotate-90">
+              <circle cx="22" cy="22" r="20" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+              <circle id="floating-progress-circle" cx="22" cy="22" r="20" fill="none" stroke="rgba(245,158,11,0.9)" stroke-width="2" stroke-linecap="round" stroke-dasharray="125.66" stroke-dashoffset="125.66"/>
+            </svg>
+          </div>
         </div>
       </div>
       <style>
@@ -2230,7 +2239,18 @@ async function renderLucidity() {
     </div>`;
 }
 
-window.doRealityCheck = async function(type) { try { await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: type, wasDreaming: false }) }); showToast('✋ Reality check enregistré !'); renderLucidity(); } catch {} };
+window.doRealityCheck = async function(type) { try { await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: type, wasDreaming: false }) }); showToast('✅ Reality check enregistré !'); renderLucidity(); } catch {} };
+
+// Quick RC depuis le bouton flottant (type 'general')
+window.quickRealityCheck = async function() {
+  const btn = document.getElementById('floating-rc-btn');
+  if (btn) { btn.style.transform = 'scale(1.2)'; setTimeout(() => btn.style.transform = '', 200); }
+  try {
+    await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: 'general', wasDreaming: false }) });
+    showToast('✅ Check validé !');
+    if (state.currentView === 'lucidity') renderLucidity();
+  } catch {}
+};
 
 // ========== LECTEUR AUDIO — RÊVE MIEUX (ANCRAGE MUSICAL) ==========
 let reveMieuxAudio = null;
@@ -2336,8 +2356,7 @@ if ('serviceWorker' in navigator) {
     }
     if (event.data?.type === 'REALITY_CHECK_FROM_SW') {
       // RC already recorded by SW directly — just update UI
-      const typeLabelsRC = { hands: '✋ Doigts', text: '📖 Lire', time: '⏰ Heure' };
-      showToast(`${typeLabelsRC[event.data.checkType] || 'RC'} enregistré !`);
+      showToast('✅ Check validé !');
       if (state.currentView === 'lucidity') renderLucidity();
     }
     if (event.data?.type === 'PLAY_REFRAIN_FROM_SW') {
