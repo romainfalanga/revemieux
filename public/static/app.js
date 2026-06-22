@@ -325,8 +325,12 @@ async function renderJournal() {
 function renderDreamCard(d) {
   const typeIcons = { normal: '🌀', lucid: '✨', nightmare: '👹', recurring: '🔄', hypnagogic: '🌊', false_awakening: '🪞' };
   const typeLabels = { normal: 'Normal', lucid: 'Lucide', nightmare: 'Cauchemar', recurring: 'Récurrent', hypnagogic: 'Hypnago.', false_awakening: 'Faux éveil' };
+  const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
+  const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
   const preview = d.content.length > 150 ? d.content.substring(0, 150) + '...' : d.content;
+  // Émotion dominante (la plus intense)
+  const topEmotion = d.emotions?.length ? d.emotions.reduce((best, e) => (!best || e.intensity > best.intensity) ? e : best, null) : null;
   return `
     <div class="glass rounded-xl p-3 sm:p-4 hover:border-dream-400/30 transition-all cursor-pointer animate-fadeIn group" onclick="openDreamDetail(${d.id})">
       <div class="flex items-start gap-2.5">
@@ -339,6 +343,8 @@ function renderDreamCard(d) {
           <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
             <span class="badge-${d.dream_type} text-[9px] px-1.5 py-0.5 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
             ${d.lucidity_level > 0 ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
+            ${d.clarity ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity}/5</span>` : ''}
+            ${topEmotion ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/30 text-dream-200">${emotionEmojis[topEmotion.emotion] || ''} ${emotionLabels[topEmotion.emotion] || topEmotion.emotion} ${topEmotion.intensity}/5</span>` : ''}
           </div>
           <p class="text-xs text-gray-400 mb-2 line-clamp-2">${escapeHtml(preview)}</p>
           <div class="flex items-center gap-2 flex-wrap">
@@ -510,12 +516,9 @@ window.openDreamEditor = async function(id) {
       <form onsubmit="saveDream(event, ${id || 'null'})" id="dream-form">
         <input type="text" name="title" value="${dream ? escapeHtml(dream.title) : ''}" placeholder="Titre du rêve..." required
           class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white font-medium placeholder-gray-500 focus:border-dream-400 focus:outline-none text-sm">
-        <div class="relative mb-3">
+        <div class="mb-3">
           <textarea name="content" rows="3" placeholder="Récit global du rêve..." required
             class="w-full px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none">${dream ? escapeHtml(dream.content) : ''}</textarea>
-          <button type="button" onclick="toggleVoiceRecording()" id="voice-btn" class="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-dream-600/30 text-dream-300 hover:bg-dream-600/50 transition-all flex items-center justify-center text-sm" title="Dictée vocale">
-            <i class="fas fa-microphone"></i>
-          </button>
         </div>
 
         <!-- Date -->
@@ -993,19 +996,7 @@ window.toggleFavorite = async function(id, current) {
 };
 
 // ========== VOICE RECORDING ==========
-let isRecording = false;
-window.toggleVoiceRecording = function() {
-  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) { alert('Dictée vocale non supportée. Essayez Chrome.'); return; }
-  if (isRecording) { window._recognition?.stop(); isRecording = false; const btn = document.getElementById('voice-btn'); btn.innerHTML = '<i class="fas fa-microphone"></i>'; btn.classList.remove('bg-red-600/30', 'text-red-300'); btn.classList.add('bg-dream-600/30', 'text-dream-300'); return; }
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'fr-FR'; recognition.continuous = true; recognition.interimResults = true;
-  recognition.onresult = (event) => { let t = ''; for (let i = 0; i < event.results.length; i++) t += event.results[i][0].transcript; const ta = document.querySelector('textarea[name="content"]'); const before = ta.value.substring(0, ta.dataset.voiceStart || ta.value.length); ta.value = before + t; };
-  recognition.onstart = () => { isRecording = true; const ta = document.querySelector('textarea[name="content"]'); ta.dataset.voiceStart = ta.value.length; const btn = document.getElementById('voice-btn'); btn.innerHTML = '<i class="fas fa-stop"></i>'; btn.classList.remove('bg-dream-600/30', 'text-dream-300'); btn.classList.add('bg-red-600/30', 'text-red-300'); };
-  recognition.onend = () => { isRecording = false; const btn = document.getElementById('voice-btn'); if (btn) { btn.innerHTML = '<i class="fas fa-microphone"></i>'; btn.classList.remove('bg-red-600/30', 'text-red-300'); btn.classList.add('bg-dream-600/30', 'text-dream-300'); } };
-  recognition.onerror = () => { isRecording = false; };
-  window._recognition = recognition; recognition.start();
-};
+
 
 // ========== CONNECTION EDITOR ==========
 window.openConnectionEditor = async function(dreamId, dreamTitle) {
@@ -1468,45 +1459,6 @@ async function renderLucidity() {
         <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Erlacher & Stumbrys (2020) · Carr et al. (2020, Frontiers in Psychology)</p>
       </div>
 
-      <!-- ===== PHILOSOPHIE RÊVE MIEUX ===== -->
-      <div class="glass rounded-xl p-5 mb-5 border border-dream-500/20" style="background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.05));">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="text-2xl">🎯</span>
-          <h3 class="text-base font-display font-bold text-dream-100">La philosophie Rêve Mieux</h3>
-        </div>
-
-        <p class="text-sm text-gray-300 leading-relaxed mb-4">
-          Rêve Mieux poursuit un double objectif scientifiquement fondé :
-        </p>
-        <div class="space-y-3 mb-4">
-          <div class="flex items-start gap-3">
-            <span class="text-lg mt-0.5 shrink-0">✨</span>
-            <div>
-              <p class="text-sm font-semibold text-dream-200 mb-1">Augmenter la fréquence de vos rêves lucides</p>
-              <p class="text-xs text-gray-400">En combinant les contrôles de réalité quotidiens, la tenue d'un journal détaillé et les techniques d'induction validées (MILD, WBTB), vous entraînez votre cerveau à reconnaître l'état de rêve. Les recherches de Stumbrys et al. (2012) montrent que cette approche combinée est la plus efficace.</p>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <span class="text-lg mt-0.5 shrink-0">🧭</span>
-            <div>
-              <p class="text-sm font-semibold text-dream-200 mb-1">Choisir la trajectoire de vos rêves</p>
-              <p class="text-xs text-gray-400">Grâce aux <strong class="text-dream-300">séries de rêves</strong>, vous pouvez structurer vos rêves en arcs narratifs. Avant de dormir, relisez les étapes précédentes d'une série : votre subconscient absorbe tous les éléments (lieux, personnages, émotions) et augmente significativement les chances de poursuivre cette histoire onirique.</p>
-            </div>
-          </div>
-        </div>
-        <div class="p-3 rounded-lg bg-dream-900/20 border border-dream-700/15">
-          <p class="text-xs text-gray-300 leading-relaxed">
-            <i class="fas fa-lightbulb text-amber-400 mr-1.5"></i>
-            <strong class="text-dream-200">La stratégie clé :</strong> La relecture immersive de vos rêves avant le sommeil agit comme une incubation naturelle. En replongeant dans l'ambiance, les détails et les émotions de vos rêves précédents, vous « programmez » votre esprit pour continuer l'exploration. Barrett (1993) a montré que la suggestion pré-sommeil ciblée permet de rêver du sujet choisi dans environ 50% des cas, et ce taux augmente avec la richesse des détails mémorisés.
-          </p>
-        </div>
-        <div class="mt-3 text-center">
-          <button onclick="openLastDreamForIncubation()" class="px-4 py-2 bg-dream-600/30 text-dream-300 rounded-lg text-xs font-medium hover:bg-dream-600/50 transition-all">
-            <i class="fas fa-moon mr-1.5"></i>Programmer une suite de rêve
-          </button>
-        </div>
-      </div>
-
       <!-- ===== TECHNIQUES D'INDUCTION ===== -->
       <h3 class="text-sm font-display font-semibold text-dream-200 mb-3"><i class="fas fa-tools mr-2"></i>Techniques d'Induction</h3>
       <div class="space-y-3 mb-5">
@@ -1563,7 +1515,7 @@ async function renderLucidity() {
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Bonnes pratiques :</p>
           <ul class="text-[10px] text-gray-300 space-y-1.5 mb-2">
             <li><strong class="text-dream-300">Au réveil, ne bougez pas :</strong> Restez immobile et gardez les yeux fermés. Les souvenirs de rêve s'effacent très rapidement avec le mouvement.</li>
-            <li><strong class="text-dream-300">Notez dans les 5 premières minutes :</strong> Même un fragment, une émotion ou une image. Utilisez la dictée vocale de Rêve Mieux si c'est plus rapide.</li>
+            <li><strong class="text-dream-300">Notez dans les 5 premières minutes :</strong> Même un fragment, une émotion ou une image. La rapidité est essentielle, les souvenirs s'effacent vite.</li>
             <li><strong class="text-dream-300">Écrivez au présent :</strong> « Je marche dans une forêt » plutôt que « J'étais dans une forêt ». Cela augmente l'immersion et le rappel.</li>
             <li><strong class="text-dream-300">Utilisez les étapes de Rêve Mieux :</strong> Découpez vos rêves en scènes distinctes avec les émotions de chaque moment. Cette structuration renforce la mémorisation.</li>
             <li><strong class="text-dream-300">Relisez vos anciens rêves :</strong> La relecture régulière consolide les souvenirs et vous aide à repérer vos signes de rêve récurrents.</li>
@@ -1808,8 +1760,8 @@ window.toggleTLR = async function() {
     
     const notifOk = ('Notification' in window && Notification.permission === 'granted');
     showToast(notifOk 
-      ? 'TLR activé ! Notification verrouillée sur votre écran.' 
-      : 'TLR activé ! Autorisez les notifications pour le rappel sur écran de verrouillage.');
+      ? 'TLR activé ! Notification fixée sur votre écran. Désactivez ici uniquement.' 
+      : 'TLR activé ! Autorisez les notifications pour le rappel permanent sur écran de verrouillage.');
   }
 };
 
