@@ -180,7 +180,9 @@ function renderApp() {
       </button>
 
       <!-- Mini-player flottant permanent -->
-      <div id="floating-player" style="position:fixed;bottom:65px;right:12px;z-index:9998;" class="sm:bottom-6 sm:right-24">
+      <!-- Mobile: au-dessus du menu (bottom ~85px), centré sur le bouton Lucidité (right:12px) -->
+      <!-- Desktop: aligné horizontalement au FAB (right:6=24px), juste au-dessus (bottom:88px) -->
+      <div id="floating-player" class="fixed z-[9998]" style="bottom:85px;right:12px;">
         <button onclick="toggleReveMieuxPlayer()" id="floating-play-btn"
           class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all"
           style="background:linear-gradient(135deg,rgba(245,158,11,0.85),rgba(139,92,246,0.85));backdrop-filter:blur(8px);"
@@ -194,6 +196,12 @@ function renderApp() {
           </svg>
         </div>
       </div>
+      <style>
+        @media (min-width: 640px) {
+          /* Aligné verticalement au-dessus du FAB (bottom:24+56+8=88), centré horizontalement (FAB centre=52px, player 44px → right=30px) */
+          #floating-player { bottom: 88px !important; right: 30px !important; }
+        }
+      </style>
     </div>
     <div id="modal-container"></div>
   `;
