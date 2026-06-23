@@ -740,11 +740,24 @@ window.openDreamEditor = async function(id) {
             class="w-full px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none">${dream ? escapeHtml(dream.content) : ''}</textarea>
         </div>
 
-        <!-- Date -->
+        <!-- Nuit du rêve (soir + matin) -->
         <div class="mb-3">
-          <label class="text-[10px] text-gray-400 mb-1 block">Date du rêve</label>
-          <input type="date" name="dreamDate" value="${dream?.dream_date || new Date().toISOString().split('T')[0]}"
-            class="w-full px-3 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-sm">
+          <label class="text-[10px] text-gray-400 mb-1.5 block">Nuit du rêve</label>
+          <div class="flex gap-2 items-center">
+            <div class="flex-1">
+              <span class="text-[9px] text-gray-500 block mb-0.5">Soir du</span>
+              <input type="date" id="dream-night-evening" value="${(() => { const d = dream?.dream_date ? new Date(dream.dream_date + 'T00:00:00') : new Date(); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()}"
+                onchange="document.getElementById('dream-night-morning').value = (() => { const d = new Date(this.value + 'T00:00:00'); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()"
+                class="w-full px-2.5 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-xs">
+            </div>
+            <span class="text-gray-500 text-xs mt-3">→</span>
+            <div class="flex-1">
+              <span class="text-[9px] text-gray-500 block mb-0.5">Matin du</span>
+              <input type="date" id="dream-night-morning" name="dreamDate" value="${dream?.dream_date || new Date().toISOString().split('T')[0]}"
+                onchange="document.getElementById('dream-night-evening').value = (() => { const d = new Date(this.value + 'T00:00:00'); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()"
+                class="w-full px-2.5 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-xs">
+            </div>
+          </div>
         </div>
 
         <!-- Type de rêve — BOUTONS -->
@@ -2079,8 +2092,13 @@ async function renderLucidity() {
         <div id="tlr-config" class="space-y-3">
           <div class="flex items-center gap-3">
             <label class="text-xs text-gray-400 shrink-0 w-36">Coucher habituel :</label>
-            <input type="time" id="tlr-bedtime" value="${getTLRBedtime()}" onchange="saveTLRBedtime(this.value)"
+            <input type="time" id="tlr-bedtime" value="${getTLRBedtime()}" onchange="saveTLRBedtime(this.value); document.getElementById('tlr-trigger-time').textContent = calcTriggerTimeStr(this.value)"
               class="px-3 py-1.5 bg-night-900/60 border border-violet-700/30 rounded-lg text-white text-sm focus:border-violet-400 focus:outline-none">
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="text-xs text-gray-400 shrink-0 w-36">Déclencheur à :</label>
+            <span id="tlr-trigger-time" class="text-sm font-mono font-semibold text-amber-300">${(() => { const [hh,mm] = getTLRBedtime().split(':').map(Number); return String((hh+6)%24).padStart(2,'0') + ':' + String(mm).padStart(2,'0'); })()}</span>
+            <span class="text-[10px] text-gray-500">(coucher + 6h)</span>
           </div>
 
           <div class="flex items-center gap-3">
@@ -2378,6 +2396,7 @@ function sendSWMessage(data) {
 
 function getTLRBedtime() { return localStorage.getItem('tlr_bedtime') || '23:00'; }
 function saveTLRBedtime(val) { localStorage.setItem('tlr_bedtime', val); if (isTLRActive()) restartTLRCounters(); }
+window.calcTriggerTimeStr = function(bedtime) { const [h,m] = bedtime.split(':').map(Number); return String((h+6)%24).padStart(2,'0') + ':' + String(m).padStart(2,'0'); };
 
 function getTLRTonightOverride() { 
   const data = localStorage.getItem('tlr_tonight');
@@ -2416,28 +2435,29 @@ function getEffectiveBedtime() {
   return getTLRBedtime();
 }
 
-function getBedtimeDate() {
-  const timeStr = getEffectiveBedtime();
-  const [h, m] = timeStr.split(':').map(Number);
+// Le cycle TLR est de 24h basé sur le TRIGGER (bedtime + 6h).
+// Le trigger est le point de référence : dès qu'il passe, on passe au cycle suivant.
+// - 18 premières heures après le trigger : "Tu dois dormir dans X" (countdown vers bedtime)
+// - 6 dernières heures (bedtime passé → trigger) : "Tu devrais dormir depuis X" (elapsed depuis bedtime, max 6h)
+function getTriggerDate() {
+  const bedtimeStr = getEffectiveBedtime();
+  const [h, m] = bedtimeStr.split(':').map(Number);
   const now = new Date();
-  const bed = new Date(now);
-  bed.setHours(h, m, 0, 0);
-  // Bed is in the past: it's tonight's bedtime if before trigger, or tomorrow's if trigger has passed
-  if (bed <= now) {
-    // Check if the trigger for this bedtime has also passed
-    const trigger = new Date(bed.getTime() + 6 * 60 * 60 * 1000);
-    if (trigger <= now) {
-      // Both bedtime and trigger passed → next cycle is tomorrow
-      bed.setDate(bed.getDate() + 1);
-    }
-    // else: bedtime passed but trigger not yet → keep today's bedtime (we're in the sleep period)
+  // Trigger = bedtime + 6h
+  const triggerH = (h + 6) % 24;
+  const trigger = new Date(now);
+  trigger.setHours(triggerH, m, 0, 0);
+  // Si le trigger est dans le passé, c'est le trigger d'aujourd'hui qui est passé → prochain trigger = demain
+  if (trigger <= now) {
+    trigger.setDate(trigger.getDate() + 1);
   }
-  return bed;
+  return trigger;
 }
 
-function getTriggerDate() {
-  const bed = getBedtimeDate();
-  return new Date(bed.getTime() + 6 * 60 * 60 * 1000);
+function getBedtimeDate() {
+  // Bedtime = trigger - 6h (toujours 6h avant le prochain trigger)
+  const trigger = getTriggerDate();
+  return new Date(trigger.getTime() - 6 * 60 * 60 * 1000);
 }
 
 function formatCountdown(ms) {
@@ -2528,62 +2548,64 @@ function updateSWNotification() {
 let tlrTriggered = false;
 function updateTLRDisplay() {
   const now = new Date();
-  const bed = getBedtimeDate();
   const trigger = getTriggerDate();
+  const bed = getBedtimeDate();
 
   const sleepEl = document.getElementById('tlr-sleep-countdown');
   const sleepLabel = document.getElementById('tlr-sleep-label');
   const triggerEl = document.getElementById('tlr-trigger-countdown');
   const statusEl = document.getElementById('tlr-status-msg');
 
-  const sleepDiff = bed - now;
-  const triggerDiff = trigger - now;
+  const triggerDiff = trigger - now; // toujours > 0 (prochain trigger est dans le futur)
+  const sleepDiff = bed - now;       // > 0 = pas encore l'heure de dormir, < 0 = bedtime passé
 
-  if (sleepEl) {
-    if (sleepDiff > 0) {
-      // Bedtime not reached yet
-      if (sleepLabel) sleepLabel.textContent = 'Tu dois dormir dans';
-      sleepEl.textContent = formatCountdown(sleepDiff);
-      sleepEl.className = 'text-sm font-mono font-bold text-violet-300';
-    } else if (triggerDiff > 0) {
-      // Bedtime passed but trigger not yet → show elapsed time since bedtime
-      if (sleepLabel) sleepLabel.textContent = 'Tu devrais dormir depuis';
-      sleepEl.textContent = formatCountdown(Math.abs(sleepDiff));
-      sleepEl.className = 'text-sm font-mono font-bold text-amber-300';
-    } else {
-      if (sleepLabel) sleepLabel.textContent = 'Dodo';
-      sleepEl.textContent = 'Bonne nuit !';
-      sleepEl.className = 'text-sm font-mono font-bold text-emerald-300';
-    }
+  // Le trigger countdown est toujours un compte à rebours (max ~24h)
+  if (triggerEl) {
+    triggerEl.textContent = formatCountdown(Math.max(0, triggerDiff));
+    triggerEl.className = triggerDiff <= 6 * 3600000 ? 'text-sm font-mono font-bold text-amber-200 animate-pulse' : 'text-sm font-mono font-bold text-amber-300';
   }
 
-  if (triggerEl) {
-    const tc = formatCountdown(triggerDiff);
-    if (tc) {
-      triggerEl.textContent = tc;
-      triggerEl.className = 'text-sm font-mono font-bold text-amber-300';
+  // Le sleep label bascule entre countdown (max 18h) et elapsed (max 6h)
+  if (sleepEl) {
+    if (sleepDiff > 0) {
+      // Bedtime pas encore atteint → countdown (max 18h)
+      if (sleepLabel) sleepLabel.textContent = 'Tu dois dormir dans';
+      sleepEl.textContent = formatCountdown(Math.min(sleepDiff, 18 * 3600000));
+      sleepEl.className = 'text-sm font-mono font-bold text-violet-300';
     } else {
-      triggerEl.textContent = 'En cours !';
-      triggerEl.className = 'text-sm font-mono font-bold text-amber-200 animate-pulse';
+      // Bedtime passé → elapsed depuis bedtime (max 6h)
+      const elapsed = Math.min(Math.abs(sleepDiff), 6 * 3600000);
+      if (sleepLabel) sleepLabel.textContent = 'Tu devrais dormir depuis';
+      sleepEl.textContent = formatCountdown(elapsed);
+      sleepEl.className = 'text-sm font-mono font-bold text-amber-300';
     }
   }
 
   if (statusEl) {
-    if (triggerDiff <= 0) {
-      statusEl.textContent = 'Le refrain se joue... Faites de beaux rêves lucides.';
-    } else if (sleepDiff <= 0) {
+    if (sleepDiff > 0) {
+      statusEl.textContent = 'En attente. Le refrain se jouera automatiquement à l\'heure prévue.';
+    } else if (triggerDiff > 30000) {
       statusEl.textContent = 'Vous devriez dormir. Le déclencheur arrivera dans votre sommeil paradoxal.';
     } else {
-      statusEl.textContent = 'En attente. Le refrain se jouera automatiquement à l\'heure prévue.';
+      statusEl.textContent = 'Le refrain se joue... Faites de beaux rêves lucides.';
     }
   }
 
-  // Auto-play du refrain quand le trigger est atteint
-  if (triggerDiff <= 0 && !tlrTriggered && isTLRActive()) {
+  // Auto-play du refrain quand le trigger est atteint (triggerDiff < 1s = trigger now)
+  // Note: triggerDiff est toujours positif mais quand il approche 0 avant le reset du cycle
+  // On utilise un seuil de 2s pour éviter les races
+  const triggerNow = triggerDiff <= 2000 && triggerDiff >= 0;
+  if (!tlrTriggered && isTLRActive() && now >= new Date(trigger.getTime() - 2000) && now <= trigger) {
+    // Ne rien faire — le trigger est dans ~2s
+  }
+  // Check if we just passed a trigger point (within last 60s)
+  const lastTrigger = new Date(trigger.getTime() - 24 * 3600000); // trigger précédent
+  const sinceLast = now - lastTrigger;
+  if (sinceLast >= 0 && sinceLast < 60000 && !tlrTriggered && isTLRActive()) {
     tlrTriggered = true;
     playTLRRefrain();
   }
-  if (triggerDiff > 0) tlrTriggered = false;
+  if (sinceLast >= 60000) tlrTriggered = false;
 }
 
 function playTLRRefrain() {
