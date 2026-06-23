@@ -101,17 +101,19 @@ cronRoutes.post('/tlr-check', async (c) => {
   }
 
   const now = new Date()
-  const currentHH = String(now.getUTCHours()).padStart(2, '0')
-  const currentMM = String(now.getUTCMinutes()).padStart(2, '0')
-  const currentTimeUTC = `${currentHH}:${currentMM}`
+  const currentHH = now.getUTCHours()
+  const currentMM = now.getUTCMinutes()
+  const currentTotalMinutes = currentHH * 60 + currentMM
+  const currentTimeUTC = `${String(currentHH).padStart(2, '0')}:${String(currentMM).padStart(2, '0')}`
 
-  // Trouver tous les schedules actifs dont le trigger_time correspond à maintenant (UTC)
-  // On cherche à la minute près
+  // Trouver tous les schedules actifs
+  // On utilise une fenêtre de matching au lieu d'un match exact,
+  // car le cron externe peut avoir quelques secondes de décalage
   const schedules = await c.env.DB.prepare(
-    `SELECT ts.user_id, ts.trigger_time, ts.bedtime
+    `SELECT ts.user_id, ts.trigger_time, ts.bedtime, ts.last_triggered_at
      FROM tlr_schedules ts
-     WHERE ts.active = 1 AND ts.trigger_time = ?`
-  ).bind(currentTimeUTC).all<any>()
+     WHERE ts.active = 1`
+  ).all<any>()
 
   if (!schedules.results?.length) {
     return c.json({ triggered: 0, time: currentTimeUTC })
@@ -120,9 +122,29 @@ cronRoutes.post('/tlr-check', async (c) => {
   const vapidPub = c.env.VAPID_PUBLIC_KEY
   const vapidPriv = c.env.VAPID_PRIVATE_KEY
   let triggered = 0
+  let skipped = 0
   let errors = 0
+  const todayStr = now.toISOString().split('T')[0] // "2026-06-23"
 
   for (const schedule of schedules.results) {
+    // Parser le trigger_time du schedule
+    const [trigH, trigM] = schedule.trigger_time.split(':').map(Number)
+    const trigTotalMinutes = trigH * 60 + trigM
+    
+    // Fenêtre de matching : trigger_time ± 1 minute (gère le décalage cron)
+    let diff = currentTotalMinutes - trigTotalMinutes
+    // Gérer le passage minuit (ex: trigger 23:59, cron 00:00)
+    if (diff > 720) diff -= 1440
+    if (diff < -720) diff += 1440
+    
+    if (diff < 0 || diff > 1) continue // Pas dans la fenêtre
+    
+    // Dedup : ne pas re-trigger si déjà triggeré aujourd'hui
+    if (schedule.last_triggered_at && schedule.last_triggered_at.startsWith(todayStr)) {
+      skipped++
+      continue
+    }
+
     // Récupérer toutes les push subscriptions de ce user
     const subs = await c.env.DB.prepare(
       'SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?'
@@ -130,15 +152,15 @@ cronRoutes.post('/tlr-check', async (c) => {
 
     if (!subs.results?.length) continue
 
+    let userTriggered = false
     for (const sub of subs.results) {
       const result = await sendWebPush(
         { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
         {
           type: 'TLR_TRIGGER',
-          title: 'Rêve Mieux : Déclencheur Lucide !',
-          body: 'Le refrain va se jouer. Faites de beaux rêves lucides.',
-          url: '/?autoplay=refrain',
-          triggerTime: schedule.trigger_time
+          title: '🌙 Déclencheur Lucide',
+          body: 'Touche pour écouter le refrain Rêve Mieux',
+          url: '/?autoplay=refrain'
         },
         vapidPub,
         vapidPriv
@@ -146,6 +168,7 @@ cronRoutes.post('/tlr-check', async (c) => {
 
       if (result.success) {
         triggered++
+        userTriggered = true
       } else {
         errors++
         // Si le push endpoint est mort (410 Gone), supprimer la subscription
@@ -156,9 +179,16 @@ cronRoutes.post('/tlr-check', async (c) => {
         }
       }
     }
+
+    // Marquer comme triggeré aujourd'hui (dedup)
+    if (userTriggered) {
+      await c.env.DB.prepare(
+        'UPDATE tlr_schedules SET last_triggered_at = ? WHERE user_id = ?'
+      ).bind(now.toISOString(), schedule.user_id).run()
+    }
   }
 
-  return c.json({ triggered, errors, time: currentTimeUTC })
+  return c.json({ triggered, skipped, errors, time: currentTimeUTC })
 })
 
 // Test endpoint — envoie un push test au user authentifié

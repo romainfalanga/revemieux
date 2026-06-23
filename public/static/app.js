@@ -222,7 +222,7 @@ function renderApp() {
     // Retirer le paramètre de l'URL pour éviter de re-jouer au refresh
     window.history.replaceState({}, '', window.location.pathname);
     // Attendre que la page soit prête puis lancer le refrain
-    setTimeout(() => { window.toggleReveMieuxPlayer?.(); showToast('🎵 Refrain lancé depuis la notification'); }, 1000);
+    setTimeout(() => { playTLRRefrain(); }, 1000);
   }
 }
 
@@ -2378,11 +2378,10 @@ if ('serviceWorker' in navigator) {
       if (state.currentView === 'lucidity') renderLucidity();
     }
     if (event.data?.type === 'PLAY_REFRAIN_FROM_SW') {
-      // Auto-play refrain when user taps notification body
+      // Push serveur TLR : jouer le refrain automatiquement au volume TLR
       setTimeout(() => {
         if (!reveMieuxAudio || reveMieuxAudio.paused) {
-          window.toggleReveMieuxPlayer?.();
-          showToast('🎵 Refrain lancé depuis la notification');
+          playTLRRefrain();
         }
       }, 300);
     }

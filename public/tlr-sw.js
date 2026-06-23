@@ -1,9 +1,9 @@
 // TLR Service Worker - Notification persistante pour Rêve Mieux
 // Gère les notifications sur écran de verrouillage
 // La notification ne peut être retirée QUE depuis la page Lucidité (toggleTLR)
-// v3.2.0 : Web Push serveur pour TLR (fonctionne téléphone verrouillé)
+// v3.3.0 : Web Push serveur — ouvre l'app et joue le refrain automatiquement
 
-const SW_VERSION = '3.2.0';
+const SW_VERSION = '3.3.0';
 
 // État interne
 let tlrActive = false;
@@ -162,42 +162,67 @@ async function closeTLRNotification() {
 }
 
 // === Web Push reçu depuis le serveur (cron TLR) ===
+// Stratégie : le push arrive pendant que l'utilisateur dort.
+// 1. On ouvre l'app en arrière-plan avec ?autoplay=refrain
+//    → l'app détecte le paramètre et lance le refrain automatiquement
+// 2. On affiche aussi une notification (obligatoire pour les push events)
+//    mais silencieuse, au cas où l'ouverture auto échoue
 self.addEventListener('push', (event) => {
-  let payload = { title: '🌙 Rêve Mieux', body: 'Déclencheur lucide !', type: 'tlr-push-trigger' };
+  let payload = { title: '🌙 Rêve Mieux', body: 'Déclencheur lucide !' };
   
   try {
     if (event.data) {
       const data = event.data.json();
       if (data.title) payload.title = data.title;
       if (data.body) payload.body = data.body;
-      // On garde toujours le type 'tlr-push-trigger' pour le notificationclick handler
-      // Le serveur envoie TLR_TRIGGER ou TLR_TEST mais on normalise côté SW
     }
   } catch (e) {
-    // Si le payload n'est pas du JSON valide, utiliser le texte brut
-    try {
-      if (event.data) payload.body = event.data.text();
-    } catch (e2) {}
+    try { if (event.data) payload.body = event.data.text(); } catch (e2) {}
   }
 
-  const options = {
-    body: payload.body,
-    icon: '/static/icon-192.png',
-    badge: '/static/icon-192.png',
-    tag: 'tlr-push-trigger',
-    requireInteraction: true,
-    // Vibration longue pour réveiller doucement — pattern : vibrer 300ms, pause 200ms, répété 5x
-    vibrate: [300, 200, 300, 200, 300, 200, 300, 200, 300],
-    // Son de notification (géré par l'OS via le channel de notification)
-    silent: false,
-    actions: [
-      { action: 'play-refrain', title: '🎵 Écouter le refrain' },
-    ],
-    data: { url: '/?autoplay=refrain', type: payload.type }
-  };
-
   event.waitUntil(
-    self.registration.showNotification(payload.title, options)
+    (async () => {
+      // Étape 1 : Essayer d'atteindre un client (app) déjà ouvert
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      let appReached = false;
+      
+      if (clients.length > 0) {
+        // L'app est ouverte (peut-être en arrière-plan) → lui envoyer le message
+        for (const client of clients) {
+          client.postMessage({ type: 'PLAY_REFRAIN_FROM_SW', auto: true });
+        }
+        appReached = true;
+      }
+      
+      // Étape 2 : Si aucun client ouvert, tenter d'ouvrir l'app
+      // openWindow fonctionne dans un push event handler sur Android Chrome
+      if (!appReached) {
+        try {
+          await self.clients.openWindow('/?autoplay=refrain');
+          appReached = true;
+        } catch (e) {
+          // openWindow peut échouer si l'écran est verrouillé sur certains navigateurs
+        }
+      }
+      
+      // Étape 3 : Afficher une notification (obligatoire pour push event)
+      // Si l'app a été atteinte, notification discrète
+      // Sinon, notification visible pour que l'utilisateur puisse taper dessus
+      await self.registration.showNotification(payload.title, {
+        body: appReached 
+          ? 'Le refrain se joue...' 
+          : 'Touche ici pour écouter le refrain',
+        icon: '/static/icon-192.png',
+        badge: '/static/icon-192.png',
+        tag: 'tlr-push-trigger',
+        requireInteraction: !appReached,
+        silent: true, // Pas de son/vibration système — c'est le refrain qui joue
+        actions: [
+          { action: 'play-refrain', title: '🎵 Écouter Rêve Mieux' },
+        ],
+        data: { url: '/?autoplay=refrain', type: 'tlr-push-trigger' }
+      });
+    })()
   );
 });
 
