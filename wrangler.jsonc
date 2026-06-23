@@ -12,6 +12,9 @@
     }
   ],
   "vars": {
-    "JWT_SECRET": "dreamscape-dev-secret-change-in-production-2026"
+    "JWT_SECRET": "dreamscape-dev-secret-change-in-production-2026",
+    "VAPID_PUBLIC_KEY": "BHMshfHoO0nfDyG7gsh8u2vZS0_zXOKTSi1w1k9GTmspk1RXqYLRjaYAnZ6k7DmczBjZ727kbmTzo_q5YpyN-os",
+    "VAPID_PRIVATE_KEY": "ZxwRDEbVcVzuXUjgQlYA6VPtRzl_-ihKu-PknKNUhAw",
+    "CRON_SECRET": "rm-cron-2026-tlr-secret-key"
   }
 }

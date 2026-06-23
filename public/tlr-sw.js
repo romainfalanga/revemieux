@@ -1,9 +1,9 @@
 // TLR Service Worker - Notification persistante pour Rêve Mieux
 // Gère les notifications sur écran de verrouillage
 // La notification ne peut être retirée QUE depuis la page Lucidité (toggleTLR)
-// v3.1.0 : 1 bouton (Écouter Rêve Mieux uniquement)
+// v3.2.0 : Web Push serveur pour TLR (fonctionne téléphone verrouillé)
 
-const SW_VERSION = '3.1.0';
+const SW_VERSION = '3.2.0';
 
 // État interne
 let tlrActive = false;
@@ -161,6 +161,46 @@ async function closeTLRNotification() {
   triggerNotifs.forEach(n => n.close());
 }
 
+// === Web Push reçu depuis le serveur (cron TLR) ===
+self.addEventListener('push', (event) => {
+  let payload = { title: '🌙 Rêve Mieux', body: 'Déclencheur lucide !', type: 'tlr-push-trigger' };
+  
+  try {
+    if (event.data) {
+      const data = event.data.json();
+      if (data.title) payload.title = data.title;
+      if (data.body) payload.body = data.body;
+      // On garde toujours le type 'tlr-push-trigger' pour le notificationclick handler
+      // Le serveur envoie TLR_TRIGGER ou TLR_TEST mais on normalise côté SW
+    }
+  } catch (e) {
+    // Si le payload n'est pas du JSON valide, utiliser le texte brut
+    try {
+      if (event.data) payload.body = event.data.text();
+    } catch (e2) {}
+  }
+
+  const options = {
+    body: payload.body,
+    icon: '/static/icon-192.png',
+    badge: '/static/icon-192.png',
+    tag: 'tlr-push-trigger',
+    requireInteraction: true,
+    // Vibration longue pour réveiller doucement — pattern : vibrer 300ms, pause 200ms, répété 5x
+    vibrate: [300, 200, 300, 200, 300, 200, 300, 200, 300],
+    // Son de notification (géré par l'OS via le channel de notification)
+    silent: false,
+    actions: [
+      { action: 'play-refrain', title: '🎵 Écouter le refrain' },
+    ],
+    data: { url: '/?autoplay=refrain', type: payload.type }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, options)
+  );
+});
+
 // Clic sur la notification
 self.addEventListener('notificationclick', (event) => {
   const notifType = event.notification.data?.type;
@@ -194,6 +234,23 @@ self.addEventListener('notificationclick', (event) => {
           clients[0].focus();
         } else {
           await self.clients.openWindow('/');
+        }
+      })()
+    );
+    return;
+  }
+
+  // Notification push TLR serveur : ouvrir l'app avec autoplay du refrain
+  if (notifType === 'tlr-push-trigger') {
+    event.notification.close();
+    event.waitUntil(
+      (async () => {
+        const clients = await self.clients.matchAll({ type: 'window' });
+        if (clients.length > 0) {
+          clients[0].focus();
+          clients[0].postMessage({ type: 'PLAY_REFRAIN_FROM_SW' });
+        } else {
+          await self.clients.openWindow('/?autoplay=refrain');
         }
       })()
     );

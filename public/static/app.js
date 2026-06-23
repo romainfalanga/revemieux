@@ -2395,7 +2395,14 @@ function sendSWMessage(data) {
 }
 
 function getTLRBedtime() { return localStorage.getItem('tlr_bedtime') || '23:00'; }
-function saveTLRBedtime(val) { localStorage.setItem('tlr_bedtime', val); if (isTLRActive()) restartTLRCounters(); }
+function saveTLRBedtime(val) { 
+  localStorage.setItem('tlr_bedtime', val); 
+  if (isTLRActive()) { 
+    restartTLRCounters(); 
+    // Re-sync le schedule serveur avec le nouveau bedtime
+    sendTLRScheduleToServer(true); 
+  } 
+}
 window.calcTriggerTimeStr = function(bedtime) { const [h,m] = bedtime.split(':').map(Number); return String((h+6)%24).padStart(2,'0') + ':' + String(m).padStart(2,'0'); };
 
 function getTLRTonightOverride() { 
@@ -2409,15 +2416,15 @@ function getTLRTonightOverride() {
   } catch { return ''; }
 }
 function saveTLRTonightOverride(val) { 
-  if (!val) { localStorage.removeItem('tlr_tonight'); return; }
+  if (!val) { localStorage.removeItem('tlr_tonight'); if (isTLRActive()) sendTLRScheduleToServer(true); return; }
   localStorage.setItem('tlr_tonight', JSON.stringify({ time: val, date: new Date().toISOString().split('T')[0] }));
-  if (isTLRActive()) restartTLRCounters();
+  if (isTLRActive()) { restartTLRCounters(); sendTLRScheduleToServer(true); }
 }
 window.clearTLRTonightOverride = function() {
   localStorage.removeItem('tlr_tonight');
   const el = document.getElementById('tlr-tonight-override');
   if (el) el.value = '';
-  if (isTLRActive()) restartTLRCounters();
+  if (isTLRActive()) { restartTLRCounters(); sendTLRScheduleToServer(true); }
 };
 
 function getTLRVolume() { return parseInt(localStorage.getItem('tlr_volume') || '1'); }
@@ -2475,12 +2482,92 @@ function formatCountdownHM(ms) {
   return `${h}h${String(m).padStart(2,'0')}`;
 }
 
+// === Web Push pour TLR serveur (fonctionne même téléphone verrouillé) ===
+async function subscribeToPush() {
+  try {
+    if (!('PushManager' in window)) { console.warn('PushManager non supporté'); return false; }
+    
+    // Récupérer la clé VAPID depuis le serveur
+    const vapidResp = await fetch('/api/push/vapid-key', { headers: authHeaders() });
+    if (!vapidResp.ok) return false;
+    const { publicKey } = await vapidResp.json();
+    
+    // Convertir la clé VAPID en Uint8Array
+    const vapidKeyBytes = Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+    
+    // S'abonner au Push Manager
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+    
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKeyBytes
+      });
+    }
+    
+    // Envoyer la subscription au backend
+    const subJSON = subscription.toJSON();
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: subJSON.endpoint, keys: subJSON.keys })
+    });
+    
+    return true;
+  } catch (err) {
+    console.warn('Push subscribe failed:', err);
+    return false;
+  }
+}
+
+async function sendTLRScheduleToServer(active) {
+  try {
+    if (active) {
+      // Utiliser l'override "ce soir" s'il existe, sinon le bedtime par défaut
+      const tonightOverride = getTLRTonightOverride();
+      const bedtime = tonightOverride || getTLRBedtime();
+      const triggerTime = calcTriggerTimeStr(bedtime);
+      // Convertir en UTC pour le serveur
+      const [bh, bm] = bedtime.split(':').map(Number);
+      const [th, tm] = triggerTime.split(':').map(Number);
+      const now = new Date();
+      const offset = now.getTimezoneOffset(); // minutes, ex: -120 pour UTC+2
+      const bedUTC_h = ((bh * 60 + bm + offset) / 60 + 24) % 24;
+      const trigUTC_h = ((th * 60 + tm + offset) / 60 + 24) % 24;
+      const bedUTC = String(Math.floor(bedUTC_h)).padStart(2,'0') + ':' + String(Math.round((bedUTC_h % 1) * 60)).padStart(2,'0');
+      const trigUTC = String(Math.floor(trigUTC_h)).padStart(2,'0') + ':' + String(Math.round((trigUTC_h % 1) * 60)).padStart(2,'0');
+      
+      await fetch('/api/push/tlr-schedule', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bedtime: bedUTC, triggerTime: trigUTC, active: true })
+      });
+    } else {
+      await fetch('/api/push/tlr-schedule', {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+    }
+  } catch (err) {
+    console.warn('TLR schedule sync failed:', err);
+  }
+}
+
+function authHeaders() {
+  return state.token ? { 'Authorization': 'Bearer ' + state.token } : {};
+}
+
 window.toggleTLR = async function() {
   if (isTLRActive()) {
     // Désactiver
     localStorage.setItem('tlr_active', '0');
     stopTLRCounters();
     sendSWMessage({ type: 'TLR_STOP' });
+    
+    // Désactiver le schedule serveur
+    sendTLRScheduleToServer(false);
+    
     const btn = document.getElementById('tlr-toggle-btn');
     if (btn) {
       btn.className = 'px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 bg-gradient-to-r from-violet-600 to-dream-600 text-white hover:from-violet-500 hover:to-dream-500';
@@ -2490,7 +2577,7 @@ window.toggleTLR = async function() {
     if (counters) counters.classList.add('hidden');
     showToast('TLR nocturne désactivé');
   } else {
-    // Activer : enregistrer SW + demander permission notifs
+    // Activer : enregistrer SW + demander permission notifs + push subscribe
     localStorage.setItem('tlr_active', '1');
     
     // Enregistrer le Service Worker
@@ -2500,6 +2587,12 @@ window.toggleTLR = async function() {
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
       await Notification.requestPermission();
     }
+    
+    // S'abonner au Web Push (pour le trigger serveur)
+    const pushOk = await subscribeToPush();
+    
+    // Envoyer le schedule au serveur
+    await sendTLRScheduleToServer(true);
     
     startTLRCounters();
     
@@ -2512,9 +2605,11 @@ window.toggleTLR = async function() {
     if (counters) counters.classList.remove('hidden');
     
     const notifOk = ('Notification' in window && Notification.permission === 'granted');
-    showToast(notifOk 
-      ? 'TLR activé ! Notification fixée sur votre écran. Désactivez ici uniquement.' 
-      : 'TLR activé ! Autorisez les notifications pour le rappel permanent sur écran de verrouillage.');
+    showToast(notifOk && pushOk
+      ? 'TLR activé ! Le refrain se déclenchera automatiquement, même téléphone verrouillé.' 
+      : notifOk
+        ? 'TLR activé ! Le déclencheur fonctionne quand l\'app est ouverte.'
+        : 'TLR activé ! Autorisez les notifications pour le déclencheur automatique.');
   }
 };
 
