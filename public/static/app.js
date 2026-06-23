@@ -2099,34 +2099,59 @@ async function renderLucidity() {
           <p class="text-[10px] text-gray-500 mt-2">Fichier MP3, enregistre-le pour le sélectionner comme sonnerie dans ton appli Horloge.</p>
         </div>
 
-        <!-- Étape 2 : Alarme routine pré-sommeil -->
+        <!-- Étape 2 : Routine lucide en 3 alarmes -->
         <div class="p-3 rounded-xl bg-emerald-900/15 border border-emerald-500/20 mb-4">
-          <p class="text-xs font-semibold text-emerald-200 mb-2"><i class="fas fa-bed mr-1.5"></i>Étape 2 : Programme ton alarme « routine lucide »</p>
-          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Se coucher à heure fixe chaque soir <strong class="text-emerald-300">augmente la prévisibilité de tes cycles REM</strong>, ce qui rend toutes les techniques de rêve lucide plus efficaces. Un rythme circadien régulier stabilise tes phases de sommeil paradoxal, et c'est précisément pendant ces phases que le TLR agit <span class="text-gray-500">(Nature Communications Psychology, 2024 ; Sleep Foundation)</span>.</p>
-          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Mais au-delà de la régularité, cette alarme a un deuxième rôle : <strong class="text-emerald-300">te pousser à pratiquer ta routine pré-sommeil</strong>. Les études montrent que les techniques pratiquées juste avant le coucher (intention, relecture de rêves, incubation) ont un impact direct sur le contenu onirique et les chances de lucidité (Barrett, 1993 ; Schredl, 2003 ; Aspy et al., 2017).</p>
+          <p class="text-xs font-semibold text-emerald-200 mb-2"><i class="fas fa-bed mr-1.5"></i>Étape 2 : Programme ta routine lucide (3 alarmes)</p>
+          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Se coucher à heure fixe chaque soir <strong class="text-emerald-300">augmente la prévisibilité de tes cycles REM</strong>, ce qui rend toutes les techniques de rêve lucide plus efficaces <span class="text-gray-500">(Nature Communications Psychology, 2024 ; Sleep Foundation)</span>.</p>
+          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Mais la régularité seule ne suffit pas. Les études montrent que les techniques pratiquées avant le coucher (relecture de rêves, intention, incubation) ont un <strong class="text-emerald-300">impact direct sur le contenu onirique</strong> et les chances de lucidité (Barrett, 1993 ; Schredl, 2003 ; Aspy et al., 2017). Le principe : <strong class="text-emerald-300">une double imprégnation</strong>. D'abord tu relis tes rêves sur ton téléphone (phase active), puis tu lâches l'écran pendant 1h (phase calme), et au moment de t'endormir tu revisualises tout de mémoire (phase d'ancrage). Ce double passage renforce considérablement la trace mnésique.</p>
 
-          <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10 space-y-1.5 mb-3">
-            <p class="text-[10px] text-gray-200"><strong class="text-emerald-300">Programme 1 alarme quotidienne</strong> dans ton appli Horloge</p>
-            <ul class="text-[10px] text-gray-300 space-y-1 ml-3">
-              <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h avant ton coucher cible (ex : coucher 23h, alarme à 22h)</li>
-              <li><span class="whitespace-nowrap">🎵 <strong>Sonnerie :</strong></span> le fichier « Rêve Mieux » téléchargé</li>
-              <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> modéré (assez pour l'entendre, pas agressif)</li>
+          <p class="text-[10px] font-semibold text-emerald-200 mb-2 mt-3"><i class="fas fa-list-ol mr-1"></i>Programme 3 alarmes quotidiennes dans ton appli Horloge</p>
+
+          <!-- Alarme 1 : Préparation active -->
+          <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10 mb-2">
+            <p class="text-[10px] font-semibold text-amber-200 mb-1.5">🔔 Alarme 1 : Préparation active (1h10 avant le coucher)</p>
+            <ul class="text-[10px] text-gray-300 space-y-1 ml-3 mb-2">
+              <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h10 avant ton coucher (ex : coucher 23h, alarme à 21h50)</li>
+              <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> <strong class="text-amber-300">fort</strong> (tu dois l'entendre clairement, c'est le signal de départ)</li>
               <li><span class="whitespace-nowrap">🔁 <strong>Répéter :</strong></span> tous les jours, y compris le week-end</li>
             </ul>
-          </div>
-
-          <p class="text-[10px] font-semibold text-emerald-200 mb-1.5">🌙 Ta routine lucide (1h avant de dormir)</p>
-          <p class="text-[10px] text-gray-400 leading-relaxed mb-2">Quand l'alarme sonne, c'est le signal : écrans éteints, lumière tamisée. Tu lances ta routine.</p>
-          <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10">
-            <ol class="text-[10px] text-gray-300 space-y-2">
-              <li><strong class="text-emerald-300">1. Relis tes derniers rêves</strong> dans ton journal Rêve Mieux. Repère tes signes de rêve récurrents (lieux, personnages, situations absurdes). Plus tu les connais, plus tu les reconnaîtras en rêve.</li>
-              <li><strong class="text-emerald-300">2. Reprends une série de rêves</strong> si tu en as une en cours. Relis les épisodes précédents, laisse les détails, les lieux et les émotions t'imprégner. Ton cerveau intègre ces contenus dans la mémoire de travail, ce qui augmente les chances d'y retourner cette nuit (incubation, voir plus bas).</li>
-              <li><strong class="text-emerald-300">3. Formule ton intention</strong> : « Cette nuit, je me rendrai compte que je rêve. » Répète cette phrase avec conviction. Si tu as une série en cours : « Cette nuit, je retourne dans ce rêve et je deviens lucide. » C'est le principe MILD (voir section Techniques d'Induction ci-dessous).</li>
-              <li><strong class="text-emerald-300">4. Fais un dernier Reality Check</strong> avec le refrain « Rêve Mieux ». Lance le lecteur audio ci-dessus, compte tes doigts, demande-toi sincèrement « suis-je en train de rêver ? ». Ce dernier ancrage juste avant le sommeil renforce le conditionnement musique/lucidité.</li>
-              <li><strong class="text-emerald-300">5. Visualise-toi lucide</strong> : en fermant les yeux, imagine-toi dans ton dernier rêve. Tu reconnais un signe de rêve, tu deviens lucide, tu prends le contrôle. Maintiens cette image en t'endormant.</li>
+            <p class="text-[10px] text-gray-400 leading-relaxed mb-1">Cette alarme lance ta routine. Tu as <strong class="text-emerald-300">10 minutes sur ton téléphone</strong> pour :</p>
+            <ol class="text-[10px] text-gray-300 space-y-1.5 ml-3">
+              <li><strong class="text-emerald-300">1. Relire tes derniers rêves</strong> dans Rêve Mieux. Repère tes signes de rêve récurrents (lieux, personnages, situations absurdes).</li>
+              <li><strong class="text-emerald-300">2. Reprendre une série de rêves</strong> si tu en as une en cours. Relis les épisodes, laisse les détails et les émotions t'imprégner. Ton cerveau charge ces contenus dans la mémoire de travail (incubation, voir section plus bas).</li>
+              <li><strong class="text-emerald-300">3. Formuler ton intention</strong> : « Cette nuit, je me rendrai compte que je rêve. » Si tu suis une série : « Cette nuit, je retourne dans ce rêve et je deviens lucide. » C'est le principe MILD (voir Techniques d'Induction ci-dessous).</li>
+              <li><strong class="text-emerald-300">4. Faire un Reality Check</strong> avec le refrain « Rêve Mieux ». Lance le lecteur audio en haut de cette page, compte tes doigts, demande-toi sincèrement « suis-je en train de rêver ? ».</li>
             </ol>
           </div>
-          <p class="text-[10px] text-gray-400 italic mt-2">En entendant « Rêve Mieux » chaque soir au même moment, tu renforces aussi l'ancrage musical qui servira de déclencheur nocturne via le TLR.</p>
+
+          <!-- Alarme 2 : Temps calme -->
+          <div class="p-2.5 rounded-lg bg-night-900/50 border border-violet-500/10 mb-2">
+            <p class="text-[10px] font-semibold text-violet-200 mb-1.5">🌙 Alarme 2 : Temps calme (1h avant le coucher)</p>
+            <ul class="text-[10px] text-gray-300 space-y-1 ml-3 mb-2">
+              <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h avant ton coucher (ex : coucher 23h, alarme à 22h)</li>
+              <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> modéré</li>
+            </ul>
+            <p class="text-[10px] text-gray-400 leading-relaxed"><strong class="text-violet-300">Pose ton téléphone.</strong> C'est le moment de couper tous les écrans. Lumière tamisée, pas de stimulation. Pendant cette heure, ton cerveau consolide naturellement ce que tu viens de lire. Pas besoin de forcer : les images, les lieux et les émotions de tes rêves continuent de travailler en arrière-plan.</p>
+          </div>
+
+          <!-- Alarme 3 : Coucher -->
+          <div class="p-2.5 rounded-lg bg-night-900/50 border border-dream-500/10">
+            <p class="text-[10px] font-semibold text-dream-200 mb-1.5">😴 Alarme 3 : Coucher (heure de dormir)</p>
+            <ul class="text-[10px] text-gray-300 space-y-1 ml-3 mb-2">
+              <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> ton heure de coucher (ex : 23h)</li>
+              <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> modéré</li>
+            </ul>
+            <p class="text-[10px] text-gray-400 leading-relaxed mb-1.5">C'est l'heure. Tu es au lit, <strong class="text-dream-300">sans téléphone depuis 1h</strong>. Maintenant, refais les mêmes techniques que lors de l'alarme 1, mais <strong class="text-dream-300">de mémoire uniquement</strong> :</p>
+            <ol class="text-[10px] text-gray-300 space-y-1.5 ml-3">
+              <li><strong class="text-dream-300">1. Repense à tes rêves récents.</strong> Quels lieux, quels personnages, quels signes de rêve récurrents te reviennent ?</li>
+              <li><strong class="text-dream-300">2. Revisite ta série de rêves</strong> mentalement. Replonge-toi dans les scènes, les émotions, les détails.</li>
+              <li><strong class="text-dream-300">3. Reformule ton intention</strong> : « Cette nuit, je me rendrai compte que je rêve. » Répète avec conviction.</li>
+              <li><strong class="text-dream-300">4. Visualise-toi lucide</strong> : imagine-toi dans ton dernier rêve. Tu reconnais un signe de rêve, tu deviens lucide, tu prends le contrôle. Maintiens cette image en t'endormant.</li>
+            </ol>
+            <p class="text-[10px] text-gray-500 italic mt-1.5">Cette double imprégnation (téléphone puis mémoire) ancre profondément les contenus oniriques. Le fait de revisualiser sans écran force ton cerveau à reconstruire activement les images, ce qui renforce la trace mnésique bien plus qu'une simple relecture.</p>
+          </div>
+
+          <p class="text-[10px] text-gray-400 italic mt-2.5">Toutes les alarmes utilisent le refrain « Rêve Mieux » comme sonnerie. En l'entendant 3 fois chaque soir, tu renforces l'ancrage musical qui servira de déclencheur nocturne via le TLR.</p>
         </div>
 
         <!-- Étape 3 : Choisir sa stratégie -->
