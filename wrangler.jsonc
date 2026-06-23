@@ -1,14 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "dreamscape",
+  "name": "reve-mieux",
   "compatibility_date": "2026-05-01",
   "pages_build_output_dir": "./dist",
   "compatibility_flags": ["nodejs_compat"],
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "dreamscape-production",
-      "database_id": "local-dev-placeholder"
+      "database_name": "revemieux-production",
+      "database_id": "c6ceb37d-633f-4fbd-b609-3e4c7786c5fb"
     }
   ],
   "vars": {
