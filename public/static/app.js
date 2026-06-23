@@ -72,9 +72,6 @@ function renderAuth() {
           <div id="auth-error" class="text-red-300 text-sm mb-3 hidden px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg"></div>
           <button type="submit" id="auth-btn" class="w-full py-3 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg font-semibold hover:from-dream-400 hover:to-dream-600 transition-all shadow-lg shadow-dream-500/20">Se connecter</button>
         </form>
-        <div class="mt-6 p-3 bg-dream-900/20 rounded-lg border border-dream-700/20">
-          <p class="text-xs text-gray-400 text-center"><i class="fas fa-flask mr-1"></i>Basé sur les recherches de Schredl (2002), LaBerge (1985) et Stumbrys et al. (2012).</p>
-        </div>
       </div>
     </div>`;
 }
