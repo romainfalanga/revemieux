@@ -2091,21 +2091,37 @@ async function renderLucidity() {
         <!-- Étape 1 : Télécharger le refrain -->
         <div class="p-3 rounded-xl bg-amber-900/15 border border-amber-500/20 mb-4">
           <p class="text-xs font-semibold text-amber-200 mb-2"><i class="fas fa-download mr-1.5"></i>Étape 1 : Télécharge le refrain</p>
-          <p class="text-[10px] text-gray-300 leading-relaxed mb-2.5">Télécharge le fichier audio du refrain « Rêve Mieux » sur ton téléphone. Tu l'utiliseras comme sonnerie d'alarme.</p>
+          <p class="text-[10px] text-gray-300 leading-relaxed mb-2.5">Télécharge le fichier audio du refrain « Rêve Mieux » sur ton téléphone. Tu l'utiliseras comme sonnerie d'alarme pour toutes les étapes suivantes.</p>
           <a href="/static/reve-mieux-refrain.mp3" download="reve-mieux-refrain.mp3"
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 transition-all">
             <i class="fas fa-music"></i> Télécharger le refrain
           </a>
-          <p class="text-[10px] text-gray-500 mt-2">Fichier MP3 — enregistre-le pour le sélectionner comme sonnerie dans ton appli Horloge.</p>
+          <p class="text-[10px] text-gray-500 mt-2">Fichier MP3, enregistre-le pour le sélectionner comme sonnerie dans ton appli Horloge.</p>
         </div>
 
-        <!-- Étape 2 : Choisir sa stratégie -->
+        <!-- Étape 2 : Alarme de coucher -->
+        <div class="p-3 rounded-xl bg-emerald-900/15 border border-emerald-500/20 mb-4">
+          <p class="text-xs font-semibold text-emerald-200 mb-2"><i class="fas fa-bed mr-1.5"></i>Étape 2 : Programme une alarme de coucher</p>
+          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Se coucher à heure fixe chaque soir <strong class="text-emerald-300">augmente la prévisibilité de tes cycles REM</strong>, ce qui rend les techniques de rêve lucide plus efficaces. Un rythme circadien régulier stabilise tes phases de sommeil paradoxal, et c'est précisément pendant ces phases que le TLR agit. Des études montrent que la régularité du sommeil améliore significativement le rappel de rêves et l'efficacité des inductions lucides <span class="text-gray-500">(Nature Communications Psychology, 2024 ; Sleep Foundation)</span>.</p>
+          <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10 space-y-1.5">
+            <p class="text-[10px] text-gray-200"><strong class="text-emerald-300">Programme 1 alarme quotidienne</strong> dans ton appli Horloge :</p>
+            <ul class="text-[10px] text-gray-300 space-y-1 ml-3">
+              <li>⏰ <strong>Heure :</strong> 30 min avant ton heure de coucher cible (ex : coucher 23h, alarme à 22h30)</li>
+              <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé</li>
+              <li>🔈 <strong>Volume :</strong> modéré (assez pour l'entendre, pas agressif)</li>
+              <li>🔁 <strong>Répéter :</strong> tous les jours, y compris le week-end</li>
+            </ul>
+            <p class="text-[10px] text-gray-400 italic mt-1">Le refrain te rappelle qu'il est temps de commencer ta routine de coucher (journal, relecture de rêves, intention). En entendant « Rêve Mieux » chaque soir, tu renforces aussi l'ancrage musical qui servira de déclencheur nocturne.</p>
+          </div>
+        </div>
+
+        <!-- Étape 3 : Choisir sa stratégie -->
         <div class="mb-4">
-          <p class="text-xs font-semibold text-violet-200 mb-3"><i class="fas fa-route mr-1.5"></i>Étape 2 : Choisis ta stratégie et programme tes alarmes</p>
+          <p class="text-xs font-semibold text-violet-200 mb-3"><i class="fas fa-route mr-1.5"></i>Étape 3 : Choisis ta stratégie et programme tes alarmes nocturnes</p>
           
           <!-- Stratégie A : Douce -->
           <div class="p-3 rounded-xl bg-violet-900/20 border border-violet-500/20 mb-3">
-            <p class="text-xs font-bold text-violet-200 mb-1.5">🌙 Stratégie A — Douce (sans réveil)</p>
+            <p class="text-xs font-bold text-violet-200 mb-1.5">🌙 Stratégie A : Douce (sans réveil)</p>
             <p class="text-[10px] text-gray-300 leading-relaxed mb-2">L'objectif est que le refrain s'intègre directement dans ton rêve <strong class="text-violet-300">sans te réveiller</strong>. Le volume doit être très bas : juste assez pour que ton cerveau endormi capte le son.</p>
             <div class="p-2.5 rounded-lg bg-night-900/50 border border-violet-500/10 space-y-1.5">
               <p class="text-[10px] text-gray-200"><strong class="text-dream-300">Programme 1 alarme</strong> dans ton appli Horloge :</p>
@@ -2122,20 +2138,20 @@ async function renderLucidity() {
 
           <!-- Stratégie B : WBTB Combinée -->
           <div class="p-3 rounded-xl bg-dream-900/20 border border-dream-500/20">
-            <p class="text-xs font-bold text-dream-200 mb-1.5">⏰ Stratégie B — WBTB combinée (réveil + rendormissement)</p>
+            <p class="text-xs font-bold text-dream-200 mb-1.5">⏰ Stratégie B : WBTB combinée (réveil + rendormissement)</p>
             <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Plus efficace mais plus engagée. Tu te réveilles d'abord brièvement (WBTB), puis tu te rendors pendant que le refrain joue en fond sonore.</p>
             <div class="p-2.5 rounded-lg bg-night-900/50 border border-dream-500/10 space-y-2">
               <div>
-                <p class="text-[10px] text-gray-200"><strong class="text-amber-300">Alarme 1 — Réveil bref</strong></p>
+                <p class="text-[10px] text-gray-200"><strong class="text-amber-300">Alarme 1 : Réveil bref</strong></p>
                 <ul class="text-[10px] text-gray-300 space-y-0.5 ml-3">
                   <li>⏰ <strong>Heure :</strong> 5h30 après ton coucher</li>
-                  <li>🎵 <strong>Sonnerie :</strong> ta sonnerie habituelle (ou « Rêve Mieux » un peu plus fort)</li>
-                  <li>🔈 <strong>Volume :</strong> assez fort pour te réveiller</li>
-                  <li>💡 <strong>Action :</strong> lève-toi 5-10 min (toilettes, verre d'eau), formule ton intention de devenir lucide, puis recouche-toi</li>
+                  <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé, <strong class="text-amber-300">à volume suffisant pour te réveiller</strong></li>
+                  <li>🔈 <strong>Volume :</strong> fort (l'objectif ici est de te réveiller, pas de rester endormi)</li>
+                  <li>💡 <strong>Action :</strong> lève-toi 5 à 10 min (toilettes, verre d'eau). Applique ensuite une <strong class="text-dream-300">technique d'induction</strong> : MILD (intention + visualisation) ou SSILD (cycles sensoriels). Voir la section « Techniques d'Induction » ci-dessous pour les protocoles détaillés. Puis recouche-toi.</li>
                 </ul>
               </div>
               <div>
-                <p class="text-[10px] text-gray-200"><strong class="text-violet-300">Alarme 2 — Refrain lucide</strong></p>
+                <p class="text-[10px] text-gray-200"><strong class="text-violet-300">Alarme 2 : Refrain lucide</strong></p>
                 <ul class="text-[10px] text-gray-300 space-y-0.5 ml-3">
                   <li>⏰ <strong>Heure :</strong> 30 min après l'alarme 1 (tu seras rendormi)</li>
                   <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé</li>
@@ -2153,7 +2169,7 @@ async function renderLucidity() {
         <div class="p-2.5 rounded-lg bg-violet-500/8 border border-violet-500/15 mb-3">
           <p class="text-[10px] text-gray-300 leading-relaxed">
             <i class="fas fa-volume-down text-violet-400 mr-1"></i>
-            <strong class="text-violet-200">Réglage du volume :</strong> L'objectif est de trouver le seuil où le son est <strong class="text-violet-300">perceptible par ton cerveau endormi</strong> mais <strong class="text-violet-300">pas assez fort pour te réveiller</strong>. Commence au minimum et augmente progressivement sur plusieurs nuits. Si tu te réveilles systématiquement, baisse d'un cran. Ce seuil est personnel — il faut quelques nuits pour le trouver.
+            <strong class="text-violet-200">Réglage du volume :</strong> L'objectif est de trouver le seuil où le son est <strong class="text-violet-300">perceptible par ton cerveau endormi</strong> mais <strong class="text-violet-300">pas assez fort pour te réveiller</strong>. Commence au minimum et augmente progressivement sur plusieurs nuits. Si tu te réveilles systématiquement, baisse d'un cran. Ce seuil est personnel, il faut quelques nuits pour le trouver.
           </p>
         </div>
 
@@ -2164,7 +2180,7 @@ async function renderLucidity() {
             <strong class="text-violet-200">Pourquoi 6 heures :</strong> Les phases REM les plus longues (30 à 60 min) surviennent en fin de nuit. L'étude TLR a montré que commencer les indices sonores 6h après l'endormissement cible le pic de sommeil paradoxal.
           </p>
         </div>
-        <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Aspy et al. (2017) · Erlacher & Stumbrys (2020)</p>
+        <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Aspy et al. (2017) · Erlacher & Stumbrys (2020) · Nature Communications Psychology (2024) · Sleep Foundation</p>
       </div>
 
       <!-- ===== TECHNIQUES D'INDUCTION ===== -->
