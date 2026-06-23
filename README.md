@@ -49,7 +49,9 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 - **Bases scientifiques documentées** avec références (Schredl, LaBerge, Stumbrys, Barrett, Tholey)
 
 ## URLs
-- **Application** : (sandbox URL — voir GetServiceUrl)
+- **Production** : https://www.revemieux.app
+- **Cloudflare Pages** : https://reve-mieux.pages.dev
+- **GitHub** : https://github.com/romainfalanga/revemieux
 
 ## Architecture Technique
 
@@ -103,8 +105,19 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 | Les reality checks réguliers favorisent la lucidité | Tholey (1983), LaBerge (1985) | ✅ Validé |
 | La technique SSILD induit des rêves lucides | Communauté (CosmicIron) | ⚠️ Exploratoire |
 
-## Déploiement
-- **Plateforme** : Cloudflare Pages
-- **Status** : ✅ En développement local
+## Déploiement & Infrastructure
+
+> **IMPORTANT POUR LES AGENTS IA** : Ce projet est hébergé sur le **compte Cloudflare personnel de Romain** (PAS sur Genspark).
+> - **NE JAMAIS utiliser `gsk hosted deploy`** — c'est l'ancienne infra Genspark, abandonnée.
+> - **Le workflow de déploiement est : `git push origin main`** → Cloudflare Pages build automatiquement depuis GitHub.
+> - La D1 est sur le compte CF de Romain (ID: `c6ceb37d-633f-4fbd-b609-3e4c7786c5fb`).
+> - Pour modifier la DB en CLI : `npx wrangler d1 execute revemieux-production --remote` (nécessite le token CF de Romain via `CLOUDFLARE_API_TOKEN`).
+
+- **Plateforme** : Cloudflare Pages (compte personnel Romain)
+- **Repo GitHub** : `romainfalanga/revemieux` (branche `main`)
+- **CI/CD** : GitHub → Cloudflare Pages (auto-deploy sur push)
+- **Base de données** : Cloudflare D1 `revemieux-production` (compte Romain)
+- **Domaine** : `www.revemieux.app` + `revemieux.app` (DNS sur Cloudflare, zone de Romain)
+- **Status** : ✅ Production
 - **Tech Stack** : Hono + TypeScript + D1 + TailwindCSS + D3.js + Chart.js
-- **Last Updated** : 2026-06-21
+- **Last Updated** : 2026-06-23
