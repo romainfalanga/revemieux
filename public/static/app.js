@@ -2076,74 +2076,95 @@ async function renderLucidity() {
       <div class="glass rounded-xl p-4 mb-5">
         <div class="flex items-center gap-2 mb-3">
           <span class="text-xl">🌜</span>
-          <h3 class="text-lg font-display font-bold text-violet-100">TLR Nocturne : Déclencheur Automatique</h3>
+          <h3 class="text-lg font-display font-bold text-violet-100">TLR Nocturne : Déclencheur Sonore</h3>
         </div>
         <p class="text-xs text-gray-300 leading-relaxed mb-3">
           La <strong class="text-violet-300">Targeted Lucidity Reactivation</strong> (TLR), développée par l'Université de Northwestern (Konkoly et al., 2024, <em>Consciousness and Cognition</em>), consiste à rejouer pendant le sommeil paradoxal un son préalablement associé à l'entraînement au rêve lucide. L'étude a montré que les participants utilisant l'app TLR sont passés de <strong class="text-dream-300">0,74 à 2,11 rêves lucides/semaine</strong>, et 7 participants ont rapporté 14 rêves lucides directement déclenchés par le son.
         </p>
         <p class="text-xs text-gray-300 leading-relaxed mb-3">
-          <strong class="text-violet-200">Comment ça marche ici :</strong> Tu définis ton heure de coucher habituelle. <strong class="text-dream-300">6 heures</strong> après (pic de sommeil paradoxal), le refrain « Rêve Mieux » se joue automatiquement à un volume ultra-faible. Comme ton cerveau a déjà associé ce refrain au questionnement « suis-je en train de rêver ? » via l'ancrage musical, le son peut s'intégrer dans ton rêve et <strong class="text-dream-300">déclencher la lucidité</strong>.
+          <strong class="text-violet-200">Comment ça marche :</strong> Tu programmes une alarme sur ton téléphone avec le refrain « Rêve Mieux » comme sonnerie, à <strong class="text-dream-300">volume très bas</strong>, pour qu'elle sonne <strong class="text-dream-300">6 heures après ton coucher</strong> (pic de sommeil paradoxal). Comme ton cerveau a déjà associé ce refrain au questionnement « suis-je en train de rêver ? » via l'ancrage musical, le son peut s'intégrer dans ton rêve et déclencher la lucidité.
         </p>
         <p class="text-xs text-gray-300 leading-relaxed mb-3">
-          <strong class="text-emerald-200">Scénario gagnant-gagnant :</strong> Que la musique te réveille ou non, tu es gagnant. <strong class="text-dream-300">Si tu ne te réveilles pas</strong>, le son s'intègre dans ton rêve et peut déclencher un flash de lucidité. <strong class="text-dream-300">Si la musique te réveille</strong>, c'est tout aussi bénéfique : tu es exactement dans les conditions idéales d'un <strong class="text-violet-200">WBTB</strong> (Wake Back To Bed). Tu peux alors appliquer la technique MILD : formuler ton intention de devenir lucide, visualiser un rêve, et te rendormir avec une conscience accrue. L'étude de Aspy et al. (2017) montre un taux de succès de 46% pour cette combinaison.
+          <strong class="text-emerald-200">Scénario gagnant-gagnant :</strong> <strong class="text-dream-300">Si tu ne te réveilles pas</strong>, le son s'intègre dans ton rêve et peut déclencher un flash de lucidité. <strong class="text-dream-300">Si la musique te réveille</strong>, tu es dans les conditions idéales d'un <strong class="text-violet-200">WBTB</strong> (voir technique ci-dessous). Tu peux alors formuler ton intention et te rendormir avec une conscience accrue.
         </p>
 
-        <!-- Configuration -->
-        <div id="tlr-config" class="space-y-3">
-          <div class="flex items-center gap-3">
-            <label class="text-xs text-gray-400 shrink-0 w-36">Coucher habituel :</label>
-            <input type="time" id="tlr-bedtime" value="${getTLRBedtime()}" onchange="saveTLRBedtime(this.value); document.getElementById('tlr-trigger-time').textContent = calcTriggerTimeStr(this.value)"
-              class="px-3 py-1.5 bg-night-900/60 border border-violet-700/30 rounded-lg text-white text-sm focus:border-violet-400 focus:outline-none">
-          </div>
-          <div class="flex items-center gap-3">
-            <label class="text-xs text-gray-400 shrink-0 w-36">Déclencheur à :</label>
-            <span id="tlr-trigger-time" class="text-sm font-mono font-semibold text-amber-300">${(() => { const [hh,mm] = getTLRBedtime().split(':').map(Number); return String((hh+6)%24).padStart(2,'0') + ':' + String(mm).padStart(2,'0'); })()}</span>
-            <span class="text-[10px] text-gray-500">(coucher + 6h)</span>
+        <!-- Étape 1 : Télécharger le refrain -->
+        <div class="p-3 rounded-xl bg-amber-900/15 border border-amber-500/20 mb-4">
+          <p class="text-xs font-semibold text-amber-200 mb-2"><i class="fas fa-download mr-1.5"></i>Étape 1 : Télécharge le refrain</p>
+          <p class="text-[10px] text-gray-300 leading-relaxed mb-2.5">Télécharge le fichier audio du refrain « Rêve Mieux » sur ton téléphone. Tu l'utiliseras comme sonnerie d'alarme.</p>
+          <a href="/static/reve-mieux-refrain.mp3" download="reve-mieux-refrain.mp3"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 transition-all">
+            <i class="fas fa-music"></i> Télécharger le refrain
+          </a>
+          <p class="text-[10px] text-gray-500 mt-2">Fichier MP3 — enregistre-le pour le sélectionner comme sonnerie dans ton appli Horloge.</p>
+        </div>
+
+        <!-- Étape 2 : Choisir sa stratégie -->
+        <div class="mb-4">
+          <p class="text-xs font-semibold text-violet-200 mb-3"><i class="fas fa-route mr-1.5"></i>Étape 2 : Choisis ta stratégie et programme tes alarmes</p>
+          
+          <!-- Stratégie A : Douce -->
+          <div class="p-3 rounded-xl bg-violet-900/20 border border-violet-500/20 mb-3">
+            <p class="text-xs font-bold text-violet-200 mb-1.5">🌙 Stratégie A — Douce (sans réveil)</p>
+            <p class="text-[10px] text-gray-300 leading-relaxed mb-2">L'objectif est que le refrain s'intègre directement dans ton rêve <strong class="text-violet-300">sans te réveiller</strong>. Le volume doit être très bas : juste assez pour que ton cerveau endormi capte le son.</p>
+            <div class="p-2.5 rounded-lg bg-night-900/50 border border-violet-500/10 space-y-1.5">
+              <p class="text-[10px] text-gray-200"><strong class="text-dream-300">Programme 1 alarme</strong> dans ton appli Horloge :</p>
+              <ul class="text-[10px] text-gray-300 space-y-1 ml-3">
+                <li>⏰ <strong>Heure :</strong> 6h après ton coucher (ex : coucher 23h → alarme à 5h)</li>
+                <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé</li>
+                <li>🔈 <strong>Volume :</strong> le plus bas possible (1-2 barres max)</li>
+                <li>🔁 <strong>Répéter :</strong> active le rappel (snooze) à 10 min d'intervalle, 3 fois max</li>
+                <li>📳 <strong>Vibration :</strong> désactivée</li>
+              </ul>
+              <p class="text-[10px] text-gray-400 italic mt-1">Ainsi, le refrain sonnera 3 fois à 10 min d'intervalle, à un volume si faible qu'il ne te réveillera pas, mais ton cerveau endormi pourra l'intégrer dans le rêve en cours.</p>
+            </div>
           </div>
 
-          <div class="flex items-center gap-3">
-            <label class="text-xs text-gray-400 shrink-0 w-36">Volume nocturne :</label>
-            <div class="flex gap-1.5" id="tlr-volume-picker">
-              ${[1,2,3].map(v => `<button onclick="setTLRVolume(${v})" data-vol="${v}" class="tlr-vol-btn w-8 h-8 rounded-lg text-xs font-bold border transition-all ${getTLRVolume() === v ? 'border-violet-400 bg-violet-600/30 text-violet-200' : 'border-violet-700/20 bg-night-900/40 text-gray-500 hover:text-gray-300'}">${v}</button>`).join('')}
+          <!-- Stratégie B : WBTB Combinée -->
+          <div class="p-3 rounded-xl bg-dream-900/20 border border-dream-500/20">
+            <p class="text-xs font-bold text-dream-200 mb-1.5">⏰ Stratégie B — WBTB combinée (réveil + rendormissement)</p>
+            <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Plus efficace mais plus engagée. Tu te réveilles d'abord brièvement (WBTB), puis tu te rendors pendant que le refrain joue en fond sonore.</p>
+            <div class="p-2.5 rounded-lg bg-night-900/50 border border-dream-500/10 space-y-2">
+              <div>
+                <p class="text-[10px] text-gray-200"><strong class="text-amber-300">Alarme 1 — Réveil bref</strong></p>
+                <ul class="text-[10px] text-gray-300 space-y-0.5 ml-3">
+                  <li>⏰ <strong>Heure :</strong> 5h30 après ton coucher</li>
+                  <li>🎵 <strong>Sonnerie :</strong> ta sonnerie habituelle (ou « Rêve Mieux » un peu plus fort)</li>
+                  <li>🔈 <strong>Volume :</strong> assez fort pour te réveiller</li>
+                  <li>💡 <strong>Action :</strong> lève-toi 5-10 min (toilettes, verre d'eau), formule ton intention de devenir lucide, puis recouche-toi</li>
+                </ul>
+              </div>
+              <div>
+                <p class="text-[10px] text-gray-200"><strong class="text-violet-300">Alarme 2 — Refrain lucide</strong></p>
+                <ul class="text-[10px] text-gray-300 space-y-0.5 ml-3">
+                  <li>⏰ <strong>Heure :</strong> 30 min après l'alarme 1 (tu seras rendormi)</li>
+                  <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé</li>
+                  <li>🔈 <strong>Volume :</strong> très bas (1-2 barres)</li>
+                  <li>🔁 <strong>Répéter :</strong> rappel à 10 min, 2-3 fois</li>
+                  <li>📳 <strong>Vibration :</strong> désactivée</li>
+                </ul>
+              </div>
+              <p class="text-[10px] text-gray-400 italic">La combinaison WBTB + TLR est la plus puissante : Aspy et al. (2017) montrent 46% de réussite dès la première semaine.</p>
             </div>
-            <span class="text-[10px] text-gray-500">${['', 'Très faible', 'Faible', 'Modéré'][getTLRVolume()]}</span>
-          </div>
-          <div class="flex items-center gap-3 pt-1">
-            <button onclick="toggleTLR()" id="tlr-toggle-btn"
-              class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${isTLRActive() ? 'bg-violet-600/40 text-violet-200 border border-violet-400/50 shadow-lg shadow-violet-500/10' : 'bg-gradient-to-r from-violet-600 to-dream-600 text-white hover:from-violet-500 hover:to-dream-500'}">
-              <i class="fas ${isTLRActive() ? 'fa-stop' : 'fa-moon'}"></i>
-              ${isTLRActive() ? 'Désactiver TLR' : 'Activer TLR Nocturne'}
-            </button>
           </div>
         </div>
 
-        <!-- Compteurs TLR (visible quand actif) -->
-        <div id="tlr-counters" class="${isTLRActive() ? '' : 'hidden'} mt-4 p-3 rounded-xl bg-night-900/50 border border-violet-500/20 space-y-2">
-          <div class="flex items-center gap-2">
-            <i class="fas fa-question-circle text-dream-400 text-xs"></i>
-            <span class="text-xs text-dream-200 font-semibold">Est-ce que tu rêves ?</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <i class="fas fa-bed text-violet-400 text-xs"></i>
-            <span id="tlr-sleep-label" class="text-xs text-gray-400">Tu dois dormir dans</span>
-            <span id="tlr-sleep-countdown" class="text-sm font-mono font-bold text-violet-300">--:--</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <i class="fas fa-bolt text-amber-400 text-xs"></i>
-            <span class="text-xs text-gray-400">Déclencheur lucide dans</span>
-            <span id="tlr-trigger-countdown" class="text-sm font-mono font-bold text-amber-300">--:--</span>
-          </div>
-          <div id="tlr-status-msg" class="text-[10px] text-gray-500 italic"></div>
+        <!-- Conseils volume -->
+        <div class="p-2.5 rounded-lg bg-violet-500/8 border border-violet-500/15 mb-3">
+          <p class="text-[10px] text-gray-300 leading-relaxed">
+            <i class="fas fa-volume-down text-violet-400 mr-1"></i>
+            <strong class="text-violet-200">Réglage du volume :</strong> L'objectif est de trouver le seuil où le son est <strong class="text-violet-300">perceptible par ton cerveau endormi</strong> mais <strong class="text-violet-300">pas assez fort pour te réveiller</strong>. Commence au minimum et augmente progressivement sur plusieurs nuits. Si tu te réveilles systématiquement, baisse d'un cran. Ce seuil est personnel — il faut quelques nuits pour le trouver.
+          </p>
         </div>
 
         <!-- Explication scientifique courte -->
-        <div class="mt-3 p-2.5 rounded-lg bg-violet-500/8 border border-violet-500/15">
+        <div class="p-2.5 rounded-lg bg-violet-500/8 border border-violet-500/15">
           <p class="text-[10px] text-gray-300 leading-relaxed">
             <i class="fas fa-flask text-violet-400 mr-1"></i>
-            <strong class="text-violet-200">Pourquoi 6 heures :</strong> Les phases REM les plus longues (30 à 60 min) surviennent en fin de nuit. L'étude TLR a montré que commencer les indices sonores 6h après l'endormissement cible le pic de sommeil paradoxal. Le volume est maintenu au seuil de discrimination perceptive : assez fort pour que le cerveau endormi intègre le son dans le rêve, pas assez pour provoquer le réveil.
+            <strong class="text-violet-200">Pourquoi 6 heures :</strong> Les phases REM les plus longues (30 à 60 min) surviennent en fin de nuit. L'étude TLR a montré que commencer les indices sonores 6h après l'endormissement cible le pic de sommeil paradoxal.
           </p>
         </div>
-        <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Erlacher & Stumbrys (2020) · Carr et al. (2020, Frontiers in Psychology)</p>
+        <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Aspy et al. (2017) · Erlacher & Stumbrys (2020)</p>
       </div>
 
       <!-- ===== TECHNIQUES D'INDUCTION ===== -->
@@ -2156,11 +2177,11 @@ async function renderLucidity() {
           <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est <strong class="text-dream-300">la technique d'induction la plus puissante</strong> connue à ce jour. Le principe : les phases REM deviennent plus longues et intenses en fin de nuit (30 à 60 min, contre 10 min en début de nuit). En te réveillant après 5 à 6 heures, tu interromps ton sommeil juste avant ces pics REM. La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral (responsable de la conscience de soi), ce qui se maintient partiellement au retour au sommeil. Résultat : ta conscience critique est bien plus élevée quand tu replonges dans les rêves. Stumbrys et al. (2012) montrent que le WBTB multiplie par 5 les chances de lucidité. Aspy et al. (2017) : 46% de réussite et 50% des débutants complets ont réussi leur premier rêve lucide en 5 semaines.</p>
           <div class="p-3 rounded-lg bg-emerald-900/15 border border-emerald-500/20 mb-3">
             <p class="text-[10px] font-semibold text-emerald-200 mb-1">🎵 Lien avec le TLR Nocturne (voir ci-dessus)</p>
-            <p class="text-[10px] text-gray-300 leading-relaxed">Si le refrain « Rêve Mieux » programmé par le TLR Nocturne te réveille au lieu de s'intégrer dans ton rêve, <strong class="text-emerald-300">tu es exactement dans un scénario WBTB idéal</strong>. Tu es éveillé en plein pic de sommeil paradoxal, ton cortex préfrontal se réactive, et tu peux appliquer les variantes ci-dessous pour te rendormir avec une conscience accrue. C'est en ça que le refrain « Rêve Mieux » est gagnant-gagnant : soit il déclenche la lucidité directement dans le rêve, soit il crée les conditions parfaites d'un WBTB spontané.</p>
+            <p class="text-[10px] text-gray-300 leading-relaxed">Si le refrain « Rêve Mieux » programmé via ton alarme te réveille au lieu de s'intégrer dans ton rêve, <strong class="text-emerald-300">tu es exactement dans un scénario WBTB idéal</strong>. Tu es éveillé en plein pic de sommeil paradoxal, ton cortex préfrontal se réactive, et tu peux appliquer les variantes ci-dessous pour te rendormir avec une conscience accrue. C'est la Stratégie B du TLR Nocturne.</p>
           </div>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole de base :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-3">
-            <li><strong class="text-dream-300">1. Réveil à 5-6h après l'endormissement.</strong> C'est le moment optimal, juste avant le pic REM. (Le TLR Nocturne fait ça automatiquement pour toi.)</li>
+            <li><strong class="text-dream-300">1. Réveil à 5-6h après l'endormissement.</strong> C'est le moment optimal, juste avant le pic REM. (La Stratégie B du TLR Nocturne utilise ce principe.)</li>
             <li><strong class="text-dream-300">2. Lève-toi physiquement</strong> (toilettes, verre d'eau) pour activer ton cortex préfrontal. 20 à 60 min d'éveil.</li>
             <li><strong class="text-dream-300">3. Pendant l'éveil :</strong> ne touche surtout pas ton téléphone. Repense mentalement à tes rêves récents, formule ton intention de devenir lucide et visualise-toi en train de reconnaître un rêve. Reste dans un état calme, sans écran ni lumière vive.</li>
             <li><strong class="text-dream-300">4. Au recoucher, choisis une variante</strong> parmi les deux ci-dessous selon ta préférence.</li>
@@ -2425,14 +2446,7 @@ function sendSWMessage(data) {
 }
 
 function getTLRBedtime() { return localStorage.getItem('tlr_bedtime') || '23:00'; }
-function saveTLRBedtime(val) { 
-  localStorage.setItem('tlr_bedtime', val); 
-  if (isTLRActive()) { 
-    restartTLRCounters(); 
-    // Re-sync le schedule serveur avec le nouveau bedtime
-    sendTLRScheduleToServer(true); 
-  } 
-}
+function saveTLRBedtime(val) { localStorage.setItem('tlr_bedtime', val); }
 window.calcTriggerTimeStr = function(bedtime) { const [h,m] = bedtime.split(':').map(Number); return String((h+6)%24).padStart(2,'0') + ':' + String(m).padStart(2,'0'); };
 
 function getTLRTonightOverride() { 
@@ -2446,15 +2460,13 @@ function getTLRTonightOverride() {
   } catch { return ''; }
 }
 function saveTLRTonightOverride(val) { 
-  if (!val) { localStorage.removeItem('tlr_tonight'); if (isTLRActive()) sendTLRScheduleToServer(true); return; }
+  if (!val) { localStorage.removeItem('tlr_tonight'); return; }
   localStorage.setItem('tlr_tonight', JSON.stringify({ time: val, date: new Date().toISOString().split('T')[0] }));
-  if (isTLRActive()) { restartTLRCounters(); sendTLRScheduleToServer(true); }
 }
 window.clearTLRTonightOverride = function() {
   localStorage.removeItem('tlr_tonight');
   const el = document.getElementById('tlr-tonight-override');
   if (el) el.value = '';
-  if (isTLRActive()) { restartTLRCounters(); sendTLRScheduleToServer(true); }
 };
 
 function getTLRVolume() { return parseInt(localStorage.getItem('tlr_volume') || '1'); }
@@ -2466,7 +2478,7 @@ window.setTLRVolume = function(v) {
   });
 };
 
-function isTLRActive() { return localStorage.getItem('tlr_active') === '1'; }
+function isTLRActive() { return false; } // TLR automatique désactivé — l'utilisateur utilise son appli Horloge
 
 function getEffectiveBedtime() {
   return getTLRBedtime();
@@ -2789,14 +2801,9 @@ function playTLRRefrain() {
   });
 }
 
-// Au chargement : relancer les compteurs TLR si actif + enregistrer SW + keep-alive
-(async function initTLR() {
-  if (isTLRActive()) {
-    await registerTLRServiceWorker();
-    startTLRKeepAlive(); // Relancer le keep-alive audio silencieux
-    startTLRCounters();
-  }
-})()
+// TLR Nocturne est maintenant un guide manuel (alarme téléphone).
+// Plus de SW, keep-alive ou push serveur.
+// Le code d'ancrage musical (écoute du refrain) reste actif.
 
 // ========== MODAL & TOAST ==========
 function showModal(content, maxWidth, flex) {
