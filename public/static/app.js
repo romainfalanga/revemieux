@@ -2349,6 +2349,37 @@ let tlrInterval = null;
 let tlrSWReady = false;
 let tlrNotifInterval = null;
 
+// === Keep-Alive Audio Silencieux ===
+// Jouer un audio silencieux en boucle maintient l'app vivante même écran verrouillé.
+// C'est LA technique qui garantit que le refrain pourra se jouer automatiquement.
+let tlrKeepAliveAudio = null;
+
+function startTLRKeepAlive() {
+  if (tlrKeepAliveAudio) return; // Déjà actif
+  tlrKeepAliveAudio = new Audio('/static/silence.mp3');
+  tlrKeepAliveAudio.loop = true;
+  tlrKeepAliveAudio.volume = 0.01; // Volume minimum mais PAS mute (important !)
+  // MediaSession pour maintenir le focus audio sur écran verrouillé
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'Rêve Mieux — TLR actif',
+      artist: 'Rêve Mieux',
+      album: 'Déclencheur Lucide'
+    });
+  }
+  tlrKeepAliveAudio.play().catch(err => {
+    console.warn('Keep-alive audio failed:', err);
+  });
+}
+
+function stopTLRKeepAlive() {
+  if (tlrKeepAliveAudio) {
+    tlrKeepAliveAudio.pause();
+    tlrKeepAliveAudio.src = '';
+    tlrKeepAliveAudio = null;
+  }
+}
+
 // Enregistrement du Service Worker
 async function registerTLRServiceWorker() {
   if (!('serviceWorker' in navigator)) return false;
@@ -2562,6 +2593,7 @@ window.toggleTLR = async function() {
     // Désactiver
     localStorage.setItem('tlr_active', '0');
     stopTLRCounters();
+    stopTLRKeepAlive(); // Arrêter l'audio silencieux keep-alive
     sendSWMessage({ type: 'TLR_STOP' });
     
     // Désactiver le schedule serveur
@@ -2592,6 +2624,9 @@ window.toggleTLR = async function() {
     
     // Envoyer le schedule au serveur
     await sendTLRScheduleToServer(true);
+    
+    // Démarrer l'audio silencieux keep-alive (maintient l'app vivante écran verrouillé)
+    startTLRKeepAlive();
     
     startTLRCounters();
     
@@ -2703,6 +2738,12 @@ function updateTLRDisplay() {
 }
 
 function playTLRRefrain() {
+  // Pauser le keep-alive silencieux — le refrain doit être le dernier media joué
+  // (important pour que Android maintienne le focus audio sur le refrain)
+  if (tlrKeepAliveAudio && !tlrKeepAliveAudio.paused) {
+    tlrKeepAliveAudio.pause();
+  }
+
   if (!reveMieuxAudio) {
     reveMieuxAudio = new Audio('/static/reve-mieux-refrain.mp3');
     reveMieuxAudio.loop = false;
@@ -2716,28 +2757,43 @@ function playTLRRefrain() {
       const timeEl = document.getElementById('reve-mieux-time');
       if (timeEl) timeEl.textContent = '0:00';
       if (reveMieuxAnimFrame) cancelAnimationFrame(reveMieuxAnimFrame);
+      // Relancer le keep-alive silencieux après que le refrain a fini
+      if (isTLRActive() && tlrKeepAliveAudio) {
+        tlrKeepAliveAudio.play().catch(() => {});
+      }
     });
   }
+  // Appliquer le volume TLR choisi par l'utilisateur
   const volumeMap = { 1: 0.03, 2: 0.08, 3: 0.15 };
   reveMieuxAudio.volume = volumeMap[getTLRVolume()] || 0.03;
+  reveMieuxAudio.currentTime = 0; // Toujours repartir du début
   reveMieuxAudio.play().then(() => {
-    const icon = document.getElementById('reve-mieux-play-icon');
-    const btn = document.getElementById('reve-mieux-play-btn');
-    if (icon) icon.className = 'fas fa-pause';
-    if (btn) btn.classList.add('bg-amber-500/30', 'shadow-lg', 'shadow-amber-500/10');
+    syncPlayerUI(true);
     updateReveMieuxProgress();
     // Notification trigger via SW
     sendSWMessage({ type: 'TLR_TRIGGER' });
+    // MediaSession pour le refrain (affiché sur écran verrouillé)
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Rêve Mieux — Déclencheur Lucide',
+        artist: 'Rêve Mieux',
+        album: 'Rêve Lucide'
+      });
+    }
   }).catch(() => {
-    // Auto-play bloqué par le navigateur, notification via SW
+    // Auto-play bloqué — relancer le keep-alive
+    if (isTLRActive() && tlrKeepAliveAudio) {
+      tlrKeepAliveAudio.play().catch(() => {});
+    }
     sendSWMessage({ type: 'TLR_TRIGGER' });
   });
 }
 
-// Au chargement : relancer les compteurs TLR si actif + enregistrer SW
+// Au chargement : relancer les compteurs TLR si actif + enregistrer SW + keep-alive
 (async function initTLR() {
   if (isTLRActive()) {
     await registerTLRServiceWorker();
+    startTLRKeepAlive(); // Relancer le keep-alive audio silencieux
     startTLRCounters();
   }
 })()
