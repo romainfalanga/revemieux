@@ -1,9 +1,9 @@
 // TLR Service Worker - Notification persistante pour Rêve Mieux
 // Gère les notifications sur écran de verrouillage
 // La notification ne peut être retirée QUE depuis la page Lucidité (toggleTLR)
-// v3.0.0 : 2 boutons (Check Validé + Écouter Rêve Mieux), RC via API directe
+// v3.1.0 : 1 bouton (Écouter Rêve Mieux uniquement)
 
-const SW_VERSION = '3.0.0';
+const SW_VERSION = '3.1.0';
 
 // État interne
 let tlrActive = false;
@@ -93,7 +93,6 @@ function refreshNotification() {
     silent: true,
     ongoing: true,
     actions: [
-      { action: 'rc-check', title: '✅ Check Validé' },
       { action: 'play-refrain', title: '🎵 Écouter Rêve Mieux' }
     ],
     data: { url: '/', type: 'tlr-persistent' }
@@ -165,20 +164,6 @@ async function closeTLRNotification() {
 // Clic sur la notification
 self.addEventListener('notificationclick', (event) => {
   const notifType = event.notification.data?.type;
-
-  // Check Validé — record RC directly from SW (no unlock needed)
-  if (event.action === 'rc-check') {
-    event.notification.close();
-    event.waitUntil(
-      (async () => {
-        await recordRealityCheck('general');
-        if (tlrActive) refreshNotification();
-        const clients = await self.clients.matchAll({ type: 'window' });
-        clients.forEach(client => client.postMessage({ type: 'REALITY_CHECK_FROM_SW', checkType: 'general' }));
-      })()
-    );
-    return;
-  }
 
   // Écouter Rêve Mieux — open app and auto-play refrain
   if (event.action === 'play-refrain') {
