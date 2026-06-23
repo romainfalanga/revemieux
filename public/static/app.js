@@ -2049,7 +2049,7 @@ async function renderLucidity() {
           <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
             <p class="text-xs font-semibold text-dream-200 mb-1">📖 Lire un texte</p>
             <p class="text-xs text-gray-400"><strong>Quoi faire :</strong> Lis un texte (panneau, écran, livre), détourne le regard, puis relis-le. Demande-toi : le texte est-il resté identique ?</p>
-            <p class="text-xs text-gray-400 mt-1"><strong>Pourquoi :</strong> Les travaux de Stephen LaBerge à Stanford (1985) ont démontré que les aires de Broca et Wernicke (responsables du langage écrit) fonctionnent de manière instable pendant le sommeil paradoxal. Le texte se transforme, se brouille ou change de contenu entre deux lectures. C'est l'un des indicateurs de rêve les plus fiables, avec un taux de détection d'environ 75% (LaBerge & Rheingold, 1990).</p>
+            <p class="text-xs text-gray-400 mt-1"><strong>Pourquoi :</strong> Les travaux de Stephen LaBerge à Stanford ont montré que les représentations du langage écrit sont instables pendant le sommeil paradoxal, probablement parce que le cerveau endormi reconstruit le texte sans input sensoriel externe. Le texte se transforme, se brouille ou change de contenu entre deux lectures. C'est l'un des indicateurs de rêve les plus fiables : dans une étude de LaBerge et al. (1996), le texte a changé dans 75% des cas dès la première relecture et 95% à la seconde.</p>
           </div>
           <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40">
             <p class="text-xs font-semibold text-dream-200 mb-1">⏰ Regarder l'heure</p>
@@ -2063,10 +2063,10 @@ async function renderLucidity() {
           <p class="text-xs font-semibold text-amber-200 mb-1">🎵 Ancrage Musical : le conditionnement sonore</p>
           <p class="text-xs text-gray-400 leading-relaxed"><strong>Le principe :</strong> Écoute le refrain « Rêve Mieux » à chaque contrôle de réalité. L'objectif est de créer un conditionnement associatif entre la musique et le questionnement « suis-je en train de rêver ? ». Avec la répétition, ton cerveau associe les deux de manière automatique.</p>
           <p class="text-xs text-gray-400 leading-relaxed mt-3"><strong>Pourquoi ça fonctionne :</strong> Ce mécanisme repose sur le conditionnement classique (Pavlov, 1927) et l'apprentissage associatif. À force de coupler un stimulus (la musique) avec un comportement (le questionnement de la réalité), le stimulus finit par déclencher le comportement seul, y compris en rêve. Konkoly et al. (2021, <em>Current Biology</em>) ont démontré que des stimuli sensoriels externes (sons, lumières) peuvent être intégrés dans les rêves pendant le sommeil paradoxal.</p>
-          <p class="text-xs text-gray-400 leading-relaxed mt-3"><strong>L'effet dans les rêves :</strong> La mémoire musicale dépend de l'hippocampe et du cortex auditif, deux structures actives pendant le REM (Stickgold, 2005). L'effet earworm (Williamson et al., 2012) montre que les fragments musicaux répétés s'inscrivent involontairement dans la boucle phonologique de la mémoire de travail. Un refrain écouté en boucle pendant tes reality checks a de fortes chances de se « rejouer » spontanément dans tes rêves, et comme ton cerveau a associé ce refrain au questionnement de la réalité, il peut déclencher un moment de lucidité automatique.</p>
+          <p class="text-xs text-gray-400 leading-relaxed mt-3"><strong>L'effet dans les rêves :</strong> La mémoire musicale dépend de l'hippocampe et du cortex auditif, deux structures actives pendant le REM (Stickgold, 2005, <em>Nature</em>). L'effet earworm (Williamson et al., 2012) montre que les fragments musicaux répétés s'inscrivent involontairement dans la boucle phonologique de la mémoire de travail. Un refrain écouté en boucle pendant tes reality checks a de fortes chances de se « rejouer » spontanément dans tes rêves, et comme ton cerveau a associé ce refrain au questionnement de la réalité, il peut déclencher un moment de lucidité automatique.</p>
           <p class="text-xs text-gray-400 leading-relaxed mt-3"><strong>Le réflexe earworm :</strong> En écoutant régulièrement le refrain « Rêve Mieux », tu vas naturellement l'avoir en tête à des moments aléatoires de ta journée. C'est l'effet earworm qui travaille pour toi. À chaque fois que le refrain te revient en tête, fais immédiatement un contrôle de réalité : compte tes doigts, lis un texte, vérifie l'heure. Et surtout, lance le refrain avec le lecteur ci-dessus (ou sur ton téléphone) pendant que tu fais ton test. Cela renforce encore l'association musique/questionnement, ce qui alimente l'earworm en retour : plus tu écoutes le refrain, plus il te revient en tête spontanément, et plus il te revient en tête, plus tu fais de contrôles de réalité. C'est une boucle qui s'auto-amplifie : chaque itération renforce la suivante, et le nombre de reality checks augmente naturellement avec le temps.</p>
           <p class="text-xs text-gray-400 leading-relaxed mt-3"><strong>Le bénéfice nocturne :</strong> Cette boucle d'auto-renforcement prend toute sa dimension la nuit grâce au TLR Nocturne (voir ci-dessous). En programmant une alarme avec le refrain à volume ultra-faible pendant le sommeil paradoxal, ton cerveau endormi capte le son sans que tu te réveilles. Et comme le lien « refrain = suis-je en train de rêver ? » a été renforcé en journée par des dizaines de reality checks et d'earworms spontanés, le refrain nocturne a d'autant plus de chances de déclencher un flash de lucidité dans ton rêve. Plus la boucle diurne est forte, plus le déclencheur nocturne est efficace. L'étude de Northwestern (Konkoly et al., 2024) a validé cette approche.</p>
-          <p class="text-[10px] text-gray-500 italic mt-3">Sources : Pavlov (1927) · Konkoly et al. (2021, Current Biology ; 2024, Consciousness and Cognition) · Williamson et al. (2012, Psychology of Music) · Stickgold (2005, Nature Reviews Neuroscience)</p>
+          <p class="text-[10px] text-gray-500 italic mt-3">Sources : Pavlov (1927) · Konkoly et al. (2021, Current Biology ; 2024, Consciousness and Cognition) · Williamson et al. (2012, Psychology of Music) · Stickgold (2005, Nature)</p>
         </div>
       </div>
 
@@ -2196,7 +2196,7 @@ async function renderLucidity() {
                   <li><span class="whitespace-nowrap">📳 <strong>Vibration :</strong></span> désactivée</li>
                 </ul>
               </div>
-              <p class="text-[10px] text-gray-400 italic">La combinaison WBTB + TLR est la plus puissante : Aspy et al. (2017) montrent 46% de réussite dès la première semaine.</p>
+              <p class="text-[10px] text-gray-400 italic">La combinaison WBTB + induction est la plus puissante : Aspy et al. (2017) montrent 46% de réussite chez ceux qui se rendorment rapidement après MILD, et Konkoly et al. (2024) montrent que le TLR augmente la fréquence de rêves lucides de 2,8 fois.</p>
             </div>
           </div>
         </div>
@@ -2216,7 +2216,7 @@ async function renderLucidity() {
             <strong class="text-violet-200">Pourquoi 5h30 :</strong> Les phases REM les plus longues (30 à 60 min) surviennent en fin de nuit. L'étude TLR a montré que les indices sonores à partir de 5h30 après l'endormissement ciblent le pic de sommeil paradoxal. En espaçant les répétitions de 20 min, on couvre la fenêtre 5h30 à 6h10, ce qui compense les variations de temps d'endormissement.
           </p>
         </div>
-        <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Aspy et al. (2017) · Erlacher & Stumbrys (2020) · Nature Communications Psychology (2024) · Sleep Foundation</p>
+        <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Aspy et al. (2017) · Erlacher & Stumbrys (2020, Frontiers in Psychology) · Nature Communications Psychology (2024) · Sleep Foundation</p>
       </div>
 
       <!-- ===== TECHNIQUES D'INDUCTION ===== -->
@@ -2226,7 +2226,7 @@ async function renderLucidity() {
         <!-- WBTB (technique principale, intègre MILD et SSILD comme variantes) -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">⏰</span><h4 class="font-semibold text-dream-200 text-sm">WBTB (Wake Back To Bed) : la technique principale</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est <strong class="text-dream-300">la technique d'induction la plus puissante</strong> connue à ce jour. Le principe : les phases REM deviennent plus longues et intenses en fin de nuit (30 à 60 min, contre 10 min en début de nuit). En te réveillant après 5 à 6 heures, tu interromps ton sommeil juste avant ces pics REM. La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral (responsable de la conscience de soi), ce qui se maintient partiellement au retour au sommeil. Résultat : ta conscience critique est bien plus élevée quand tu replonges dans les rêves. Stumbrys et al. (2012) montrent que le WBTB multiplie par 5 les chances de lucidité. Aspy et al. (2017) : 46% de réussite et 50% des débutants complets ont réussi leur premier rêve lucide en 5 semaines.</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le WBTB est <strong class="text-dream-300">la technique d'induction la plus puissante</strong> connue à ce jour. Le principe : les phases REM deviennent plus longues et intenses en fin de nuit (30 à 60 min, contre 10 min en début de nuit). En te réveillant après 5 à 6 heures, tu interromps ton sommeil juste avant ces pics REM. La période d'éveil qui suit augmente l'activité du cortex préfrontal dorsolatéral (responsable de la conscience de soi), ce qui se maintient partiellement au retour au sommeil. Résultat : ta conscience critique est bien plus élevée quand tu replonges dans les rêves. Stumbrys et al. (2012) ont identifié le WBTB comme la méthode la plus prometteuse dans leur revue systématique de 35 études. Aspy et al. (2017) : 46% de réussite chez les participants qui se rendorment en moins de 5 minutes après la technique MILD. Erlacher & Stumbrys (2020) : environ 50% des participants ont eu un rêve lucide en une seule nuit de labo via WBTB + MILD, y compris des personnes n'ayant jamais eu de rêve lucide avant.</p>
           <div class="p-3 rounded-lg bg-emerald-900/15 border border-emerald-500/20 mb-3">
             <p class="text-[10px] font-semibold text-emerald-200 mb-1">🎵 Lien avec le TLR Nocturne (voir ci-dessus)</p>
             <p class="text-[10px] text-gray-300 leading-relaxed">Si le refrain « Rêve Mieux » programmé via ton alarme te réveille au lieu de s'intégrer dans ton rêve, <strong class="text-emerald-300">tu es exactement dans un scénario WBTB idéal</strong>. Tu es éveillé en plein pic de sommeil paradoxal, ton cortex préfrontal se réactive, et tu peux appliquer les variantes ci-dessous pour te rendormir avec une conscience accrue. C'est la Stratégie B du TLR Nocturne.</p>
@@ -2242,7 +2242,7 @@ async function renderLucidity() {
           <div class="mt-3 space-y-3">
             <div class="p-3 rounded-lg bg-dream-900/20 border border-dream-500/20">
               <p class="text-xs font-semibold text-dream-200 mb-1.5">🧠 Variante MILD (Mnemonic Induction)</p>
-              <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Développée par Stephen LaBerge (Stanford, 1980), la MILD repose sur la <strong class="text-dream-300">mémoire prospective</strong> : programmer ton esprit pour reconnaître l'état de rêve. C'est la technique la plus validée scientifiquement, avec un taux de réussite de 46% combinée au WBTB (Aspy et al., 2017). L'étude ILDIS (2020) confirme son efficacité même chez des débutants complets.</p>
+              <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Développée par Stephen LaBerge (Stanford, 1980), la MILD repose sur la <strong class="text-dream-300">mémoire prospective</strong> : programmer ton esprit pour reconnaître l'état de rêve. C'est la technique la plus validée scientifiquement, avec un taux de réussite de 46% chez les participants qui se rendorment en moins de 5 minutes après WBTB (Aspy et al., 2017). L'étude ILDIS (2020) confirme son efficacité même chez des débutants complets.</p>
               <ol class="text-[10px] text-gray-300 space-y-1">
                 <li><strong class="text-dream-300">1.</strong> Remémore-toi le rêve que tu viens de faire. Note les éléments bizarres ou impossibles.</li>
                 <li><strong class="text-dream-300">2.</strong> Répète-toi : « La prochaine fois que je rêve, je me rendrai compte que je rêve. »</li>
@@ -2266,13 +2266,13 @@ async function renderLucidity() {
             </div>
           </div>
 
-          <p class="text-[9px] text-gray-500 italic mt-3">Sources : Stumbrys et al. (2012, méta-analyse) · Aspy et al. (2017) · LaBerge (1985) · ILDIS (2020) · Frontiers in Psychology (2020, PMC7332853)</p>
+          <p class="text-[9px] text-gray-500 italic mt-3">Sources : Stumbrys et al. (2012, revue systématique) · Aspy et al. (2017) · Erlacher & Stumbrys (2020, Frontiers in Psychology) · LaBerge (1985) · ILDIS (2020, PMC7379166)</p>
         </div>
 
         <!-- Reality Testing -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">✋</span><h4 class="font-semibold text-dream-200 text-sm">Reality Testing (Technique de Réflexion)</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Formalisée par Paul Tholey (1983), cette méthode repose sur un principe simple : si tu prends l'habitude de questionner la réalité pendant la journée, ce réflexe finit par se déclencher aussi en rêve. L'élément clé est la <strong class="text-dream-300">qualité</strong> de l'interrogation, pas la quantité. Il ne suffit pas de faire le geste mécaniquement : tu dois sincèrement te demander « suis-je en train de rêver ? » et examiner ton environnement avec attention critique. Aspy et al. (2017) : taux de succès de 47,5% quand le Reality Testing est pratiqué avec intention, effet négligeable quand il est fait par habitude mécanique.</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Formalisée par Paul Tholey (1983), cette méthode repose sur un principe simple : si tu prends l'habitude de questionner la réalité pendant la journée, ce réflexe finit par se déclencher aussi en rêve. L'élément clé est la <strong class="text-dream-300">qualité intentionnelle</strong> de l'interrogation, pas la quantité mécanique. Il ne suffit pas de faire le geste par habitude : tu dois sincèrement te demander « suis-je en train de rêver ? » et examiner ton environnement avec attention critique. L'efficacité du Reality Testing isolé reste débattue (Stumbrys et al., 2012), mais combiné au WBTB et au MILD, il contribue à un taux de réussite de 17% dès la première semaine (Aspy et al., 2017).</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Protocole :</p>
           <ol class="text-[10px] text-gray-300 space-y-1.5 mb-2">
             <li><strong class="text-dream-300">1. Choisis tes déclencheurs :</strong> Associe tes tests à des moments récurrents (passer une porte, regarder l'heure, entendre un son particulier).</li>
@@ -2281,13 +2281,13 @@ async function renderLucidity() {
             <li><strong class="text-dream-300">4. Vise 10 à 15 tests par jour.</strong> La régularité est essentielle. Plus le réflexe est ancré, plus il apparaîtra dans tes rêves.</li>
             <li><strong class="text-dream-300">5. En rêve, les résultats seront anormaux :</strong> doigts en trop, air passant à travers le nez pincé, texte qui change.</li>
           </ol>
-          <p class="text-[9px] text-gray-500 italic">Sources : Tholey (1983, Reflexionstechnik) · Aspy et al. (2017) · Erlacher & Schredl (2008)</p>
+          <p class="text-[9px] text-gray-500 italic">Sources : Tholey (1983, Reflexionstechnik) · Aspy et al. (2017) · Stumbrys et al. (2012) · LaBerge et al. (1996)</p>
         </div>
 
         <!-- Journal -->
         <div class="glass rounded-xl p-4">
           <div class="flex items-center gap-2 mb-2"><span class="text-xl">📝</span><h4 class="font-semibold text-dream-200 text-sm">Journal de Rêves</h4></div>
-          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal est le <strong class="text-dream-300">fondement</strong> de toute pratique de rêve lucide. Sans rappel de tes rêves, même si tu deviens lucide, tu ne t'en souviendras pas au réveil. Schredl & Erlacher (2004) : la simple habitude de noter ses rêves augmente le rappel en 2 à 3 semaines. Plus tu notes, plus ton cerveau retient les rêves. Le journal permet aussi d'identifier tes « signes de rêve » récurrents, essentiel pour MILD et le Reality Testing.</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-3">Le journal est le <strong class="text-dream-300">fondement</strong> de toute pratique de rêve lucide. Sans rappel de tes rêves, même si tu deviens lucide, tu ne t'en souviendras pas au réveil. La recherche sur le rappel onirique (Schredl, 2002 ; 2018) montre que la simple habitude de noter ses rêves augmente significativement le rappel en quelques semaines. Plus tu notes, plus ton cerveau retient les rêves. Le journal permet aussi d'identifier tes « signes de rêve » récurrents, essentiel pour MILD et le Reality Testing.</p>
           <p class="text-[10px] font-semibold text-dream-200 mb-1.5">Bonnes pratiques :</p>
           <ul class="text-[10px] text-gray-300 space-y-1.5 mb-2">
             <li><strong class="text-dream-300">Au réveil, ne bouge pas.</strong> Reste immobile, yeux fermés. Les souvenirs s'effacent très vite avec le mouvement.</li>
@@ -2296,7 +2296,7 @@ async function renderLucidity() {
             <li><strong class="text-dream-300">Utilise les étapes de Rêve Mieux :</strong> Découpe tes rêves en scènes distinctes avec les émotions de chaque moment.</li>
             <li><strong class="text-dream-300">Relis tes anciens rêves :</strong> La relecture consolide les souvenirs et t'aide à repérer tes signes de rêve récurrents.</li>
           </ul>
-          <p class="text-[9px] text-gray-500 italic">Sources : Schredl & Erlacher (2004) · Schredl (2002) · Cleveland Clinic (2024)</p>
+          <p class="text-[9px] text-gray-500 italic">Sources : Schredl (2002 ; 2018) · Cleveland Clinic (2024)</p>
         </div>
 
         <!-- Incubation -->
@@ -2320,10 +2320,10 @@ async function renderLucidity() {
       <div class="glass rounded-xl p-4">
         <h3 class="text-xs font-display font-semibold text-dream-200 mb-3"><i class="fas fa-flask mr-2"></i>Bases Scientifiques</h3>
         <div class="space-y-2 text-[10px] text-gray-300">
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📊 Rappel et journal</p><p>Schredl & Erlacher (2004) : le journal augmente significativement le rappel. Effet mesurable dès 2 à 3 semaines de pratique quotidienne.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">✨ Rêves lucides</p><p>Stumbrys et al. (2012), méta-analyse de 35 études : la combinaison MILD + WBTB + Reality Testing est l'approche la plus efficace connue à ce jour.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📊 Rappel et journal</p><p>Schredl (2002 ; 2018) : le journal augmente significativement le rappel onirique. Effet mesurable dès quelques semaines de pratique quotidienne.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">✨ Rêves lucides</p><p>Stumbrys et al. (2012), revue systématique de 35 études : la combinaison MILD + WBTB est l'approche la plus prometteuse. Aspy et al. (2017) : 46% de réussite chez ceux qui se rendorment rapidement après MILD + WBTB.</p></div>
           <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">🌙 Incubation et continuité</p><p>Barrett (Harvard, 1993) : environ 50% des participants ont rêvé du sujet choisi. L'hypothèse de la continuité (Schredl, 2003) montre que les pensées pré-sommeil influencent directement le contenu onirique.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📖 Texte et lecture en rêve</p><p>LaBerge & Rheingold (1990) : dans environ 75% des cas, un texte relu change de contenu en rêve. Les aires corticales du langage écrit sont instables pendant le REM.</p></div>
+          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📖 Texte et lecture en rêve</p><p>LaBerge et al. (1996) : dans environ 75% des cas, un texte relu change de contenu en rêve dès la première relecture, et 95% à la seconde. Le cerveau endormi peine à reconstruire le texte sans input sensoriel.</p></div>
           <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD, WBTB et Reality Testing sont validés par des études contrôlées. SSILD est principalement communautaire (résultats comparables à MILD selon l'étude ILDIS 2020, mais pas d'étude isolée). Rêve Mieux distingue clairement ce qui est validé de ce qui est exploratoire.</p></div>
         </div>
       </div>
