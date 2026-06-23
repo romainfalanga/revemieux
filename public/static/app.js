@@ -2099,20 +2099,34 @@ async function renderLucidity() {
           <p class="text-[10px] text-gray-500 mt-2">Fichier MP3, enregistre-le pour le sélectionner comme sonnerie dans ton appli Horloge.</p>
         </div>
 
-        <!-- Étape 2 : Alarme de coucher -->
+        <!-- Étape 2 : Alarme routine pré-sommeil -->
         <div class="p-3 rounded-xl bg-emerald-900/15 border border-emerald-500/20 mb-4">
-          <p class="text-xs font-semibold text-emerald-200 mb-2"><i class="fas fa-bed mr-1.5"></i>Étape 2 : Programme une alarme de coucher</p>
-          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Se coucher à heure fixe chaque soir <strong class="text-emerald-300">augmente la prévisibilité de tes cycles REM</strong>, ce qui rend les techniques de rêve lucide plus efficaces. Un rythme circadien régulier stabilise tes phases de sommeil paradoxal, et c'est précisément pendant ces phases que le TLR agit. Des études montrent que la régularité du sommeil améliore significativement le rappel de rêves et l'efficacité des inductions lucides <span class="text-gray-500">(Nature Communications Psychology, 2024 ; Sleep Foundation)</span>.</p>
-          <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10 space-y-1.5">
-            <p class="text-[10px] text-gray-200"><strong class="text-emerald-300">Programme 1 alarme quotidienne</strong> dans ton appli Horloge :</p>
+          <p class="text-xs font-semibold text-emerald-200 mb-2"><i class="fas fa-bed mr-1.5"></i>Étape 2 : Programme ton alarme « routine lucide »</p>
+          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Se coucher à heure fixe chaque soir <strong class="text-emerald-300">augmente la prévisibilité de tes cycles REM</strong>, ce qui rend toutes les techniques de rêve lucide plus efficaces. Un rythme circadien régulier stabilise tes phases de sommeil paradoxal, et c'est précisément pendant ces phases que le TLR agit <span class="text-gray-500">(Nature Communications Psychology, 2024 ; Sleep Foundation)</span>.</p>
+          <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Mais au-delà de la régularité, cette alarme a un deuxième rôle : <strong class="text-emerald-300">te pousser à pratiquer ta routine pré-sommeil</strong>. Les études montrent que les techniques pratiquées juste avant le coucher (intention, relecture de rêves, incubation) ont un impact direct sur le contenu onirique et les chances de lucidité (Barrett, 1993 ; Schredl, 2003 ; Aspy et al., 2017).</p>
+
+          <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10 space-y-1.5 mb-3">
+            <p class="text-[10px] text-gray-200"><strong class="text-emerald-300">Programme 1 alarme quotidienne</strong> dans ton appli Horloge</p>
             <ul class="text-[10px] text-gray-300 space-y-1 ml-3">
-              <li>⏰ <strong>Heure :</strong> 30 min avant ton heure de coucher cible (ex : coucher 23h, alarme à 22h30)</li>
-              <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé</li>
-              <li>🔈 <strong>Volume :</strong> modéré (assez pour l'entendre, pas agressif)</li>
-              <li>🔁 <strong>Répéter :</strong> tous les jours, y compris le week-end</li>
+              <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h avant ton coucher cible (ex : coucher 23h, alarme à 22h)</li>
+              <li><span class="whitespace-nowrap">🎵 <strong>Sonnerie :</strong></span> le fichier « Rêve Mieux » téléchargé</li>
+              <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> modéré (assez pour l'entendre, pas agressif)</li>
+              <li><span class="whitespace-nowrap">🔁 <strong>Répéter :</strong></span> tous les jours, y compris le week-end</li>
             </ul>
-            <p class="text-[10px] text-gray-400 italic mt-1">Le refrain te rappelle qu'il est temps de commencer ta routine de coucher (journal, relecture de rêves, intention). En entendant « Rêve Mieux » chaque soir, tu renforces aussi l'ancrage musical qui servira de déclencheur nocturne.</p>
           </div>
+
+          <p class="text-[10px] font-semibold text-emerald-200 mb-1.5">🌙 Ta routine lucide (1h avant de dormir)</p>
+          <p class="text-[10px] text-gray-400 leading-relaxed mb-2">Quand l'alarme sonne, c'est le signal : écrans éteints, lumière tamisée. Tu lances ta routine.</p>
+          <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10">
+            <ol class="text-[10px] text-gray-300 space-y-2">
+              <li><strong class="text-emerald-300">1. Relis tes derniers rêves</strong> dans ton journal Rêve Mieux. Repère tes signes de rêve récurrents (lieux, personnages, situations absurdes). Plus tu les connais, plus tu les reconnaîtras en rêve.</li>
+              <li><strong class="text-emerald-300">2. Reprends une série de rêves</strong> si tu en as une en cours. Relis les épisodes précédents, laisse les détails, les lieux et les émotions t'imprégner. Ton cerveau intègre ces contenus dans la mémoire de travail, ce qui augmente les chances d'y retourner cette nuit (incubation, voir plus bas).</li>
+              <li><strong class="text-emerald-300">3. Formule ton intention</strong> : « Cette nuit, je me rendrai compte que je rêve. » Répète cette phrase avec conviction. Si tu as une série en cours : « Cette nuit, je retourne dans ce rêve et je deviens lucide. » C'est le principe MILD (voir section Techniques d'Induction ci-dessous).</li>
+              <li><strong class="text-emerald-300">4. Fais un dernier Reality Check</strong> avec le refrain « Rêve Mieux ». Lance le lecteur audio ci-dessus, compte tes doigts, demande-toi sincèrement « suis-je en train de rêver ? ». Ce dernier ancrage juste avant le sommeil renforce le conditionnement musique/lucidité.</li>
+              <li><strong class="text-emerald-300">5. Visualise-toi lucide</strong> : en fermant les yeux, imagine-toi dans ton dernier rêve. Tu reconnais un signe de rêve, tu deviens lucide, tu prends le contrôle. Maintiens cette image en t'endormant.</li>
+            </ol>
+          </div>
+          <p class="text-[10px] text-gray-400 italic mt-2">En entendant « Rêve Mieux » chaque soir au même moment, tu renforces aussi l'ancrage musical qui servira de déclencheur nocturne via le TLR.</p>
         </div>
 
         <!-- Étape 3 : Choisir sa stratégie -->
@@ -2124,13 +2138,13 @@ async function renderLucidity() {
             <p class="text-xs font-bold text-violet-200 mb-1.5">🌙 Stratégie A : Douce (sans réveil)</p>
             <p class="text-[10px] text-gray-300 leading-relaxed mb-2">L'objectif est que le refrain s'intègre directement dans ton rêve <strong class="text-violet-300">sans te réveiller</strong>. Le volume doit être très bas : juste assez pour que ton cerveau endormi capte le son.</p>
             <div class="p-2.5 rounded-lg bg-night-900/50 border border-violet-500/10 space-y-1.5">
-              <p class="text-[10px] text-gray-200"><strong class="text-dream-300">Programme 1 alarme</strong> dans ton appli Horloge :</p>
+              <p class="text-[10px] text-gray-200"><strong class="text-dream-300">Programme 1 alarme</strong> dans ton appli Horloge</p>
               <ul class="text-[10px] text-gray-300 space-y-1 ml-3">
-                <li>⏰ <strong>Heure :</strong> 6h après ton coucher (ex : coucher 23h → alarme à 5h)</li>
-                <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé</li>
-                <li>🔈 <strong>Volume :</strong> le plus bas possible (1-2 barres max)</li>
-                <li>🔁 <strong>Répéter :</strong> active le rappel (snooze) à 10 min d'intervalle, 3 fois max</li>
-                <li>📳 <strong>Vibration :</strong> désactivée</li>
+                <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 6h après ton coucher (ex : coucher 23h, alarme à 5h)</li>
+                <li><span class="whitespace-nowrap">🎵 <strong>Sonnerie :</strong></span> le fichier « Rêve Mieux » téléchargé</li>
+                <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> le plus bas possible (1 à 2 barres max)</li>
+                <li><span class="whitespace-nowrap">🔁 <strong>Répéter :</strong></span> active le rappel (snooze) à 10 min d'intervalle, 3 fois max</li>
+                <li><span class="whitespace-nowrap">📳 <strong>Vibration :</strong></span> désactivée</li>
               </ul>
               <p class="text-[10px] text-gray-400 italic mt-1">Ainsi, le refrain sonnera 3 fois à 10 min d'intervalle, à un volume si faible qu'il ne te réveillera pas, mais ton cerveau endormi pourra l'intégrer dans le rêve en cours.</p>
             </div>
@@ -2144,20 +2158,20 @@ async function renderLucidity() {
               <div>
                 <p class="text-[10px] text-gray-200"><strong class="text-amber-300">Alarme 1 : Réveil bref</strong></p>
                 <ul class="text-[10px] text-gray-300 space-y-0.5 ml-3">
-                  <li>⏰ <strong>Heure :</strong> 5h30 après ton coucher</li>
-                  <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé, <strong class="text-amber-300">à volume suffisant pour te réveiller</strong></li>
-                  <li>🔈 <strong>Volume :</strong> fort (l'objectif ici est de te réveiller, pas de rester endormi)</li>
-                  <li>💡 <strong>Action :</strong> lève-toi 5 à 10 min (toilettes, verre d'eau). Applique ensuite une <strong class="text-dream-300">technique d'induction</strong> : MILD (intention + visualisation) ou SSILD (cycles sensoriels). Voir la section « Techniques d'Induction » ci-dessous pour les protocoles détaillés. Puis recouche-toi.</li>
+                  <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 5h30 après ton coucher</li>
+                  <li><span class="whitespace-nowrap">🎵 <strong>Sonnerie :</strong></span> le fichier « Rêve Mieux » téléchargé, <strong class="text-amber-300">à volume suffisant pour te réveiller</strong></li>
+                  <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> fort (l'objectif ici est de te réveiller, pas de rester endormi)</li>
+                  <li><span class="whitespace-nowrap">💡 <strong>Action :</strong></span> lève-toi 5 à 10 min (toilettes, verre d'eau). Applique ensuite une <strong class="text-dream-300">technique d'induction</strong> : MILD (intention + visualisation) ou SSILD (cycles sensoriels). Voir la section « Techniques d'Induction » ci-dessous pour les protocoles détaillés. Puis recouche-toi.</li>
                 </ul>
               </div>
               <div>
                 <p class="text-[10px] text-gray-200"><strong class="text-violet-300">Alarme 2 : Refrain lucide</strong></p>
                 <ul class="text-[10px] text-gray-300 space-y-0.5 ml-3">
-                  <li>⏰ <strong>Heure :</strong> 30 min après l'alarme 1 (tu seras rendormi)</li>
-                  <li>🎵 <strong>Sonnerie :</strong> le fichier « Rêve Mieux » téléchargé</li>
-                  <li>🔈 <strong>Volume :</strong> très bas (1-2 barres)</li>
-                  <li>🔁 <strong>Répéter :</strong> rappel à 10 min, 2-3 fois</li>
-                  <li>📳 <strong>Vibration :</strong> désactivée</li>
+                  <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 30 min après l'alarme 1 (tu seras rendormi)</li>
+                  <li><span class="whitespace-nowrap">🎵 <strong>Sonnerie :</strong></span> le fichier « Rêve Mieux » téléchargé</li>
+                  <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> très bas (1 à 2 barres)</li>
+                  <li><span class="whitespace-nowrap">🔁 <strong>Répéter :</strong></span> rappel à 10 min, 2 à 3 fois</li>
+                  <li><span class="whitespace-nowrap">📳 <strong>Vibration :</strong></span> désactivée</li>
                 </ul>
               </div>
               <p class="text-[10px] text-gray-400 italic">La combinaison WBTB + TLR est la plus puissante : Aspy et al. (2017) montrent 46% de réussite dès la première semaine.</p>
