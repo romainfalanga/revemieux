@@ -2165,13 +2165,13 @@ async function renderLucidity() {
             <div class="p-2.5 rounded-lg bg-night-900/50 border border-violet-500/10 space-y-1.5">
               <p class="text-[10px] text-gray-200"><strong class="text-dream-300">Programme 1 alarme</strong> dans ton appli Horloge</p>
               <ul class="text-[10px] text-gray-300 space-y-1 ml-3">
-                <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 6h après ton coucher (ex : coucher 23h, alarme à 5h)</li>
+                <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 5h30 après ton coucher (ex : coucher 23h, alarme à 4h30)</li>
                 <li><span class="whitespace-nowrap">🎵 <strong>Sonnerie :</strong></span> le fichier « Rêve Mieux » téléchargé</li>
                 <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> le plus bas possible (1 à 2 barres max)</li>
-                <li><span class="whitespace-nowrap">🔁 <strong>Répéter :</strong></span> active le rappel (snooze) à 10 min d'intervalle, 3 fois max</li>
+                <li><span class="whitespace-nowrap">🔁 <strong>Répéter :</strong></span> active le rappel (snooze) à 20 min d'intervalle, 3 fois max</li>
                 <li><span class="whitespace-nowrap">📳 <strong>Vibration :</strong></span> désactivée</li>
               </ul>
-              <p class="text-[10px] text-gray-400 italic mt-1">Ainsi, le refrain sonnera 3 fois à 10 min d'intervalle, à un volume si faible qu'il ne te réveillera pas, mais ton cerveau endormi pourra l'intégrer dans le rêve en cours.</p>
+              <p class="text-[10px] text-gray-400 italic mt-1">Le refrain sonnera 3 fois à 20 min d'intervalle (5h30, 5h50, 6h10 après le coucher), couvrant une large fenêtre de sommeil paradoxal. Le volume ultra-bas fait que tu ne te réveilleras pas, mais ton cerveau endormi pourra capter le son et l'intégrer dans le rêve en cours.</p>
             </div>
           </div>
 
@@ -2216,7 +2216,7 @@ async function renderLucidity() {
         <div class="p-2.5 rounded-lg bg-violet-500/8 border border-violet-500/15">
           <p class="text-[10px] text-gray-300 leading-relaxed">
             <i class="fas fa-flask text-violet-400 mr-1"></i>
-            <strong class="text-violet-200">Pourquoi 6 heures :</strong> Les phases REM les plus longues (30 à 60 min) surviennent en fin de nuit. L'étude TLR a montré que commencer les indices sonores 6h après l'endormissement cible le pic de sommeil paradoxal.
+            <strong class="text-violet-200">Pourquoi 5h30 :</strong> Les phases REM les plus longues (30 à 60 min) surviennent en fin de nuit. L'étude TLR a montré que les indices sonores à partir de 5h30 après l'endormissement ciblent le pic de sommeil paradoxal. En espaçant les répétitions de 20 min, on couvre la fenêtre 5h30 à 6h10, ce qui compense les variations de temps d'endormissement.
           </p>
         </div>
         <p class="text-[9px] text-gray-500 italic mt-2">Sources : Konkoly et al. (2024, Consciousness and Cognition, PMC11542932) · Aspy et al. (2017) · Erlacher & Stumbrys (2020) · Nature Communications Psychology (2024) · Sleep Foundation</p>
