@@ -2113,7 +2113,6 @@ async function renderLucidity() {
             <ul class="text-[10px] text-gray-300 space-y-1 ml-3 mb-2">
               <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h10 avant ton coucher (ex : coucher 23h, alarme à 21h50)</li>
               <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> <strong class="text-amber-300">fort</strong> (tu dois l'entendre clairement, c'est le signal de départ)</li>
-              <li><span class="whitespace-nowrap">🔁 <strong>Répéter :</strong></span> tous les jours, y compris le week-end</li>
             </ul>
             <p class="text-[10px] text-gray-400 leading-relaxed mb-1">Cette alarme lance ta routine. Tu as <strong class="text-emerald-300">10 minutes sur ton téléphone</strong> pour :</p>
             <ol class="text-[10px] text-gray-300 space-y-1.5 ml-3">
@@ -2178,7 +2177,7 @@ async function renderLucidity() {
           <!-- Stratégie B : WBTB Combinée -->
           <div class="p-3 rounded-xl bg-dream-900/20 border border-dream-500/20">
             <p class="text-xs font-bold text-dream-200 mb-1.5">⏰ Stratégie B : WBTB combinée (réveil + rendormissement)</p>
-            <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Plus efficace mais plus engagée. Tu te réveilles d'abord brièvement (WBTB), puis tu te rendors pendant que le refrain joue en fond sonore.</p>
+            <p class="text-[10px] text-gray-300 leading-relaxed mb-2">Plus efficace mais plus engagée. Tu te réveilles brièvement en plein pic de sommeil paradoxal, tu appliques une technique d'induction (MILD ou SSILD), puis tu te rendors avec une conscience accrue. 30 min plus tard, le refrain joue à volume ultra-bas pour s'intégrer dans ton rêve.</p>
             <div class="p-2.5 rounded-lg bg-night-900/50 border border-dream-500/10 space-y-2">
               <div>
                 <p class="text-[10px] text-gray-200"><strong class="text-amber-300">Alarme 1 : Réveil bref</strong></p>
