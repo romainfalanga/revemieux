@@ -2319,17 +2319,17 @@ async function renderLucidity() {
 
       <!-- ===== BOUTON NIVEAU 2 ===== -->
       <div class="mb-5">
-        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2();"
-          class="w-full p-4 rounded-xl border border-dream-500/30 bg-gradient-to-r from-dream-900/30 to-violet-900/30 hover:from-dream-900/50 hover:to-violet-900/50 transition-all group">
+        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); window.scrollTo(0,0);"
+          class="w-full p-4 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 transition-all group">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="text-2xl">🧪</span>
               <div class="text-left">
-                <p class="text-sm font-display font-bold text-dream-200 group-hover:text-dream-100 transition-colors">Niveau 2 : Optimise ton sommeil</p>
-                <p class="text-xs text-gray-400 mt-0.5">Augmente la durée de ton sommeil paradoxal pour rêver plus, plus longtemps et plus intensément.</p>
+                <p class="text-sm font-display font-bold text-white group-hover:text-white transition-colors">Niveau 2 : Optimise ton sommeil</p>
+                <p class="text-xs text-amber-100/70 mt-0.5">Augmente la durée de ton sommeil paradoxal pour rêver plus, plus longtemps et plus intensément.</p>
               </div>
             </div>
-            <i class="fas fa-chevron-right text-dream-400 group-hover:translate-x-1 transition-transform"></i>
+            <i class="fas fa-chevron-right text-white/80 group-hover:translate-x-1 transition-transform"></i>
           </div>
         </button>
       </div>
@@ -2354,7 +2354,7 @@ function renderLucidityLevel2() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <!-- Bouton retour -->
-      <button onclick="state.currentView='lucidity'; renderLucidity();" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
+      <button onclick="state.currentView='lucidity'; renderLucidity(); window.scrollTo(0,0);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
         <i class="fas fa-arrow-left"></i> Retour à Lucidité
       </button>
 
@@ -2660,7 +2660,7 @@ function renderLucidityLevel2() {
       </div>
 
       <!-- Bouton retour en bas -->
-      <button onclick="state.currentView='lucidity'; renderLucidity();" class="w-full p-3 rounded-xl glass text-sm text-gray-400 hover:text-dream-300 transition-colors mb-2">
+      <button onclick="state.currentView='lucidity'; renderLucidity(); window.scrollTo(0,0);" class="w-full p-3 rounded-xl glass text-sm text-gray-400 hover:text-dream-300 transition-colors mb-2">
         <i class="fas fa-arrow-left mr-2"></i>Retour à Lucidité (Niveau 1)
       </button>
     </div>`;
