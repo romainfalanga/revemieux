@@ -2317,23 +2317,6 @@ async function renderLucidity() {
 
       </div>
 
-      <!-- ===== BOUTON NIVEAU 2 ===== -->
-      <div class="mb-5">
-        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); window.scrollTo(0,0);"
-          class="w-full p-4 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 transition-all group">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">🧪</span>
-              <div class="text-left">
-                <p class="text-sm font-display font-bold text-white group-hover:text-white transition-colors">Niveau 2 : Optimise ton sommeil</p>
-                <p class="text-xs text-amber-100/70 mt-0.5">Augmente la durée de ton sommeil paradoxal pour rêver plus, plus longtemps et plus intensément.</p>
-              </div>
-            </div>
-            <i class="fas fa-chevron-right text-white/80 group-hover:translate-x-1 transition-transform"></i>
-          </div>
-        </button>
-      </div>
-
       <!-- ===== BASES SCIENTIFIQUES ===== -->
       <div class="glass rounded-xl p-4">
         <h3 class="text-xs font-display font-semibold text-dream-200 mb-3"><i class="fas fa-flask mr-2"></i>Bases Scientifiques</h3>
@@ -2345,6 +2328,14 @@ async function renderLucidity() {
           <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD, WBTB et Reality Testing sont validés par des études contrôlées. SSILD est principalement communautaire (résultats comparables à MILD selon l'étude ILDIS 2020, mais pas d'étude isolée). Rêve Mieux distingue clairement ce qui est validé de ce qui est exploratoire.</p></div>
         </div>
       </div>
+
+      <!-- ===== BOUTON NIVEAU 2 ===== -->
+      <div class="flex justify-center mt-5">
+        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>window.scrollTo(0,0),50);"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 transition-all">
+          <i class="fas fa-flask"></i> Niveau 2 : Optimise ton sommeil <i class="fas fa-chevron-right text-xs ml-1"></i>
+        </button>
+      </div>
     </div>`;
 }
 
@@ -2354,7 +2345,7 @@ function renderLucidityLevel2() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <!-- Bouton retour -->
-      <button onclick="state.currentView='lucidity'; renderLucidity(); window.scrollTo(0,0);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
+      <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>window.scrollTo(0,0),50);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
         <i class="fas fa-arrow-left"></i> Retour à Lucidité
       </button>
 
@@ -2659,10 +2650,6 @@ function renderLucidityLevel2() {
         </div>
       </div>
 
-      <!-- Bouton retour en bas -->
-      <button onclick="state.currentView='lucidity'; renderLucidity(); window.scrollTo(0,0);" class="w-full p-3 rounded-xl glass text-sm text-gray-400 hover:text-dream-300 transition-colors mb-2">
-        <i class="fas fa-arrow-left mr-2"></i>Retour à Lucidité (Niveau 1)
-      </button>
     </div>`;
 }
 
