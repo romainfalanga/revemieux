@@ -2021,7 +2021,7 @@ async function renderLucidity() {
         <div class="relative text-center">
           <div class="text-3xl mb-2">👁️</div>
           <p class="text-sm font-display font-semibold text-dream-300 mb-1">Niveau 1</p>
-          <h2 class="text-xl font-display font-bold text-white mb-1.5">Déclenche tes rêves</h2>
+          <h2 class="text-xl font-display font-bold text-white mb-1.5">Déclenche tes rêves lucides</h2>
           <p class="text-xs text-gray-400">Techniques, entraînement et science du rêve lucide</p>
         </div>
       </div>
@@ -2378,7 +2378,7 @@ function renderLucidityLevel2() {
         <div class="relative text-center">
           <div class="text-3xl mb-2">🧪</div>
           <p class="text-sm font-display font-semibold text-dream-300 mb-1">Niveau 2</p>
-          <h2 class="text-xl font-display font-bold text-white mb-1.5">Optimise ton sommeil</h2>
+          <h2 class="text-xl font-display font-bold text-white mb-1.5">Optimise ton sommeil paradoxal</h2>
           <p class="text-xs text-gray-400">Augmente la durée de ton sommeil paradoxal pour rêver plus et plus intensément</p>
         </div>
       </div>
