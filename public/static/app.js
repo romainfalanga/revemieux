@@ -2355,7 +2355,7 @@ function renderLucidityLevel2() {
     <div class="animate-slideUp">
       <!-- Bouton retour -->
       <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
-        <i class="fas fa-arrow-left"></i> Retour à Rêve mieux
+        <i class="fas fa-arrow-left"></i> Retour au Niveau 1
       </button>
 
       <!-- ===== HERO TITRE ===== -->
