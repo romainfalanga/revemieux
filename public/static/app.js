@@ -2001,7 +2001,15 @@ async function renderLucidity() {
   let rcStats = { total: 0, today: 0 }; try { rcStats = await api('/reality-checks/stats'); } catch {}
   main.innerHTML = `
     <div class="animate-slideUp">
-      <h2 class="text-base font-display font-semibold text-dream-200 mb-5"><i class="fas fa-eye mr-2"></i>Aide à la Lucidité</h2>
+      <!-- ===== HERO TITRE ===== -->
+      <div class="relative rounded-2xl p-5 mb-6 overflow-hidden" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(56,189,248,0.10), rgba(139,92,246,0.08));">
+        <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
+        <div class="relative text-center">
+          <div class="text-3xl mb-2">👁️</div>
+          <h2 class="text-xl font-display font-bold text-white mb-1.5">Améliore ta lucidité</h2>
+          <p class="text-xs text-gray-400">Techniques, entraînement et science du rêve lucide</p>
+        </div>
+      </div>
 
       <!-- ===== CONTRÔLES DE RÉALITÉ ===== -->
       <div class="glass rounded-xl p-4 mb-5">
@@ -2349,8 +2357,15 @@ function renderLucidityLevel2() {
         <i class="fas fa-arrow-left"></i> Retour à Lucidité
       </button>
 
-      <h2 class="text-base font-display font-semibold text-dream-200 mb-2"><i class="fas fa-flask mr-2"></i>Niveau 2 : Optimise ton sommeil</h2>
-      <p class="text-xs text-gray-400 mb-5">Augmente la durée de ton sommeil paradoxal (REM) pour rêver plus, plus longtemps et plus intensément.</p>
+      <!-- ===== HERO TITRE ===== -->
+      <div class="relative rounded-2xl p-5 mb-6 overflow-hidden" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(56,189,248,0.10), rgba(139,92,246,0.08));">
+        <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
+        <div class="relative text-center">
+          <div class="text-3xl mb-2">🧪</div>
+          <h2 class="text-xl font-display font-bold text-white mb-1.5">Niveau 2 : Optimise ton sommeil</h2>
+          <p class="text-xs text-gray-400">Augmente la durée de ton sommeil paradoxal pour rêver plus et plus intensément</p>
+        </div>
+      </div>
 
       <!-- ===== INTRO : POURQUOI LE REM ===== -->
       <div class="glass rounded-xl p-4 mb-5">
