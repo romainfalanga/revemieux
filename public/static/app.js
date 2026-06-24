@@ -237,6 +237,7 @@ window.navigate = function(view) {
     case 'series': renderSeries(); break;
     case 'intentions': renderIntentions(); break;
     case 'lucidity': renderLucidity(); break;
+    case 'lucidity-level2': renderLucidityLevel2(); break;
     case 'dream-detail': renderDreamDetailPage(state.dreamDetailId); break;
   }
 };
@@ -2316,6 +2317,23 @@ async function renderLucidity() {
 
       </div>
 
+      <!-- ===== BOUTON NIVEAU 2 ===== -->
+      <div class="mb-5">
+        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2();"
+          class="w-full p-4 rounded-xl border border-dream-500/30 bg-gradient-to-r from-dream-900/30 to-violet-900/30 hover:from-dream-900/50 hover:to-violet-900/50 transition-all group">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🧪</span>
+              <div class="text-left">
+                <p class="text-sm font-display font-bold text-dream-200 group-hover:text-dream-100 transition-colors">Niveau 2 : Optimise ton sommeil</p>
+                <p class="text-xs text-gray-400 mt-0.5">Augmente la durée de ton sommeil paradoxal pour rêver plus, plus longtemps et plus intensément.</p>
+              </div>
+            </div>
+            <i class="fas fa-chevron-right text-dream-400 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </button>
+      </div>
+
       <!-- ===== BASES SCIENTIFIQUES ===== -->
       <div class="glass rounded-xl p-4">
         <h3 class="text-xs font-display font-semibold text-dream-200 mb-3"><i class="fas fa-flask mr-2"></i>Bases Scientifiques</h3>
@@ -2327,6 +2345,324 @@ async function renderLucidity() {
           <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD, WBTB et Reality Testing sont validés par des études contrôlées. SSILD est principalement communautaire (résultats comparables à MILD selon l'étude ILDIS 2020, mais pas d'étude isolée). Rêve Mieux distingue clairement ce qui est validé de ce qui est exploratoire.</p></div>
         </div>
       </div>
+    </div>`;
+}
+
+// ========== LUCIDITÉ NIVEAU 2 : OPTIMISER SON SOMMEIL ==========
+function renderLucidityLevel2() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="animate-slideUp">
+      <!-- Bouton retour -->
+      <button onclick="state.currentView='lucidity'; renderLucidity();" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
+        <i class="fas fa-arrow-left"></i> Retour à Lucidité
+      </button>
+
+      <h2 class="text-base font-display font-semibold text-dream-200 mb-2"><i class="fas fa-flask mr-2"></i>Niveau 2 : Optimise ton sommeil</h2>
+      <p class="text-xs text-gray-400 mb-5">Augmente la durée de ton sommeil paradoxal (REM) pour rêver plus, plus longtemps et plus intensément.</p>
+
+      <!-- ===== INTRO : POURQUOI LE REM ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🧠</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Pourquoi le sommeil paradoxal est la « zone des rêves »</h3>
+        </div>
+        <p class="text-xs text-gray-300 leading-relaxed mb-3">Chez l'adulte en bonne santé, le <strong class="text-dream-300">sommeil paradoxal représente 20 à 25% du temps de sommeil total</strong>, soit environ <strong class="text-dream-300">90 à 120 minutes par nuit</strong> si tu dors 7 à 9 heures.</p>
+        <div class="space-y-2 mb-3">
+          <div class="flex items-start gap-2">
+            <span class="text-dream-400 mt-0.5">▸</span>
+            <p class="text-xs text-gray-300">L'activité cérébrale est intense, proche de l'éveil.</p>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-dream-400 mt-0.5">▸</span>
+            <p class="text-xs text-gray-300">C'est la phase <strong class="text-dream-300">la plus propice aux rêves</strong> complexes et mémorisables.</p>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-dream-400 mt-0.5">▸</span>
+            <p class="text-xs text-gray-300">La durée du REM <strong class="text-dream-300">augmente progressivement au fil de la nuit</strong> : les premiers épisodes durent 10 à 20 min, les derniers peuvent dépasser 30 min.</p>
+          </div>
+        </div>
+        <div class="p-3 rounded-lg bg-dream-900/20 border border-dream-500/15">
+          <p class="text-xs text-gray-300 leading-relaxed"><i class="fas fa-lightbulb text-amber-400 mr-1.5"></i><strong class="text-dream-200">En clair :</strong> plus tu dors longtemps et de manière continue, plus tu permets à ces longs épisodes de REM de se dérouler, donc plus tu crées de rêves, souvent plus intenses en fin de nuit.</p>
+        </div>
+      </div>
+
+      <!-- ===== 1. DORMIR ASSEZ LONGTEMPS ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">⏰</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Dormir assez longtemps et régulièrement</h3>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40 mb-3">
+          <p class="text-xs font-semibold text-dream-200 mb-1.5">Viser 7 à 9 heures de sommeil</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">Pour atteindre 90 à 120 minutes de REM, il faut un volume total de sommeil suffisant.</p>
+          <ul class="text-xs text-gray-300 space-y-1.5 ml-1">
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span>En dessous de 6 heures, tu coupes surtout la <strong class="text-dream-300">fin de nuit</strong>, là où le REM est le plus long et le plus riche en rêves.</span></li>
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span>Recommandation : <strong class="text-dream-300">7 à 9 heures par nuit</strong>, ce qui laisse au cerveau le temps de traverser plusieurs cycles complets avec des REM prolongés.</span></li>
+          </ul>
+          <div class="p-2.5 rounded-lg bg-dream-900/15 border border-dream-500/10 mt-2.5">
+            <p class="text-[11px] text-gray-400"><i class="fas fa-check text-emerald-400 mr-1.5"></i><strong class="text-emerald-200">Stratégie :</strong> Calcule ton heure de coucher à partir de ton heure de réveil cible en te laissant au moins 7h30 de temps au lit. Garde cette fenêtre de sommeil stable chaque nuit.</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-violet-500/40">
+          <p class="text-xs font-semibold text-violet-200 mb-1.5">Rendre ton horloge interne ultra régulière</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">La <strong class="text-violet-300">régularité des horaires</strong> est l'un des leviers les plus puissants pour stabiliser les cycles de sommeil et garantir un REM bien structuré chaque nuit.</p>
+          <ul class="text-xs text-gray-300 space-y-1.5 ml-1">
+            <li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">▸</span><span>Se coucher et se lever <strong class="text-violet-300">tous les jours à la même heure</strong>, week-end compris.</span></li>
+            <li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">▸</span><span>Ne pas décaler ses horaires de plus d'<strong class="text-violet-300">une heure</strong> d'un jour à l'autre.</span></li>
+          </ul>
+          <div class="p-2.5 rounded-lg bg-violet-900/15 border border-violet-500/10 mt-2.5">
+            <p class="text-[11px] text-gray-400"><i class="fas fa-check text-emerald-400 mr-1.5"></i><strong class="text-emerald-200">Stratégie :</strong> Choisis une plage horaire réaliste et durable (ex : 23h à 7h) et tiens-t'y chaque jour. Évite les nuits blanches ou très décalées qui cassent cette programmation.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 2. PROTÉGER LE REM ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🛡️</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Protéger ton REM : éliminer les ennemis des rêves</h3>
+        </div>
+        <p class="text-xs text-gray-400 mb-3">Certaines substances réduisent, fragmentent ou retardent le REM, donc diminuent la quantité et l'intensité des rêves.</p>
+
+        <div class="space-y-3">
+          <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-amber-500/40">
+            <p class="text-xs font-semibold text-amber-200 mb-1.5">☕ Limiter caféine et stimulants</p>
+            <p class="text-xs text-gray-300 leading-relaxed mb-2">La caféine (café, thé fort, boissons énergisantes) <strong class="text-amber-300">retarde l'endormissement et perturbe la structure du sommeil</strong>, y compris la répartition du REM.</p>
+            <ul class="text-[11px] text-gray-300 space-y-1 ml-1">
+              <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">▸</span><span><strong class="text-amber-300">Éviter la caféine dans l'après-midi et le soir.</strong></span></li>
+              <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">▸</span><span>Limiter aussi les autres excitants le soir : sucre en grande quantité, boissons énergétiques.</span></li>
+            </ul>
+          </div>
+
+          <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-red-500/40">
+            <p class="text-xs font-semibold text-red-200 mb-1.5">🍷 Réduire l'alcool, surtout le soir</p>
+            <p class="text-xs text-gray-300 leading-relaxed mb-2">L'alcool peut donner l'impression de faciliter l'endormissement, mais il fragmente le sommeil et <strong class="text-red-300">réduit et retarde le sommeil paradoxal</strong>, avec parfois un rebond de REM peu réparateur plus tard dans la nuit.</p>
+            <p class="text-[11px] text-gray-400"><i class="fas fa-check text-emerald-400 mr-1.5"></i><strong class="text-emerald-200">Conseil :</strong> Limiter ou éviter l'alcool dans les heures précédant le coucher.</p>
+          </div>
+
+          <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-gray-500/40">
+            <p class="text-xs font-semibold text-gray-200 mb-1.5">💊 Autres substances et médicaments</p>
+            <p class="text-xs text-gray-300 leading-relaxed mb-1.5">La <strong class="text-gray-200">nicotine</strong> et certains stimulants fragmentent le sommeil et peuvent réduire la continuité du REM. De nombreux <strong class="text-gray-200">médicaments psychotropes</strong> (certains antidépresseurs, antipsychotiques, hypnotiques) sont connus pour diminuer ou remodeler le REM.</p>
+            <p class="text-[11px] text-gray-400 italic">Si tu prends ce genre de traitements et que la disparition de tes rêves te gêne, parles-en à un professionnel de santé.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 3. ENVIRONNEMENT ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🏠</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Un environnement qui favorise un REM abondant</h3>
+        </div>
+        <p class="text-xs text-gray-400 mb-3">Un environnement de sommeil optimisé permet un sommeil plus continu, donc des cycles complets avec un REM préservé.</p>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40 mb-3">
+          <p class="text-xs font-semibold text-dream-200 mb-1.5">🌑 Chambre sombre, silencieuse et fraîche</p>
+          <ul class="text-xs text-gray-300 space-y-1.5 ml-1">
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span><strong class="text-dream-300">Obscurité :</strong> la mélatonine, qui régule le sommeil, est mieux sécrétée dans le noir.</span></li>
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span><strong class="text-dream-300">Silence</strong> ou bruit neutre : limiter les réveils nocturnes qui cassent les cycles.</span></li>
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span><strong class="text-dream-300">Température :</strong> idéalement <strong class="text-dream-300">16 à 19 °C</strong> dans la chambre.</span></li>
+          </ul>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-violet-500/40">
+          <p class="text-xs font-semibold text-violet-200 mb-1.5">🛏️ Literie et aménagement</p>
+          <ul class="text-xs text-gray-300 space-y-1.5 ml-1">
+            <li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">▸</span><span>Une <strong class="text-violet-300">bonne literie</strong> (matelas + oreiller adaptés) réduit les micro-réveils liés à l'inconfort.</span></li>
+            <li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">▸</span><span>Utiliser une <strong class="text-violet-300">literie respirante</strong> qui évacue l'humidité aide à maintenir une température corporelle stable.</span></li>
+            <li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">▸</span><span>Une chambre <strong class="text-violet-300">désencombrée</strong>, avec des couleurs douces, favorise une ambiance apaisante.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ===== 4. LUMIÈRE ET ÉCRANS ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">💡</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Lumière et écrans : laisser la mélatonine faire son travail</h3>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-amber-500/40 mb-3">
+          <p class="text-xs font-semibold text-amber-200 mb-1.5">📵 Réduire la lumière bleue le soir</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">La lumière bleue des écrans <strong class="text-amber-300">inhibe la mélatonine</strong> et retarde l'endormissement, ce qui désorganise toute l'architecture de la nuit, y compris le REM.</p>
+          <ul class="text-[11px] text-gray-300 space-y-1 ml-1">
+            <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">▸</span><span><strong class="text-amber-300">Éviter les écrans 1 à 2 heures avant le coucher.</strong></span></li>
+            <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">▸</span><span>Privilégie des activités calmes : lecture, musique douce, écriture, dessin.</span></li>
+          </ul>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-emerald-500/40">
+          <p class="text-xs font-semibold text-emerald-200 mb-1.5">☀️ S'exposer à la lumière le matin</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">Recevoir de la lumière intense tôt dans la journée aide à <strong class="text-emerald-300">calibrer ton rythme circadien</strong>, ce qui se traduit par des nuits mieux organisées et un REM plus stable.</p>
+          <ul class="text-[11px] text-gray-300 space-y-1 ml-1">
+            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">▸</span><span>S'exposer à la lumière du jour le matin, ou utiliser un dispositif de luminothérapie.</span></li>
+            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">▸</span><span>Les dispositifs de luminothérapie sont recommandés <strong class="text-emerald-300">le matin après le réveil</strong>, pendant 10 à 30 minutes.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ===== 5. ALIMENTATION ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🍽️</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Alimentation : soutenir le REM</h3>
+        </div>
+        <p class="text-xs text-gray-400 mb-3">L'alimentation ne « crée » pas du REM à elle seule, mais elle peut faciliter un sommeil plus stable et une bonne sécrétion de mélatonine.</p>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-red-500/40 mb-3">
+          <p class="text-xs font-semibold text-red-200 mb-1.5">🚫 Éviter les repas lourds le soir</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-1.5">Les repas trop copieux sont associés à un endormissement difficile et à un sommeil plus fragmenté.</p>
+          <p class="text-[11px] text-gray-400"><i class="fas fa-check text-emerald-400 mr-1.5"></i><strong class="text-emerald-200">Conseil :</strong> Laisser quelques heures entre le dîner et le coucher.</p>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-emerald-500/40">
+          <p class="text-xs font-semibold text-emerald-200 mb-1.5">✅ Favoriser certains aliments le soir</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">Les aliments riches en <strong class="text-emerald-300">tryptophane</strong>, précurseur de la sérotonine et de la mélatonine, peuvent favoriser un meilleur sommeil :</p>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <span class="px-2.5 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/20 text-[11px] text-emerald-300">🥜 Noix</span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/20 text-[11px] text-emerald-300">🌱 Graines</span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/20 text-[11px] text-emerald-300">🧀 Fromage</span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/20 text-[11px] text-emerald-300">🥛 Lait</span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/20 text-[11px] text-emerald-300">🥚 Oeufs</span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-900/30 border border-emerald-500/20 text-[11px] text-emerald-300">🦃 Dinde</span>
+          </div>
+          <p class="text-[11px] text-gray-400">Des <strong class="text-emerald-200">glucides complexes</strong> (céréales complètes) peuvent également aider à réguler la production de sérotonine.</p>
+        </div>
+      </div>
+
+      <!-- ===== 6. ACTIVITÉ PHYSIQUE ET RELAXATION ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🏃</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Activité physique et relaxation</h3>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40 mb-3">
+          <p class="text-xs font-semibold text-dream-200 mb-1.5">🏋️ Faire du sport, mais au bon moment</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">L'activité physique régulière améliore la qualité globale du sommeil, donc la qualité du REM.</p>
+          <ul class="text-[11px] text-gray-300 space-y-1 ml-1">
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span>Pratiquer du <strong class="text-dream-300">sport régulièrement</strong>, mais <strong class="text-dream-300">loin de l'heure du coucher</strong>.</span></li>
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span>Éviter les activités physiques intenses juste avant d'aller au lit.</span></li>
+          </ul>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-violet-500/40">
+          <p class="text-xs font-semibold text-violet-200 mb-1.5">🧘 Intégrer des routines de relaxation</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">Le stress est un grand perturbateur des nuits et favorise les réveils nocturnes qui tronquent les cycles. Des techniques de relaxation aident à s'endormir plus vite et à garder un sommeil plus continu :</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-2.5 py-1 rounded-full bg-violet-900/30 border border-violet-500/20 text-[11px] text-violet-300">🧘 Méditation</span>
+            <span class="px-2.5 py-1 rounded-full bg-violet-900/30 border border-violet-500/20 text-[11px] text-violet-300">🌬️ Respiration profonde</span>
+            <span class="px-2.5 py-1 rounded-full bg-violet-900/30 border border-violet-500/20 text-[11px] text-violet-300">🧎 Yoga doux</span>
+            <span class="px-2.5 py-1 rounded-full bg-violet-900/30 border border-violet-500/20 text-[11px] text-violet-300">🛁 Bain chaud</span>
+            <span class="px-2.5 py-1 rounded-full bg-violet-900/30 border border-violet-500/20 text-[11px] text-violet-300">📖 Lecture tranquille</span>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-2">Ces routines réduisent le stress et améliorent la continuité du sommeil, ce qui permet au <strong class="text-violet-200">REM de s'exprimer pleinement</strong>.</p>
+        </div>
+      </div>
+
+      <!-- ===== 7. TROUBLES DU SOMMEIL ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">⚕️</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Troubles du sommeil qui sabotent le REM</h3>
+        </div>
+        <p class="text-xs text-gray-300 leading-relaxed mb-3">Si malgré toutes ces stratégies tu continues à avoir un sommeil très fragmenté, il peut y avoir un <strong class="text-dream-300">trouble du sommeil</strong> sous-jacent.</p>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <span class="px-2.5 py-1 rounded-full bg-night-900/40 border border-gray-600/30 text-[11px] text-gray-300">Insomnie chronique</span>
+          <span class="px-2.5 py-1 rounded-full bg-night-900/40 border border-gray-600/30 text-[11px] text-gray-300">Apnée du sommeil</span>
+          <span class="px-2.5 py-1 rounded-full bg-night-900/40 border border-gray-600/30 text-[11px] text-gray-300">Syndrome des jambes sans repos</span>
+        </div>
+        <div class="p-3 rounded-lg bg-amber-900/15 border border-amber-500/20">
+          <p class="text-xs text-gray-300 leading-relaxed"><i class="fas fa-exclamation-triangle text-amber-400 mr-1.5"></i><strong class="text-amber-200">Important :</strong> Identifier et traiter ces troubles avec un professionnel de santé est essentiel pour restaurer une architecture de sommeil normale, incluant un REM suffisant.</p>
+        </div>
+      </div>
+
+      <!-- ===== 8. ALLER PLUS LOIN ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🚀</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Aller plus loin : maximiser quantité et intensité</h3>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-dream-500/40 mb-3">
+          <p class="text-xs font-semibold text-dream-200 mb-1.5">🌅 Exploiter le REM de fin de nuit</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">Puisque les épisodes de REM sont <strong class="text-dream-300">plus longs en fin de nuit</strong>, tu peux :</p>
+          <ul class="text-[11px] text-gray-300 space-y-1.5 ml-1">
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span>Éviter les réveils trop précoces.</span></li>
+            <li class="flex items-start gap-2"><span class="text-dream-400 mt-0.5">▸</span><span>T'accorder, lorsque c'est possible, un <strong class="text-dream-300">réveil naturel sans alarme</strong>, pour te réveiller spontanément durant ou juste après un épisode REM.</span></li>
+          </ul>
+          <p class="text-[11px] text-gray-400 mt-2">Tu augmentes ainsi la probabilité de te réveiller en pleine phase de rêve, ce qui facilite énormément le souvenir du rêve.</p>
+        </div>
+
+        <div class="p-3 rounded-lg bg-night-900/30 border-l-2 border-violet-500/40">
+          <p class="text-xs font-semibold text-violet-200 mb-1.5">📝 Développer le rappel des rêves</p>
+          <p class="text-xs text-gray-300 leading-relaxed mb-2">Même avec un bon REM, tu peux ne pas te souvenir de tes rêves. Tu peux entraîner ton cerveau à mieux les mémoriser :</p>
+          <ul class="text-[11px] text-gray-300 space-y-1.5 ml-1">
+            <li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">▸</span><span><strong class="text-violet-300">Journal de rêves :</strong> garde un carnet près du lit (ou utilise Rêve Mieux) et note au réveil tout ce dont tu te souviens, même quelques fragments.</span></li>
+            <li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">▸</span><span><strong class="text-violet-300">Intention avant le sommeil :</strong> te répéter que tu veux te rappeler tes rêves renforce l'attention portée à ceux-ci à chaque micro-réveil.</span></li>
+          </ul>
+          <p class="text-[11px] text-gray-400 mt-2">Ces techniques ne modifient pas directement la quantité de REM, mais augmentent la <strong class="text-violet-200">richesse et la vivacité des souvenirs</strong>, ce qui revient, subjectivement, à rêver plus et plus intensément.</p>
+        </div>
+      </div>
+
+      <!-- ===== SYNTHÈSE ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">📋</span>
+          <h3 class="text-sm font-display font-bold text-dream-100">Synthèse : ta stratégie pro-REM</h3>
+        </div>
+        <p class="text-xs text-gray-400 mb-3">Pour augmenter au maximum la durée du sommeil paradoxal, et donc la quantité et l'intensité de tes rêves, l'ensemble des sources convergent sur ces piliers :</p>
+        <div class="space-y-2">
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">⏰</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Dormir 7 à 9h par nuit</strong> pour laisser le temps aux épisodes REM de s'allonger.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">📅</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Horaires réguliers</strong> de coucher et de lever pour stabiliser le rythme circadien.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">☕</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Limiter caféine, alcool et excitants</strong>, surtout l'après-midi et le soir.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">🌑</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Chambre sombre, calme, à 16-19 °C</strong>, avec une literie confortable.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">📵</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Réduire les écrans 1 à 2h avant de dormir</strong>, privilégier des activités calmes.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">🍽️</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Ne pas manger trop lourd le soir</strong>, favoriser le tryptophane et les glucides complexes.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">🏃</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Faire de l'exercice régulièrement</strong>, mais pas juste avant le coucher.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">🧘</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Pratiquer des techniques de relaxation</strong> pour réduire le stress.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">⚕️</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Traiter les troubles du sommeil</strong> éventuels avec un professionnel.</p>
+          </div>
+          <div class="flex items-start gap-2.5 p-2 rounded-lg bg-night-900/30">
+            <span class="text-lg mt-0.5">📝</span>
+            <p class="text-xs text-gray-300"><strong class="text-dream-300">Entraîner le rappel de rêves</strong> (journal, intention) pour tirer pleinement parti du REM optimisé.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton retour en bas -->
+      <button onclick="state.currentView='lucidity'; renderLucidity();" class="w-full p-3 rounded-xl glass text-sm text-gray-400 hover:text-dream-300 transition-colors mb-2">
+        <i class="fas fa-arrow-left mr-2"></i>Retour à Lucidité (Niveau 1)
+      </button>
     </div>`;
 }
 
