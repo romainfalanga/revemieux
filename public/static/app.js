@@ -2331,7 +2331,7 @@ async function renderLucidity() {
 
       <!-- ===== BOUTON NIVEAU 2 ===== -->
       <div class="flex justify-center mt-5">
-        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>window.scrollTo(0,0),50);"
+        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 transition-all">
           <i class="fas fa-flask"></i> Niveau 2 : Optimise ton sommeil <i class="fas fa-chevron-right text-xs ml-1"></i>
         </button>
@@ -2345,7 +2345,7 @@ function renderLucidityLevel2() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <!-- Bouton retour -->
-      <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>window.scrollTo(0,0),50);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
+      <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
         <i class="fas fa-arrow-left"></i> Retour à Lucidité
       </button>
 
