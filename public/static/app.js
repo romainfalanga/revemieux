@@ -2652,7 +2652,7 @@ function renderLucidityLevel2() {
 
       <!-- Bouton scroll to top -->
       <div class="flex justify-center mt-5">
-        <button onclick="window.scrollTo({top:0,behavior:'smooth'});"
+        <button onclick="document.getElementById('main-content').scrollTo({top:0,behavior:'smooth'});"
           class="w-10 h-10 rounded-full glass border border-dream-500/30 flex items-center justify-center text-dream-400 hover:text-dream-200 hover:border-dream-400/50 transition-all">
           <i class="fas fa-arrow-up"></i>
         </button>
