@@ -2021,8 +2021,8 @@ async function renderLucidity() {
         <div class="relative text-center">
           <div class="text-3xl mb-2">👁️</div>
           <p class="text-sm font-display font-semibold text-dream-300 mb-1">Niveau 1</p>
-          <h2 class="text-xl font-display font-bold text-white mb-1.5">Déclenche tes rêves lucides</h2>
-          <p class="text-xs text-gray-400">Techniques, entraînement et science du rêve lucide</p>
+          <h2 class="text-xl font-display font-bold text-white mb-1.5">Déclenche des rêves lucides</h2>
+          <p class="text-xs text-gray-400 leading-relaxed max-w-md mx-auto">Contrôles de réalité, ancrage musical avec le refrain « Rêve Mieux », TLR nocturne (alarmes pendant le sommeil paradoxal), techniques d'induction WBTB, MILD et SSILD, incubation de rêves et journal onirique.</p>
         </div>
       </div>
 
