@@ -179,6 +179,20 @@ function renderApp() {
       <!-- Mini-player flottant permanent -->
       <!-- Boutons flottants : RC + Player, colonne verticale alignée -->
       <div id="floating-player" class="fixed z-[9998] flex flex-col items-center gap-2" style="bottom:85px;right:12px;">
+        <!-- Bouton Niveau 2 -->
+        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
+          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90 text-sm font-bold"
+          style="background:linear-gradient(135deg,rgba(139,92,246,0.85),rgba(56,189,248,0.85));backdrop-filter:blur(8px);"
+          title="Niveau 2 : Optimise ton sommeil">
+          2
+        </button>
+        <!-- Bouton Niveau 1 -->
+        <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
+          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90 text-sm font-bold"
+          style="background:linear-gradient(135deg,rgba(139,92,246,0.85),rgba(56,189,248,0.85));backdrop-filter:blur(8px);"
+          title="Niveau 1 : Déclenche tes rêves">
+          1
+        </button>
         <!-- Bouton Reality Check -->
         <button onclick="quickRealityCheck()" id="floating-rc-btn"
           class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
