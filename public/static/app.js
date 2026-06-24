@@ -142,7 +142,7 @@ function renderApp() {
           </div>
           <nav class="hidden sm:flex gap-1" id="main-nav-desktop">
             <button onclick="navigate('journal')" data-nav="journal" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-book-open mr-1"></i>Journal</button>
-            <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-eye mr-1"></i>Lucidité</button>
+            <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-eye mr-1"></i>Rêve mieux</button>
           </nav>
           <div class="flex items-center gap-2 shrink-0">
             <span class="text-xs text-gray-400 hidden lg:block">${state.user?.displayName}</span>
@@ -166,7 +166,7 @@ function renderApp() {
             </div>
           </button>
           <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
-            <i class="fas fa-eye text-base"></i><span>Lucidité</span>
+            <i class="fas fa-eye text-base"></i><span>Rêve mieux</span>
           </button>
         </div>
       </nav>
@@ -2006,7 +2006,8 @@ async function renderLucidity() {
         <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
         <div class="relative text-center">
           <div class="text-3xl mb-2">👁️</div>
-          <h2 class="text-xl font-display font-bold text-white mb-1.5">Améliore ta lucidité</h2>
+          <p class="text-sm font-display font-semibold text-dream-300 mb-1">Niveau 1</p>
+          <h2 class="text-xl font-display font-bold text-white mb-1.5">Déclenche tes rêves</h2>
           <p class="text-xs text-gray-400">Techniques, entraînement et science du rêve lucide</p>
         </div>
       </div>
@@ -2354,7 +2355,7 @@ function renderLucidityLevel2() {
     <div class="animate-slideUp">
       <!-- Bouton retour -->
       <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
-        <i class="fas fa-arrow-left"></i> Retour à Lucidité
+        <i class="fas fa-arrow-left"></i> Retour à Rêve mieux
       </button>
 
       <!-- ===== HERO TITRE ===== -->
@@ -2362,7 +2363,8 @@ function renderLucidityLevel2() {
         <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
         <div class="relative text-center">
           <div class="text-3xl mb-2">🧪</div>
-          <h2 class="text-xl font-display font-bold text-white mb-1.5">Niveau 2 : Optimise ton sommeil</h2>
+          <p class="text-sm font-display font-semibold text-dream-300 mb-1">Niveau 2</p>
+          <h2 class="text-xl font-display font-bold text-white mb-1.5">Optimise ton sommeil</h2>
           <p class="text-xs text-gray-400">Augmente la durée de ton sommeil paradoxal pour rêver plus et plus intensément</p>
         </div>
       </div>
