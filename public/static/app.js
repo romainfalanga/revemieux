@@ -537,11 +537,12 @@ async function renderDreamDetailPage(id) {
   const main = document.getElementById('main-content');
   main.innerHTML = '<div class="flex justify-center py-12"><div class="animate-spin text-dream-400 text-2xl"><i class="fas fa-circle-notch"></i></div></div>';
   try {
-    const [dream, intentionsData] = await Promise.all([
+    const [dream, intentionsData, realizedByData] = await Promise.all([
       api(`/dreams/${id}`),
-      api(`/intentions/for-dream/${id}`).catch(() => ({ intentions: [] }))
+      api(`/intentions/for-dream/${id}`).catch(() => ({ intentions: [] })),
+      api(`/intentions/realized-by/${id}`).catch(() => ({ intention: null }))
     ]);
-    main.innerHTML = `<div class="animate-slideUp">${renderDreamDetailContent(dream, intentionsData.intentions || [])}</div>`;
+    main.innerHTML = `<div class="animate-slideUp">${renderDreamDetailContent(dream, intentionsData.intentions || [], realizedByData.intention)}</div>`;
   } catch (err) {
     main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`;
   }
@@ -582,8 +583,9 @@ window.goBackFromDreamDetail = function() {
   navigate(prev);
 };
 
-function renderDreamDetailContent(d, intentions) {
+function renderDreamDetailContent(d, intentions, realizedIntention) {
   intentions = intentions || [];
+  realizedIntention = realizedIntention || null;
   const typeLabels = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.label]));
   const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
   const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
@@ -637,6 +639,19 @@ function renderDreamDetailContent(d, intentions) {
 
       ${phasesHTML}
       ${interpretationsHTML}
+
+      ${realizedIntention ? `
+      <div class="mb-4">
+        <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-lightbulb mr-1 text-emerald-400/60"></i>Intention réalisée</h4>
+        <div class="p-3 rounded-lg bg-emerald-900/15 border border-emerald-500/15 cursor-pointer hover:bg-emerald-900/25 transition-all" onclick="navigate('intentions')">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-xs">${realizedIntention.type === 'dream_continuation' ? '\ud83c\udf19' : '\u2728'}</span>
+            <span class="text-xs font-medium text-emerald-200">${escapeHtml(realizedIntention.title)}</span>
+            <span class="text-[8px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300 ml-auto shrink-0">Réalisée</span>
+          </div>
+          ${realizedIntention.description ? `<p class="text-[10px] text-gray-400 line-clamp-2">${escapeHtml(realizedIntention.description)}</p>` : ''}
+        </div>
+      </div>` : ''}
 
       ${d.wished_continuation ? `
       <div class="mb-4">
@@ -707,11 +722,24 @@ const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', the
 
 window.openDreamEditor = async function(id) {
   let dream = null;
-  let allTags = [], allSeries = [], activeIntentions = [];
+  let allTags = [], allSeries = [], activeIntentions = [], currentRealizedIntention = null;
   try { allTags = (await api('/tags')).tags; } catch {}
   try { allSeries = (await api('/series')).series; } catch {}
   try { activeIntentions = (await api('/intentions/active')).intentions; } catch {}
   if (id) { try { dream = await api(`/dreams/${id}`); } catch {} }
+  // Charger l'intention déjà réalisée par ce rêve (si modification)
+  if (id) {
+    try {
+      const data = await api(`/intentions/realized-by/${id}`);
+      if (data.intention) {
+        currentRealizedIntention = data.intention;
+        // Si l'intention n'est pas déjà dans la liste des actives (elle est realized), l'ajouter
+        if (!activeIntentions.find(i => i.id === currentRealizedIntention.id)) {
+          activeIntentions.unshift(currentRealizedIntention);
+        }
+      }
+    } catch {}
+  }
 
   const selectedEmotions = dream?.emotions?.reduce((acc, e) => { acc[e.emotion] = e.intensity; return acc; }, {}) || {};
   const selectedTags = dream?.tags || [];
@@ -733,7 +761,8 @@ window.openDreamEditor = async function(id) {
       interpretations: p.interpretations?.map(i => i.content) || []
     })),
     interpretations: existingInterpretations.map(i => i.content),
-    realizedIntentionId: null // intention que ce rêve réalise
+    realizedIntentionId: currentRealizedIntention ? currentRealizedIntention.id : null, // intention que ce rêve réalise
+    _previousRealizedIntentionId: currentRealizedIntention ? currentRealizedIntention.id : null // pour détecter les changements
   };
   window._allTags = allTags;
   window._activeIntentions = activeIntentions;
@@ -933,12 +962,12 @@ window.openDreamEditor = async function(id) {
             <i class="fas fa-lightbulb text-emerald-400/70 text-xs"></i>
             <label class="text-[10px] text-gray-400 font-semibold uppercase">Ce rêve provient d'une intention ?</label>
           </div>
-          <p class="text-[9px] text-gray-500 mb-2">Si ce rêve réalise une de vos intentions, sélectionnez-la pour la marquer comme réalisée.</p>
+          <p class="text-[9px] text-gray-500 mb-2">Si ce rêve réalise une de tes intentions, sélectionne-la pour la marquer comme réalisée.</p>
           <div id="intention-selector">
             <select onchange="window._editorState.realizedIntentionId = this.value ? parseInt(this.value) : null"
               class="w-full px-3 py-2 bg-night-900/60 border border-emerald-700/25 rounded-lg text-white text-xs focus:border-emerald-400 focus:outline-none">
               <option value="">Aucune intention</option>
-              ${activeIntentions.map(i => `<option value="${i.id}">${i.type === 'dream_continuation' ? '🌙' : '✨'} ${escapeHtml(i.title)}${i.source_dream_title ? ' (suite de ' + escapeHtml(i.source_dream_title) + ')' : ''}</option>`).join('')}
+              ${activeIntentions.map(i => `<option value="${i.id}" ${currentRealizedIntention && currentRealizedIntention.id === i.id ? 'selected' : ''}>${i.type === 'dream_continuation' ? '🌙' : '✨'} ${escapeHtml(i.title)}${i.source_dream_title ? ' (suite de ' + escapeHtml(i.source_dream_title) + ')' : ''}${i.status === 'realized' ? ' ✅' : ''}</option>`).join('')}
             </select>
           </div>
         </div>` : ''}
@@ -1378,9 +1407,16 @@ window.saveDream = async function(e, id) {
         try { await api(`/series/${sid}/dreams`, { method: 'POST', body: JSON.stringify({ dreamId }) }); } catch {}
       }
     }
-    // Marquer une intention comme réalisée par ce rêve
-    if (dreamId && window._editorState.realizedIntentionId) {
-      try { await api(`/intentions/${window._editorState.realizedIntentionId}/realize`, { method: 'PUT', body: JSON.stringify({ realizedDreamId: dreamId }) }); } catch {}
+    // Gérer le lien intention <-> rêve (bidirectionnel)
+    const previousIntentionId = window._editorState._previousRealizedIntentionId;
+    const newIntentionId = window._editorState.realizedIntentionId;
+    // Si l'intention a changé, d'abord détacher l'ancienne
+    if (previousIntentionId && previousIntentionId !== newIntentionId) {
+      try { await api(`/intentions/${previousIntentionId}/unrealize`, { method: 'PUT' }); } catch {}
+    }
+    // Puis attacher la nouvelle
+    if (dreamId && newIntentionId) {
+      try { await api(`/intentions/${newIntentionId}/realize`, { method: 'PUT', body: JSON.stringify({ realizedDreamId: dreamId }) }); } catch {}
     }
     // Si suite souhaitée remplie, créer/mettre à jour une intention de suite automatique
     if (dreamId && body.wishedContinuation) {
@@ -1784,7 +1820,7 @@ function renderIntentionCard(i) {
           <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
             <span class="text-[9px] px-1.5 py-0.5 rounded-full ${isContinuation ? 'bg-violet-600/25 text-violet-300' : 'bg-indigo-600/25 text-indigo-300'}">${typeLabel}</span>
             ${isContinuation && i.source_dream_title ? `<span class="text-[9px] text-gray-500 truncate max-w-[40vw]"><i class="fas fa-link mr-0.5"></i>${escapeHtml(i.source_dream_title)}</span>` : ''}
-            ${isRealized && i.realized_dream_title ? `<span class="text-[9px] text-emerald-400/70 truncate max-w-[40vw]"><i class="fas fa-check mr-0.5"></i>${escapeHtml(i.realized_dream_title)}</span>` : ''}
+            ${isRealized && i.realized_dream_title ? `<span class="text-[9px] text-emerald-400/70 truncate max-w-[40vw] cursor-pointer hover:text-emerald-300 transition-all" onclick="event.stopPropagation(); openDreamDetail(${i.realized_dream_id})"><i class="fas fa-check mr-0.5"></i>${escapeHtml(i.realized_dream_title)}</span>` : ''}
           </div>
           ${i.description ? `<p class="text-xs text-gray-400 mb-1.5 line-clamp-2 select-none">${escapeHtml(i.description)}</p>` : ''}
           <span class="text-[10px] text-gray-500 select-none"><i class="far fa-calendar mr-1"></i>${dateStr}</span>
@@ -1793,6 +1829,7 @@ function renderIntentionCard(i) {
       <div class="flex items-center gap-1 mt-2 pt-2 border-t border-dream-700/10">
         <button onclick="viewIntentionDetail(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-dream-300 hover:bg-dream-600/10 rounded-lg transition-all"><i class="fas fa-eye mr-1"></i>Voir</button>
         ${!isRealized && !isArchived ? `<button onclick="openIntentionEditor(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-dream-300 hover:bg-dream-600/10 rounded-lg transition-all"><i class="fas fa-edit mr-1"></i>Modifier</button>` : ''}
+        ${!isRealized && !isArchived ? `<button onclick="openRealizeIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-emerald-300 hover:bg-emerald-600/10 rounded-lg transition-all"><i class="fas fa-check-circle mr-1"></i>Réaliser</button>` : ''}
         ${isArchived ? `<button onclick="reactivateIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-indigo-300 hover:bg-indigo-600/10 rounded-lg transition-all"><i class="fas fa-redo mr-1"></i>Réactiver</button>` : ''}
         ${isRealized ? `<button onclick="unrealizeIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-amber-300 hover:bg-amber-600/10 rounded-lg transition-all"><i class="fas fa-undo mr-1"></i>Réactiver</button>` : ''}
         <button onclick="deleteIntention(${i.id})" class="flex-1 py-1.5 text-[10px] text-gray-400 hover:text-red-400 hover:bg-red-600/10 rounded-lg transition-all"><i class="fas fa-trash mr-1"></i>Supprimer</button>
@@ -1942,10 +1979,12 @@ window.viewIntentionDetail = function(id) {
         ${i.description ? `<div class="glass rounded-xl p-3 mb-3"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(i.description)}</p></div>` : '<p class="text-xs text-gray-500 italic mb-3">Aucune description</p>'}
         ${i.realized_dream_title ? `<p class="text-xs text-emerald-400/70 mb-3"><i class="fas fa-check mr-1"></i>Réalisée dans : ${escapeHtml(i.realized_dream_title)}</p>` : ''}
         <p class="text-[10px] text-gray-500 mb-4"><i class="far fa-calendar mr-1"></i>${dateStr}</p>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
           <button onclick="closeModal()" class="flex-1 py-2 bg-night-800/40 text-gray-300 rounded-lg hover:bg-night-800/60 transition-all text-xs font-medium">Fermer</button>
           ${i.status === 'active' ? `<button onclick="closeModal(); openIntentionEditor(${i.id})" class="flex-1 py-2 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all text-xs font-medium"><i class="fas fa-edit mr-1"></i>Modifier</button>` : ''}
+          ${i.status === 'active' ? `<button onclick="closeModal(); openRealizeIntention(${i.id})" class="flex-1 py-2 bg-emerald-600/30 text-emerald-300 rounded-lg hover:bg-emerald-600/50 transition-all text-xs font-medium"><i class="fas fa-check-circle mr-1"></i>Réaliser</button>` : ''}
           ${isContinuation && i.source_dream_id ? `<button onclick="closeModal(); openDreamDetail(${i.source_dream_id})" class="flex-1 py-2 bg-indigo-600/20 text-indigo-300 rounded-lg hover:bg-indigo-600/30 transition-all text-xs font-medium"><i class="fas fa-book-open mr-1"></i>Voir le rêve</button>` : ''}
+          ${i.status === 'realized' && i.realized_dream_id ? `<button onclick="closeModal(); openDreamDetail(${i.realized_dream_id})" class="flex-1 py-2 bg-emerald-600/20 text-emerald-300 rounded-lg hover:bg-emerald-600/30 transition-all text-xs font-medium"><i class="fas fa-book-open mr-1"></i>Voir le rêve réalisé</button>` : ''}
         </div>
       </div>
     `, '500px');
@@ -1958,6 +1997,53 @@ window.reactivateIntention = async function(id) {
 
 window.unrealizeIntention = async function(id) {
   try { await api(`/intentions/${id}/unrealize`, { method: 'PUT' }); showToast('Intention réactivée'); renderIntentions(); } catch (err) { alert(err.message); }
+};
+
+window.openRealizeIntention = async function(intentionId) {
+  // Charger les intentions pour afficher le titre
+  let intentions = [], dreams = [];
+  try { intentions = (await api('/intentions')).intentions; } catch { return; }
+  try { const data = await api('/dreams?limit=200'); dreams = data.dreams; } catch {}
+  const intention = intentions.find(i => i.id === intentionId);
+  if (!intention) return;
+
+  showModal(`
+    <div class="p-4 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-display font-semibold text-dream-100">
+          <i class="fas fa-check-circle mr-2 text-emerald-400"></i>Réaliser l'intention
+        </h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white p-1"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="glass rounded-lg p-3 mb-4">
+        <p class="text-xs text-gray-400 mb-0.5">Intention :</p>
+        <p class="text-sm font-medium text-dream-200">${intention.type === 'dream_continuation' ? '\ud83c\udf19' : '\u2728'} ${escapeHtml(intention.title)}</p>
+        ${intention.description ? `<p class="text-xs text-gray-400 mt-1 line-clamp-2">${escapeHtml(intention.description)}</p>` : ''}
+      </div>
+      <p class="text-xs text-gray-400 mb-2">Quel r\u00eave r\u00e9alise cette intention ?</p>
+      ${dreams.length > 0 ? `
+        <select id="realize-dream-select" class="w-full px-3 py-2.5 bg-night-900/60 border border-emerald-700/30 rounded-lg text-white text-xs focus:border-emerald-400 focus:outline-none mb-4">
+          <option value="">S\u00e9lectionner un r\u00eave...</option>
+          ${dreams.map(d => `<option value="${d.id}">${escapeHtml(d.title)} (${new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })})</option>`).join('')}
+        </select>
+        <button onclick="confirmRealizeIntention(${intentionId})" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-lg font-semibold text-sm hover:from-emerald-500 hover:to-emerald-400 transition-all">
+          <i class="fas fa-check mr-2"></i>Marquer comme r\u00e9alis\u00e9e
+        </button>
+      ` : '<p class="text-sm text-gray-400 italic text-center py-4">Aucun r\u00eave dans le journal. Cr\u00e9e d\'abord un r\u00eave !</p>'}
+    </div>
+  `, '500px');
+};
+
+window.confirmRealizeIntention = async function(intentionId) {
+  const select = document.getElementById('realize-dream-select');
+  const dreamId = select ? parseInt(select.value) : null;
+  if (!dreamId) { showToast('S\u00e9lectionne un r\u00eave'); return; }
+  try {
+    await api(`/intentions/${intentionId}/realize`, { method: 'PUT', body: JSON.stringify({ realizedDreamId: dreamId }) });
+    closeModal();
+    showToast('\u2705 Intention marqu\u00e9e comme r\u00e9alis\u00e9e !');
+    renderIntentions();
+  } catch (err) { alert(err.message); }
 };
 
 window.deleteIntention = async function(id) {
@@ -2359,7 +2445,7 @@ async function renderLucidity() {
       <div class="flex justify-center mt-5">
         <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 transition-all">
-          <i class="fas fa-flask"></i> Niveau 2 : Optimise ton sommeil paradoxal <i class="fas fa-chevron-right text-xs ml-1"></i>
+          Niveau 2 : Optimise ton sommeil paradoxal <i class="fas fa-chevron-right text-xs ml-1"></i>
         </button>
       </div>
     </div>`;

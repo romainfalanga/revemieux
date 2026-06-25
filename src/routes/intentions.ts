@@ -45,6 +45,22 @@ intentionRoutes.get('/for-dream/:dreamId', async (c) => {
   return c.json({ intentions: results })
 })
 
+// GET /intentions/realized-by/:dreamId — Intention réalisée par un rêve donné
+intentionRoutes.get('/realized-by/:dreamId', async (c) => {
+  const userId = c.get('userId')
+  const dreamId = parseInt(c.req.param('dreamId'))
+
+  const intention = await c.env.DB.prepare(`
+    SELECT di.*, d_source.title as source_dream_title
+    FROM dream_intentions di
+    LEFT JOIN dreams d_source ON di.source_dream_id = d_source.id
+    WHERE di.user_id = ? AND di.realized_dream_id = ?
+    LIMIT 1
+  `).bind(userId, dreamId).first<any>()
+
+  return c.json({ intention: intention || null })
+})
+
 // GET /intentions/active — Intentions actives uniquement (pour sélecteur dans l'éditeur)
 intentionRoutes.get('/active', async (c) => {
   const userId = c.get('userId')
