@@ -2131,18 +2131,33 @@ async function renderLucidity() {
 
           <!-- Alarme 1 : Préparation active -->
           <div class="p-2.5 rounded-lg bg-night-900/50 border border-emerald-500/10 mb-2">
-            <p class="text-[11px] font-semibold text-amber-200 mb-1.5">🔔 Alarme 1 : Préparation active (1h10 avant le coucher)</p>
+            <p class="text-[11px] font-semibold text-amber-200 mb-1.5">🔔 Alarme 1 : Préparation active (1h30 avant le coucher)</p>
             <ul class="text-[11px] text-gray-300 space-y-1 ml-3 mb-2">
-              <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h10 avant ton coucher (ex : coucher 23h, alarme à 21h50)</li>
+              <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h30 avant ton coucher (ex : coucher 23h, alarme à 21h30)</li>
               <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> <strong class="text-amber-300">fort</strong> (tu dois l'entendre clairement, c'est le signal de départ)</li>
             </ul>
-            <p class="text-[11px] text-gray-400 leading-relaxed mb-1">Cette alarme lance ta routine. Tu as <strong class="text-emerald-300">10 minutes sur ton téléphone</strong> pour :</p>
-            <ol class="text-[11px] text-gray-300 space-y-1.5 ml-3">
-              <li><strong class="text-emerald-300">1. Relire tes derniers rêves</strong> dans Rêve Mieux. Repère tes signes de rêve récurrents (lieux, personnages, situations absurdes).</li>
-              <li><strong class="text-emerald-300">2. Reprendre une série de rêves</strong> si tu en as une en cours. Relis les épisodes, laisse les détails et les émotions t'imprégner. Ton cerveau charge ces contenus dans la mémoire de travail (incubation, voir section plus bas).</li>
-              <li><strong class="text-emerald-300">3. Formuler ton intention</strong> : « Cette nuit, je me rendrai compte que je rêve. » Si tu suis une série : « Cette nuit, je retourne dans ce rêve et je deviens lucide. » C'est le principe MILD (voir Techniques d'Induction ci-dessous).</li>
-              <li><strong class="text-emerald-300">4. Faire un Reality Check</strong> avec le refrain « Rêve Mieux ». Lance le lecteur audio en haut de cette page, compte tes doigts, demande-toi sincèrement « suis-je en train de rêver ? ».</li>
-            </ol>
+            <p class="text-[11px] text-gray-400 leading-relaxed mb-1">Cette alarme lance ta routine en <strong class="text-emerald-300">3 phases de 10 minutes</strong> :</p>
+
+            <div class="p-2 rounded-lg bg-emerald-900/10 border border-emerald-500/10 mb-1.5">
+              <p class="text-[11px] font-semibold text-emerald-200 mb-1">📱 Phase 1 : Relecture sur Rêve Mieux (10 min)</p>
+              <ol class="text-[11px] text-gray-300 space-y-1 ml-3">
+                <li><strong class="text-emerald-300">1. Relire tes derniers rêves</strong> dans Rêve Mieux. Repère tes signes de rêve récurrents (lieux, personnages, situations absurdes).</li>
+                <li><strong class="text-emerald-300">2. Reprendre une série de rêves</strong> si tu en as une en cours. Relis les épisodes, laisse les détails et les émotions t'imprégner. Ton cerveau charge ces contenus dans la mémoire de travail (incubation, voir section plus bas).</li>
+                <li><strong class="text-emerald-300">3. Formuler ton intention</strong> : « Cette nuit, je me rendrai compte que je rêve. » Si tu suis une série : « Cette nuit, je retourne dans ce rêve et je deviens lucide. » C'est le principe MILD (voir Techniques d'Induction ci-dessous).</li>
+                <li><strong class="text-emerald-300">4. Faire un Reality Check</strong> avec le refrain « Rêve Mieux ». Lance le lecteur audio en haut de cette page, compte tes doigts, demande-toi sincèrement « suis-je en train de rêver ? ».</li>
+              </ol>
+            </div>
+
+            <div class="p-2 rounded-lg bg-amber-900/10 border border-amber-500/10 mb-1.5">
+              <p class="text-[11px] font-semibold text-amber-200 mb-1">🚿 Phase 2 : Douche chaude + visualisation (10 min)</p>
+              <p class="text-[11px] text-gray-300 leading-relaxed mb-1">Prends une <strong class="text-amber-300">douche chaude (pas brûlante)</strong>. La chaleur détend le corps et facilite l'endormissement : quand tu en sors, ta température corporelle chute naturellement, ce qui envoie un signal de sommeil à ton cerveau.</p>
+              <p class="text-[11px] text-gray-300 leading-relaxed">Profite de ce moment pour <strong class="text-amber-300">visualiser des rêves que tu aimerais faire</strong>. Repars de ce que tu viens de relire (tes rêves récents, tes séries en cours) ou laisse de nouvelles idées émerger. La douche est un moment parfait pour ça : ton esprit est libre, détendu, et les images viennent naturellement.</p>
+            </div>
+
+            <div class="p-2 rounded-lg bg-violet-900/10 border border-violet-500/10">
+              <p class="text-[11px] font-semibold text-violet-200 mb-1">📝 Phase 3 : Retour sur Rêve Mieux (10 min)</p>
+              <p class="text-[11px] text-gray-300 leading-relaxed">De retour sur ton téléphone, <strong class="text-violet-300">note les nouvelles idées de rêves</strong> ou de suites de rêves que tu as eues sous la douche dans la page <strong class="text-violet-300">Intentions de rêve</strong>. Enrichis tes séries en cours si de nouvelles scènes te sont venues. Cette dernière phase ancre les visualisations fraîches dans ta mémoire de travail juste avant la phase calme.</p>
+            </div>
           </div>
 
           <!-- Alarme 2 : Temps calme -->
@@ -2340,23 +2355,11 @@ async function renderLucidity() {
 
       </div>
 
-      <!-- ===== BASES SCIENTIFIQUES ===== -->
-      <div class="glass rounded-xl p-4">
-        <h3 class="text-xs font-display font-semibold text-dream-200 mb-3"><i class="fas fa-flask mr-2"></i>Bases Scientifiques</h3>
-        <div class="space-y-2 text-[11px] text-gray-300">
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📊 Rappel et journal</p><p>Schredl (2002 ; 2018) : le journal augmente significativement le rappel onirique. Effet mesurable dès quelques semaines de pratique quotidienne.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">✨ Rêves lucides</p><p>Stumbrys et al. (2012), revue systématique de 35 études : la combinaison MILD + WBTB est l'approche la plus prometteuse. Aspy et al. (2017) : 46% de réussite chez ceux qui se rendorment rapidement après MILD + WBTB.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">🌙 Incubation et continuité</p><p>Barrett (Harvard, 1993) : environ 50% des participants ont rêvé du sujet choisi. L'hypothèse de la continuité (Schredl, 2003) montre que les pensées pré-sommeil influencent directement le contenu onirique.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">📖 Texte et lecture en rêve</p><p>LaBerge et al. (1996) : dans environ 75% des cas, un texte relu change de contenu en rêve dès la première relecture, et 95% à la seconde. Le cerveau endormi peine à reconstruire le texte sans input sensoriel.</p></div>
-          <div class="p-2.5 rounded-lg bg-night-900/40"><p class="font-semibold text-dream-200 mb-1">⚠️ Transparence</p><p>MILD, WBTB et Reality Testing sont validés par des études contrôlées. SSILD est principalement communautaire (résultats comparables à MILD selon l'étude ILDIS 2020, mais pas d'étude isolée). Rêve Mieux distingue clairement ce qui est validé de ce qui est exploratoire.</p></div>
-        </div>
-      </div>
-
       <!-- ===== BOUTON NIVEAU 2 ===== -->
       <div class="flex justify-center mt-5">
         <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 transition-all">
-          <i class="fas fa-flask"></i> Niveau 2 : Optimise ton sommeil <i class="fas fa-chevron-right text-xs ml-1"></i>
+          <i class="fas fa-flask"></i> Niveau 2 : Optimise ton sommeil paradoxal <i class="fas fa-chevron-right text-xs ml-1"></i>
         </button>
       </div>
     </div>`;
