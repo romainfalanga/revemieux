@@ -2167,7 +2167,7 @@ async function renderLucidity() {
               <li><span class="whitespace-nowrap">⏰ <strong>Heure :</strong></span> 1h avant ton coucher (ex : coucher 23h, alarme à 22h)</li>
               <li><span class="whitespace-nowrap">🔈 <strong>Volume :</strong></span> modéré</li>
             </ul>
-            <p class="text-[11px] text-gray-400 leading-relaxed"><strong class="text-violet-300">Pose ton téléphone.</strong> C'est le moment de couper tous les écrans. Lumière tamisée, pas de stimulation. Pendant cette heure, ton cerveau consolide naturellement ce que tu viens de lire. Pas besoin de forcer : les images, les lieux et les émotions de tes rêves continuent de travailler en arrière-plan.</p>
+            <p class="text-[11px] text-gray-400 leading-relaxed"><strong class="text-violet-300">Pose ton téléphone et active le mode avion.</strong> C'est le moment de couper tous les écrans. Lumière tamisée, pas de stimulation. Le mode avion te protège à trois niveaux : plus aucune distraction pendant ton temps calme, aucune interruption pendant la nuit, et surtout, au réveil, tu peux ouvrir Rêve Mieux pour noter tes rêves sans qu'un flot de notifications te fasse perdre le fil de ce que tu es en train de te rappeler. Pendant cette heure, ton cerveau consolide naturellement ce que tu viens de lire. Pas besoin de forcer : les images, les lieux et les émotions de tes rêves continuent de travailler en arrière-plan.</p>
           </div>
 
           <!-- Alarme 3 : Coucher -->
