@@ -142,6 +142,8 @@ function renderApp() {
           </div>
           <nav class="hidden sm:flex gap-1" id="main-nav-desktop">
             <button onclick="navigate('journal')" data-nav="journal" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-book-open mr-1"></i>Journal</button>
+            <button onclick="navigate('series')" data-nav="series" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-layer-group mr-1"></i>Séries</button>
+            <button onclick="navigate('intentions')" data-nav="intentions" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-lightbulb mr-1"></i>Intentions</button>
             <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab px-3 py-2 rounded-lg text-sm font-medium transition-all"><i class="fas fa-eye mr-1"></i>Rêve mieux</button>
           </nav>
           <div class="flex items-center gap-2 shrink-0">
@@ -156,16 +158,17 @@ function renderApp() {
 
       <!-- Mobile Bottom Nav — inline styles for bulletproof positioning -->
       <nav id="main-nav-mobile" class="sm:hidden" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(10,8,25,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(139,92,246,0.2);padding-bottom:env(safe-area-inset-bottom,0px);margin:0;transform:translateZ(0);">
-        <div class="flex justify-around items-end py-1.5 px-1">
-          <button onclick="navigate('journal')" data-nav="journal" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
+        <div class="flex justify-around items-center py-1.5 px-1">
+          <button onclick="navigate('journal')" data-nav="journal" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[44px]">
             <i class="fas fa-book-open text-base"></i><span>Journal</span>
           </button>
-          <button onclick="openDreamEditor()" class="flex flex-col items-center -mt-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-dream-400 to-dream-600 rounded-full shadow-lg shadow-dream-500/30 flex items-center justify-center text-white text-lg animate-glow">
-              <i class="fas fa-plus"></i>
-            </div>
+          <button onclick="navigate('series')" data-nav="series" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[44px]">
+            <i class="fas fa-layer-group text-base"></i><span>Séries</span>
           </button>
-          <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[48px]">
+          <button onclick="navigate('intentions')" data-nav="intentions" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[44px]">
+            <i class="fas fa-lightbulb text-base"></i><span>Intentions</span>
+          </button>
+          <button onclick="navigate('lucidity')" data-nav="lucidity" class="nav-tab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all min-w-[44px]">
             <i class="fas fa-eye text-base"></i><span>Rêve mieux</span>
           </button>
         </div>
@@ -179,6 +182,13 @@ function renderApp() {
       <!-- Mini-player flottant permanent -->
       <!-- Boutons flottants : RC + Player, colonne verticale alignée -->
       <div id="floating-player" class="fixed z-[9998] flex flex-col items-center gap-2" style="bottom:85px;right:12px;">
+        <!-- Bouton Nouveau Rêve -->
+        <button onclick="openDreamEditor()"
+          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
+          style="background:linear-gradient(135deg,rgba(99,102,241,0.9),rgba(139,92,246,0.9));backdrop-filter:blur(8px);"
+          title="Nouveau rêve">
+          <i class="fas fa-plus text-sm"></i>
+        </button>
         <!-- Bouton Niveau 2 -->
         <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
           class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90 text-sm font-bold"
@@ -239,10 +249,12 @@ function renderApp() {
 
 window.navigate = function(view) {
   state.currentView = view;
+  // Highlight nav: lucidity-level2 highlights the lucidity tab
+  const navView = view === 'lucidity-level2' ? 'lucidity' : view;
   document.querySelectorAll('[data-nav]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.nav === view);
-    btn.classList.toggle('text-dream-300', btn.dataset.nav === view);
-    btn.classList.toggle('text-gray-400', btn.dataset.nav !== view);
+    btn.classList.toggle('active', btn.dataset.nav === navView);
+    btn.classList.toggle('text-dream-300', btn.dataset.nav === navView);
+    btn.classList.toggle('text-gray-400', btn.dataset.nav !== navView);
   });
   const main = document.getElementById('main-content');
   main.innerHTML = '<div class="flex justify-center py-12"><div class="animate-spin text-dream-400 text-2xl"><i class="fas fa-circle-notch"></i></div></div>';
@@ -323,14 +335,6 @@ async function renderJournal() {
             ${activeFilterCount > 0 ? `<span class="w-4 h-4 bg-dream-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">${activeFilterCount}</span>` : ''}
           </button>
           ${activeFilterCount > 0 ? `<button onclick="clearAllFilters()" class="px-2.5 py-2.5 text-red-400/70 hover:text-red-300 text-xs transition-all"><i class="fas fa-times-circle mr-1"></i>Réinit.</button>` : ''}
-          <button onclick="navigate('series')" class="px-3 py-2.5 bg-night-900/60 text-gray-400 border border-dream-700/30 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 hover:text-dream-300 hover:border-dream-400/40">
-            <i class="fas fa-layer-group text-xs"></i>
-            <span class="text-xs">Mes séries</span>
-          </button>
-          <button onclick="navigate('intentions')" class="px-3 py-2.5 bg-night-900/60 text-gray-400 border border-dream-700/30 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 hover:text-indigo-300 hover:border-indigo-400/40">
-            <i class="fas fa-lightbulb text-xs"></i>
-            <span class="text-xs">Mes intentions</span>
-          </button>
           <button onclick="openDreamEditor()" class="hidden sm:flex px-4 py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl text-sm font-medium hover:from-dream-400 hover:to-dream-600 transition-all whitespace-nowrap items-center gap-1.5 ml-auto">
             <i class="fas fa-plus"></i> Nouveau rêve
           </button>
@@ -1461,10 +1465,7 @@ async function renderSeries() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-3">
-          <button onclick="navigate('journal')" class="p-2 text-gray-400 hover:text-dream-300 transition-all rounded-lg hover:bg-night-900/40" title="Retour au journal"><i class="fas fa-arrow-left"></i></button>
-          <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-layer-group mr-2"></i>Mes séries</h2>
-        </div>
+        <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-layer-group mr-2"></i>Mes séries</h2>
         <button onclick="openSeriesEditor()" class="px-3 py-2 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-lg text-xs font-medium hover:from-dream-400 hover:to-dream-600 transition-all">
           <i class="fas fa-plus mr-1"></i>Nouvelle série
         </button>
@@ -1752,10 +1753,7 @@ async function renderIntentions() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2">
-          <button onclick="navigate('journal')" class="p-2 text-gray-400 hover:text-white transition-all"><i class="fas fa-arrow-left"></i></button>
-          <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-lightbulb mr-2 text-indigo-400"></i>Mes Intentions</h2>
-        </div>
+        <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-lightbulb mr-2 text-indigo-400"></i>Mes Intentions</h2>
         <button onclick="openIntentionEditor()" class="px-3 py-2 bg-gradient-to-r from-indigo-500 to-dream-600 text-white rounded-xl text-xs font-medium hover:from-indigo-400 hover:to-dream-500 transition-all">
           <i class="fas fa-plus mr-1"></i>Nouveau rêve
         </button>
