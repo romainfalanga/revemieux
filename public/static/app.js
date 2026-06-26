@@ -174,35 +174,8 @@ function renderApp() {
         </div>
       </nav>
 
-      <!-- Desktop FAB -->
-      <button onclick="openDreamEditor()" id="fab-add" class="hidden sm:flex fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-dream-400 to-dream-600 rounded-full shadow-lg shadow-dream-500/30 items-center justify-center text-white text-xl hover:scale-110 transition-transform animate-glow">
-        <i class="fas fa-plus"></i>
-      </button>
-
-      <!-- Mini-player flottant permanent -->
-      <!-- Boutons flottants : RC + Player, colonne verticale alignée -->
+      <!-- Boutons flottants : RC + Refrain + Nouveau rêve -->
       <div id="floating-player" class="fixed z-[9998] flex flex-col items-center gap-2" style="bottom:85px;right:12px;">
-        <!-- Bouton Nouveau Rêve -->
-        <button onclick="openDreamEditor()"
-          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
-          style="background:linear-gradient(135deg,rgba(99,102,241,0.9),rgba(139,92,246,0.9));backdrop-filter:blur(8px);"
-          title="Nouveau rêve">
-          <i class="fas fa-plus text-sm"></i>
-        </button>
-        <!-- Bouton Niveau 2 -->
-        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
-          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90 text-sm font-bold"
-          style="background:linear-gradient(135deg,rgba(139,92,246,0.85),rgba(56,189,248,0.85));backdrop-filter:blur(8px);"
-          title="Niveau 2 : Optimise ton sommeil">
-          2
-        </button>
-        <!-- Bouton Niveau 1 -->
-        <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
-          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90 text-sm font-bold"
-          style="background:linear-gradient(135deg,rgba(139,92,246,0.85),rgba(56,189,248,0.85));backdrop-filter:blur(8px);"
-          title="Niveau 1 : Déclenche tes rêves">
-          1
-        </button>
         <!-- Bouton Reality Check -->
         <button onclick="quickRealityCheck()" id="floating-rc-btn"
           class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
@@ -225,11 +198,17 @@ function renderApp() {
             </svg>
           </div>
         </div>
+        <!-- Bouton Nouveau Rêve -->
+        <button onclick="openDreamEditor()"
+          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
+          style="background:linear-gradient(135deg,rgba(99,102,241,0.9),rgba(139,92,246,0.9));backdrop-filter:blur(8px);"
+          title="Nouveau rêve">
+          <i class="fas fa-plus text-sm"></i>
+        </button>
       </div>
       <style>
         @media (min-width: 640px) {
-          /* Aligné verticalement au-dessus du FAB (bottom:24+56+8=88), centré horizontalement (FAB centre=52px, player 44px → right=30px) */
-          #floating-player { bottom: 88px !important; right: 30px !important; }
+          #floating-player { bottom: 24px !important; right: 24px !important; }
         }
       </style>
     </div>
@@ -249,8 +228,8 @@ function renderApp() {
 
 window.navigate = function(view) {
   state.currentView = view;
-  // Highlight nav: lucidity-level2 highlights the lucidity tab
-  const navView = view === 'lucidity-level2' ? 'lucidity' : view;
+  // Highlight nav: lucidity-level1 and lucidity-level2 highlight the lucidity tab
+  const navView = (view === 'lucidity-level2' || view === 'lucidity-level1') ? 'lucidity' : view;
   document.querySelectorAll('[data-nav]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.nav === navView);
     btn.classList.toggle('text-dream-300', btn.dataset.nav === navView);
@@ -262,7 +241,8 @@ window.navigate = function(view) {
     case 'journal': renderJournal(); break;
     case 'series': renderSeries(); break;
     case 'intentions': renderIntentions(); break;
-    case 'lucidity': renderLucidity(); break;
+    case 'lucidity': renderDashboard(); break;
+    case 'lucidity-level1': renderLucidity(); break;
     case 'lucidity-level2': renderLucidityLevel2(); break;
     case 'dream-detail': renderDreamDetailPage(state.dreamDetailId); break;
   }
@@ -2093,12 +2073,311 @@ window.saveContinuationIntention = async function(e, dreamId) {
   } catch (err) { alert(err.message); }
 };
 
-// ========== LUCIDITY VIEW ==========
+// ========== DASHBOARD "RÊVE MIEUX" ==========
+let dashboardPeriod = 'month'; // 'week', 'month', 'year'
+
+async function renderDashboard() {
+  const main = document.getElementById('main-content');
+  try {
+    const data = await api(`/stats/dashboard?period=${dashboardPeriod}`);
+    const o = data.overview;
+    const periodLabel = dashboardPeriod === 'week' ? 'cette semaine' : dashboardPeriod === 'year' ? 'cette année' : 'ce mois';
+    const periodLabelShort = dashboardPeriod === 'week' ? '7j' : dashboardPeriod === 'year' ? '365j' : '30j';
+
+    // Formater les labels de timeline
+    function fmtTimelineLabel(label, type) {
+      if (type === 'day') {
+        const d = new Date(label + 'T00:00:00');
+        return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+      }
+      if (type === 'week') {
+        const parts = label.split('-W');
+        return 'S' + parts[1];
+      }
+      if (type === 'month') {
+        const [y, m] = label.split('-');
+        const months = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+        return months[parseInt(m) - 1] + (dashboardPeriod === 'year' ? '' : ' ' + y.slice(2));
+      }
+      return label;
+    }
+
+    // Timeline chart (barres simples en HTML)
+    const tlData = data.timeline.data || [];
+    const maxTl = Math.max(...tlData.map(d => d.total), 1);
+    const tlBarsHTML = tlData.map(d => {
+      const pct = Math.round((d.total / maxTl) * 100);
+      const lucidPct = d.total > 0 ? Math.round((d.lucid / d.total) * 100) : 0;
+      return `<div class="flex flex-col items-center gap-1 flex-1 min-w-0">
+        <span class="text-[9px] text-gray-400 font-semibold">${d.total}</span>
+        <div class="w-full rounded-t relative" style="height:${Math.max(pct, 4)}px;max-height:80px;background:rgba(139,92,246,0.3);">
+          ${d.lucid > 0 ? `<div class="absolute bottom-0 left-0 right-0 rounded-t" style="height:${lucidPct}%;background:rgba(139,92,246,0.7);"></div>` : ''}
+        </div>
+        <span class="text-[8px] text-gray-500 truncate w-full text-center">${fmtTimelineLabel(d.label, data.timeline.label)}</span>
+      </div>`;
+    }).join('');
+
+    // Emotions chart
+    const emotionsHTML = (data.emotions || []).map(em => {
+      const maxEm = data.emotions[0]?.count || 1;
+      const pct = Math.round((em.count / maxEm) * 100);
+      return `<div class="flex items-center gap-2 mb-1.5">
+        <span class="text-xs w-20 truncate text-gray-300">${em.emotion}</span>
+        <div class="flex-1 h-3 bg-night-900/40 rounded-full overflow-hidden">
+          <div class="h-full rounded-full" style="width:${pct}%;background:linear-gradient(90deg,rgba(139,92,246,0.6),rgba(56,189,248,0.6));"></div>
+        </div>
+        <span class="text-[10px] text-gray-400 w-8 text-right">${em.count}</span>
+        <span class="text-[9px] text-gray-500 w-8 text-right">${em.avg_intensity}/5</span>
+      </div>`;
+    }).join('') || '<p class="text-xs text-gray-500 italic text-center py-2">Pas encore d\'émotions enregistrées</p>';
+
+    // Types
+    const typeEmoji = { normal: '💭', lucid: '✨', nightmare: '😱', recurring: '🔄', sleep_paralysis: '😶', false_awakening: '🔁' };
+    const typeLabel = { normal: 'Normal', lucid: 'Lucide', nightmare: 'Cauchemar', recurring: 'Récurrent', sleep_paralysis: 'Paralysie', false_awakening: 'Faux réveil' };
+    const typesHTML = (data.types || []).map(t => `
+      <div class="flex items-center justify-between px-3 py-1.5 glass rounded-lg">
+        <span class="text-xs text-gray-300">${typeEmoji[t.dream_type] || '💭'} ${typeLabel[t.dream_type] || t.dream_type}</span>
+        <span class="text-xs font-semibold text-dream-300">${t.count}</span>
+      </div>`).join('') || '<p class="text-xs text-gray-500 italic text-center py-2">Aucun rêve sur cette période</p>';
+
+    // Tags par catégorie
+    const catLabels = { person: '👤 Personnages', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
+    const catOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
+    let tagsHTML = '';
+    for (const cat of catOrder) {
+      const tags = data.tagCategories[cat];
+      if (!tags || tags.length === 0) continue;
+      tagsHTML += `<div class="mb-3">
+        <p class="text-[10px] text-gray-500 font-semibold uppercase mb-1.5">${catLabels[cat] || cat}</p>
+        <div class="flex flex-wrap gap-1.5">
+          ${tags.slice(0, 10).map(t => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:${t.color}20;color:${t.color};border:1px solid ${t.color}30;">${escapeHtml(t.name)} <span class="opacity-60">x${t.count}</span></span>`).join('')}
+        </div>
+      </div>`;
+    }
+    if (!tagsHTML) tagsHTML = '<p class="text-xs text-gray-500 italic text-center py-2">Aucun tag sur cette période</p>';
+
+    // Reality Checks
+    const rc = data.realityChecks;
+    const rcTypeLabel = { hands: '✋ Doigts', text: '📖 Texte', time: '⏰ Heure', nose: '👃 Nez', gravity: '🪶 Gravité', general: '🔍 Général' };
+    const rcTypesHTML = (rc.byType || []).map(t => `
+      <div class="flex items-center justify-between px-2 py-1">
+        <span class="text-[10px] text-gray-300">${rcTypeLabel[t.check_type] || t.check_type}</span>
+        <span class="text-[10px] font-semibold text-emerald-400">${t.count}</span>
+      </div>`).join('') || '<p class="text-[10px] text-gray-500 italic">Aucun RC</p>';
+
+    // RC timeline mini bars
+    const rcTlData = rc.timeline || [];
+    const maxRc = Math.max(...rcTlData.map(d => d.count), 1);
+    const rcBarsHTML = rcTlData.length > 0 ? `<div class="flex items-end gap-0.5 h-10 mt-2">
+      ${rcTlData.map(d => {
+        const h = Math.max(Math.round((d.count / maxRc) * 100), 8);
+        return `<div class="flex-1 rounded-t" style="height:${h}%;background:rgba(16,185,129,0.4);" title="${d.label}: ${d.count}"></div>`;
+      }).join('')}
+    </div>` : '';
+
+    // Intentions
+    const int = data.intentions;
+    const intTotal = int.total || 0;
+    const intRealizedPct = intTotal > 0 ? Math.round((int.realized / intTotal) * 100) : 0;
+
+    main.innerHTML = `
+    <div class="animate-slideUp">
+      <!-- ===== HERO TITRE ===== -->
+      <div class="relative rounded-2xl p-5 mb-5 overflow-hidden" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(56,189,248,0.10), rgba(139,92,246,0.08));">
+        <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
+        <div class="relative text-center">
+          <div class="text-3xl mb-2">🌙</div>
+          <h2 class="text-xl font-display font-bold text-white mb-1">Rêve Mieux</h2>
+          <p class="text-xs text-gray-400">Ton tableau de bord onirique</p>
+        </div>
+      </div>
+
+      <!-- ===== SÉLECTEUR DE PÉRIODE ===== -->
+      <div class="flex justify-center gap-2 mb-5">
+        <button onclick="dashboardPeriod='week';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'week' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Semaine</button>
+        <button onclick="dashboardPeriod='month';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'month' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Mois</button>
+        <button onclick="dashboardPeriod='year';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'year' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Année</button>
+      </div>
+
+      <!-- ===== COMPTEURS PRINCIPAUX ===== -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-white">${o.totalPeriod}</div>
+          <div class="text-[10px] text-gray-400">Rêves ${periodLabelShort}</div>
+          <div class="text-[9px] text-gray-500 mt-0.5">${o.totalAllTime} au total</div>
+        </div>
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-dream-300">${o.lucidPeriod}</div>
+          <div class="text-[10px] text-gray-400">Lucides ${periodLabelShort}</div>
+          <div class="text-[9px] text-dream-400/60 mt-0.5">${o.lucidRate}% taux</div>
+        </div>
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-amber-400">${o.streak}</div>
+          <div class="text-[10px] text-gray-400">Jours de suite</div>
+          <div class="text-[9px] text-gray-500 mt-0.5">journalisation</div>
+        </div>
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-emerald-400">${rc.today}</div>
+          <div class="text-[10px] text-gray-400">RC aujourd'hui</div>
+          <div class="text-[9px] text-gray-500 mt-0.5">${rc.totalAllTime} au total</div>
+        </div>
+      </div>
+
+      <!-- ===== MOYENNES ===== -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div class="glass rounded-xl p-2.5 text-center">
+          <div class="text-lg font-bold text-sky-400">${o.avgSleep || '-'}<span class="text-[10px] text-gray-500">/5</span></div>
+          <div class="text-[9px] text-gray-400">Qualité sommeil moy.</div>
+        </div>
+        <div class="glass rounded-xl p-2.5 text-center">
+          <div class="text-lg font-bold text-violet-400">${o.avgLucidity || '-'}<span class="text-[10px] text-gray-500">/5</span></div>
+          <div class="text-[9px] text-gray-400">Lucidité moy.</div>
+        </div>
+        <div class="glass rounded-xl p-2.5 text-center">
+          <div class="text-lg font-bold text-rose-400">${o.nightmaresPeriod}</div>
+          <div class="text-[9px] text-gray-400">Cauchemars</div>
+        </div>
+        <div class="glass rounded-xl p-2.5 text-center">
+          <div class="text-lg font-bold text-cyan-400">${o.recurringPeriod}</div>
+          <div class="text-[9px] text-gray-400">Récurrents</div>
+        </div>
+      </div>
+
+      <!-- ===== EVOLUTION TEMPORELLE ===== -->
+      ${tlData.length > 0 ? `
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-chart-bar mr-1.5 text-dream-400"></i>Evolution des rêves</h3>
+        <div class="flex items-end gap-1" style="height:100px;">
+          ${tlBarsHTML}
+        </div>
+        <div class="flex items-center gap-3 mt-2 justify-center">
+          <span class="flex items-center gap-1 text-[9px] text-gray-400"><span class="w-2 h-2 rounded" style="background:rgba(139,92,246,0.3);"></span>Total</span>
+          <span class="flex items-center gap-1 text-[9px] text-gray-400"><span class="w-2 h-2 rounded" style="background:rgba(139,92,246,0.7);"></span>Lucides</span>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- ===== TYPES DE RÊVES ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-shapes mr-1.5 text-dream-400"></i>Types de rêves</h3>
+        <div class="space-y-1.5">${typesHTML}</div>
+      </div>
+
+      <!-- ===== EMOTIONS ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-heart mr-1.5 text-rose-400"></i>Émotions ressenties</h3>
+        <div>${emotionsHTML}</div>
+      </div>
+
+      <!-- ===== TAGS / PERSONNAGES / LIEUX ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-tags mr-1.5 text-amber-400"></i>Éléments récurrents</h3>
+        ${tagsHTML}
+      </div>
+
+      <!-- ===== REALITY CHECKS ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-check-circle mr-1.5 text-emerald-400"></i>Contrôles de réalité</h3>
+        <div class="grid grid-cols-3 gap-2 mb-2">
+          <div class="text-center">
+            <div class="text-lg font-bold text-emerald-400">${rc.totalPeriod}</div>
+            <div class="text-[9px] text-gray-400">Sur la période</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-emerald-300">${rc.today}</div>
+            <div class="text-[9px] text-gray-400">Aujourd'hui</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-emerald-500">${rc.totalAllTime}</div>
+            <div class="text-[9px] text-gray-400">Total</div>
+          </div>
+        </div>
+        <div class="space-y-0.5">${rcTypesHTML}</div>
+        ${rcBarsHTML}
+      </div>
+
+      <!-- ===== INTENTIONS ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-lightbulb mr-1.5 text-yellow-400"></i>Intentions oniriques</h3>
+        <div class="grid grid-cols-3 gap-2 mb-2">
+          <div class="text-center">
+            <div class="text-lg font-bold text-yellow-400">${int.active}</div>
+            <div class="text-[9px] text-gray-400">Actives</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-emerald-400">${int.realized}</div>
+            <div class="text-[9px] text-gray-400">Réalisées</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-gray-400">${int.archived}</div>
+            <div class="text-[9px] text-gray-400">Archivées</div>
+          </div>
+        </div>
+        ${intTotal > 0 ? `
+        <div class="mt-2">
+          <div class="flex items-center justify-between text-[9px] text-gray-400 mb-1">
+            <span>Taux de réalisation</span>
+            <span class="font-semibold text-emerald-400">${intRealizedPct}%</span>
+          </div>
+          <div class="w-full h-2 bg-night-900/40 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style="width:${intRealizedPct}%"></div>
+          </div>
+        </div>` : ''}
+        ${int.createdPeriod > 0 ? `<p class="text-[9px] text-gray-500 mt-2">${int.createdPeriod} intention(s) créée(s) ${periodLabel}</p>` : ''}
+      </div>
+
+      <!-- ===== COMPTEURS COMPLÉMENTAIRES ===== -->
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-lg font-bold text-violet-400">${o.seriesCount}</div>
+          <div class="text-[9px] text-gray-400">Séries de rêves</div>
+        </div>
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-lg font-bold text-cyan-400">${o.connectionsCount}</div>
+          <div class="text-[9px] text-gray-400">Connexions entre rêves</div>
+        </div>
+      </div>
+
+      <!-- ===== BOUTONS NIVEAUX ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3 text-center"><i class="fas fa-graduation-cap mr-1.5 text-dream-400"></i>Techniques et apprentissage</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button onclick="navigate('lucidity-level1')" class="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95" style="background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(139,92,246,0.05));border:1px solid rgba(139,92,246,0.2);">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:rgba(139,92,246,0.2);">👁️</div>
+            <div class="text-left">
+              <div class="text-xs font-semibold text-dream-200">Niveau 1</div>
+              <div class="text-[10px] text-gray-400">Déclenche des rêves lucides</div>
+            </div>
+            <i class="fas fa-chevron-right text-xs text-gray-500 ml-auto"></i>
+          </button>
+          <button onclick="navigate('lucidity-level2')" class="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05));border:1px solid rgba(245,158,11,0.2);">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:rgba(245,158,11,0.2);">🧪</div>
+            <div class="text-left">
+              <div class="text-xs font-semibold text-amber-200">Niveau 2</div>
+              <div class="text-[10px] text-gray-400">Optimise ton sommeil paradoxal</div>
+            </div>
+            <i class="fas fa-chevron-right text-xs text-gray-500 ml-auto"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>`;
+  } catch (err) {
+    main.innerHTML = `<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>${err.message}</div>`;
+  }
+}
+
+// ========== LUCIDITY VIEW (NIVEAU 1) ==========
 async function renderLucidity() {
   const main = document.getElementById('main-content');
   let rcStats = { total: 0, today: 0 }; try { rcStats = await api('/reality-checks/stats'); } catch {}
   main.innerHTML = `
     <div class="animate-slideUp">
+      <!-- Bouton retour -->
+      <button onclick="navigate('lucidity')" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
+        <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+      </button>
+
       <!-- ===== HERO TITRE ===== -->
       <div class="relative rounded-2xl p-5 mb-6 overflow-hidden" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(56,189,248,0.10), rgba(139,92,246,0.08));">
         <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
@@ -2439,9 +2718,13 @@ async function renderLucidity() {
 
       </div>
 
-      <!-- ===== BOUTON NIVEAU 2 ===== -->
-      <div class="flex justify-center mt-5">
-        <button onclick="state.currentView='lucidity-level2'; renderLucidityLevel2(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);"
+      <!-- ===== BOUTONS NAVIGATION ===== -->
+      <div class="flex flex-col sm:flex-row justify-center gap-3 mt-5">
+        <button onclick="navigate('lucidity')"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold glass text-gray-300 hover:text-white transition-all">
+          <i class="fas fa-arrow-left text-xs"></i> Tableau de bord
+        </button>
+        <button onclick="navigate('lucidity-level2')"
           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 transition-all">
           Niveau 2 : Optimise ton sommeil paradoxal <i class="fas fa-chevron-right text-xs ml-1"></i>
         </button>
@@ -2455,8 +2738,8 @@ function renderLucidityLevel2() {
   main.innerHTML = `
     <div class="animate-slideUp">
       <!-- Bouton retour -->
-      <button onclick="state.currentView='lucidity'; renderLucidity(); setTimeout(()=>document.getElementById('main-content').scrollTo(0,0),50);" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
-        <i class="fas fa-arrow-left"></i> Retour au Niveau 1
+      <button onclick="navigate('lucidity')" class="flex items-center gap-2 text-sm text-gray-400 hover:text-dream-300 transition-colors mb-4">
+        <i class="fas fa-arrow-left"></i> Retour au tableau de bord
       </button>
 
       <!-- ===== HERO TITRE ===== -->
@@ -2779,7 +3062,7 @@ function renderLucidityLevel2() {
     </div>`;
 }
 
-window.doRealityCheck = async function(type) { try { await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: type, wasDreaming: false }) }); showToast('✅ Reality check enregistré !'); renderLucidity(); } catch {} };
+window.doRealityCheck = async function(type) { try { await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: type, wasDreaming: false }) }); showToast('✅ Reality check enregistré !'); if (state.currentView === 'lucidity-level1') renderLucidity(); else if (state.currentView === 'lucidity') renderDashboard(); } catch {} };
 
 // Quick RC depuis le bouton flottant (type 'general')
 window.quickRealityCheck = async function() {
@@ -2788,7 +3071,8 @@ window.quickRealityCheck = async function() {
   try {
     await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: 'general', wasDreaming: false }) });
     showToast('✅ Check validé !');
-    if (state.currentView === 'lucidity') renderLucidity();
+    if (state.currentView === 'lucidity-level1') renderLucidity();
+    else if (state.currentView === 'lucidity') renderDashboard();
   } catch {}
 };
 
@@ -2923,12 +3207,14 @@ if ('serviceWorker' in navigator) {
       localStorage.setItem('tlr_active', '0');
       stopTLRCounters();
       sendSWMessage({ type: 'TLR_STOP' });
-      if (state.currentView === 'lucidity') renderLucidity();
+      if (state.currentView === 'lucidity-level1') renderLucidity();
+      else if (state.currentView === 'lucidity') renderDashboard();
     }
     if (event.data?.type === 'REALITY_CHECK_FROM_SW') {
       // RC already recorded by SW directly — just update UI
       showToast('✅ Check validé !');
-      if (state.currentView === 'lucidity') renderLucidity();
+      if (state.currentView === 'lucidity-level1') renderLucidity();
+      else if (state.currentView === 'lucidity') renderDashboard();
     }
     if (event.data?.type === 'PLAY_REFRAIN_FROM_SW') {
       // Push serveur TLR : jouer le refrain automatiquement au volume TLR
