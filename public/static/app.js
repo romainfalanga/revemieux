@@ -15,7 +15,7 @@ let state = {
   stats: null,
 
   editingDream: null,
-  filters: { type: 'all', tagIds: [], emotion: null, minIntensity: 1, maxIntensity: 5 },
+  filters: { type: 'all', tagIds: [], emotions: [], minIntensity: 1, maxIntensity: 5 },
   dreamDetailId: null, // for dream sub-page view
   previousView: null   // to remember where to go back
 };
@@ -260,8 +260,8 @@ async function renderJournal() {
     const params = new URLSearchParams({ page: state.pagination.page, limit: state.pagination.limit });
     if (state.filters.type !== 'all') params.set('type', state.filters.type);
     if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
-    if (state.filters.emotion) {
-      params.set('emotion', state.filters.emotion);
+    if (state.filters.emotions.length > 0) {
+      params.set('emotion', state.filters.emotions.join(','));
       params.set('minIntensity', state.filters.minIntensity);
       params.set('maxIntensity', state.filters.maxIntensity);
     }
@@ -269,7 +269,7 @@ async function renderJournal() {
     state.dreams = data.dreams; state.pagination = data.pagination;
   } catch (err) { main.innerHTML = `<div class="text-center py-12 text-red-400">${err.message}</div>`; return; }
 
-  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + (state.filters.emotion ? 1 : 0);
+  const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + state.filters.emotions.length;
 
   const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
   const categoryOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
@@ -298,7 +298,7 @@ async function renderJournal() {
 
   // Build emotion filter HTML
   const emotionFilterHTML = EMOTION_LIST.map(em => {
-    const isActive = state.filters.emotion === em;
+    const isActive = state.filters.emotions.includes(em);
     return `<button onclick="toggleEmotionFilter('${em}')"
       class="px-2 py-1 rounded-full text-[10px] font-medium transition-all cursor-pointer ${isActive ? 'border-dream-400 bg-dream-600/30 text-dream-200 ring-1 ring-dream-400/40' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200'}" style="border:1px solid ${isActive ? 'rgba(139,92,246,0.5)' : 'rgba(139,92,246,0.15)'}">
       ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${isActive ? ' <i class="fas fa-times text-[8px] ml-0.5"></i>' : ''}
@@ -320,11 +320,11 @@ async function renderJournal() {
           </button>
         </div>
         <!-- Active filters display -->
-        ${(state.filters.type !== 'all' || state.filters.tagIds.length > 0 || state.filters.emotion) ? `
+        ${(state.filters.type !== 'all' || state.filters.tagIds.length > 0 || state.filters.emotions.length > 0) ? `
         <div class="flex flex-wrap gap-1 items-center">
           <span class="text-[9px] text-gray-500 mr-1">Filtres actifs :</span>
           ${state.filters.type !== 'all' ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).icon||''} ${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).label||state.filters.type} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="filterType('all')"></i></span>` : ''}
-          ${state.filters.emotion ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${EMOTION_EMOJIS[state.filters.emotion]} ${EMOTION_LABELS[state.filters.emotion]} ${state.filters.minIntensity}-${state.filters.maxIntensity}/5 <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleEmotionFilter(null)"></i></span>` : ''}
+          ${state.filters.emotions.map(em => `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleEmotionFilter('${em}')"></i></span>`).join('')}
           ${state.filters.tagIds.map(tid => {
             const tag = Object.values(groupedTags).flat().find(t => t.id === tid);
             return tag ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style="background:${tag.color}30; color:${tag.color}; border:1px solid ${tag.color}50">${escapeHtml(tag.name)} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleTagFilter(${tid})"></i></span>` : '';
@@ -333,7 +333,7 @@ async function renderJournal() {
       </div>
 
       <!-- Expandable filter panel — all filters apply in real-time -->
-      <div id="filter-panel" class="hidden mb-4 glass rounded-xl p-3 animate-slideUp">
+      <div id="filter-panel" class="${_filterPanelOpen ? '' : 'hidden'} mb-4 glass rounded-xl p-3 animate-slideUp">
         <div class="flex items-center justify-between mb-3">
           <h4 class="text-xs font-semibold text-dream-200"><i class="fas fa-filter mr-1.5"></i>Filtres</h4>
           <button onclick="toggleFilterPanel()" class="text-gray-400 hover:text-white text-xs"><i class="fas fa-times"></i></button>
@@ -356,12 +356,10 @@ async function renderJournal() {
           <div class="flex flex-wrap gap-1.5">
             ${emotionFilterHTML}
           </div>
-          ${state.filters.emotion ? `
+          ${state.filters.emotions.length > 0 ? `
           <div class="mt-2 p-2 rounded-lg bg-night-900/50 border border-dream-700/20">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs">${EMOTION_EMOJIS[state.filters.emotion]}</span>
-              <span class="text-[10px] text-dream-200 font-medium">${EMOTION_LABELS[state.filters.emotion]}</span>
-              <span class="text-[9px] text-gray-500">Intensité : ${state.filters.minIntensity} - ${state.filters.maxIntensity}</span>
+              <span class="text-[10px] text-dream-200 font-medium">${state.filters.emotions.map(em => EMOTION_EMOJIS[em]).join(' ')} Intensit\u00e9 : ${state.filters.minIntensity} - ${state.filters.maxIntensity}</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-[9px] text-gray-500 shrink-0">Min</span>
@@ -371,7 +369,7 @@ async function renderJournal() {
               <input type="range" min="1" max="5" value="${state.filters.maxIntensity}" class="flex-1 accent-dream-400"
                 oninput="setEmotionFilterIntensity('max', parseInt(this.value))">
             </div>
-          </div>` : ''}
+          </div>` : ''
         </div>
         <!-- Tags filter -->
         <div>
@@ -445,15 +443,18 @@ window.toggleTagFilter = function(tagId) {
 
 // Emotion-based filtering (real-time)
 window.toggleEmotionFilter = function(em) {
-  if (!em || state.filters.emotion === em) {
-    state.filters.emotion = null;
+  if (!em) {
+    state.filters.emotions = [];
     state.filters.minIntensity = 1;
     state.filters.maxIntensity = 5;
   } else {
-    state.filters.emotion = em;
+    const idx = state.filters.emotions.indexOf(em);
+    if (idx >= 0) { state.filters.emotions.splice(idx, 1); }
+    else { state.filters.emotions.push(em); }
+    if (state.filters.emotions.length === 0) { state.filters.minIntensity = 1; state.filters.maxIntensity = 5; }
   }
   state.pagination.page = 1;
-  renderJournal(); // full re-render to update the filter panel UI (intensity slider)
+  renderJournal();
 };
 
 window.setEmotionFilterIntensity = function(which, val) {
@@ -473,8 +474,8 @@ async function renderJournalList() {
   const params = new URLSearchParams({ page: state.pagination.page, limit: state.pagination.limit });
   if (state.filters.type !== 'all') params.set('type', state.filters.type);
   if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
-  if (state.filters.emotion) {
-    params.set('emotion', state.filters.emotion);
+  if (state.filters.emotions.length > 0) {
+    params.set('emotion', state.filters.emotions.join(','));
     params.set('minIntensity', state.filters.minIntensity);
     params.set('maxIntensity', state.filters.maxIntensity);
   }
@@ -484,7 +485,7 @@ async function renderJournalList() {
   } catch { return; }
   const list = document.getElementById('dreams-list');
   if (list) {
-    const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + (state.filters.emotion ? 1 : 0);
+    const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + state.filters.emotions.length;
     list.innerHTML = state.dreams.length === 0 ? `
       <div class="text-center py-12">
         <div class="text-5xl mb-4 animate-float">${activeFilterCount > 0 ? '🔍' : '🌙'}</div>
@@ -495,15 +496,16 @@ async function renderJournalList() {
   }
 }
 
+let _filterPanelOpen = false;
 window.toggleFilterPanel = function() {
   const panel = document.getElementById('filter-panel');
-  if (panel) panel.classList.toggle('hidden');
+  if (panel) { panel.classList.toggle('hidden'); _filterPanelOpen = !panel.classList.contains('hidden'); }
 };
 
 window.clearAllFilters = function() {
   state.filters.type = 'all';
   state.filters.tagIds = [];
-  state.filters.emotion = null;
+  state.filters.emotions = [];
   state.filters.minIntensity = 1;
   state.filters.maxIntensity = 5;
   state.pagination.page = 1;
@@ -2075,73 +2077,84 @@ window.saveContinuationIntention = async function(e, dreamId) {
 
 // ========== DASHBOARD "RÊVE MIEUX" ==========
 let dashboardPeriod = 'month'; // 'week', 'month', 'year'
+let _dashboardCharts = []; // keep references to destroy before re-render
+
+function _destroyDashboardCharts() {
+  _dashboardCharts.forEach(c => { try { c.destroy(); } catch {} });
+  _dashboardCharts = [];
+}
+
+function _createLineChart(canvasId, labels, datasets, yTitle) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: datasets.length > 1, labels: { color: '#9ca3af', font: { size: 10 }, boxWidth: 12, padding: 8 } },
+        tooltip: {
+          backgroundColor: 'rgba(15,10,40,0.95)', titleColor: '#c4b5fd', bodyColor: '#d1d5db',
+          borderColor: 'rgba(139,92,246,0.3)', borderWidth: 1, padding: 8,
+          titleFont: { size: 11 }, bodyFont: { size: 11 }, cornerRadius: 8
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(139,92,246,0.08)' }, ticks: { color: '#6b7280', font: { size: 9 }, maxRotation: 0 } },
+        y: { beginAtZero: true, grid: { color: 'rgba(139,92,246,0.08)' }, ticks: { color: '#6b7280', font: { size: 9 }, stepSize: 1 },
+          title: yTitle ? { display: true, text: yTitle, color: '#6b7280', font: { size: 9 } } : undefined }
+      },
+      elements: { line: { tension: 0.4, borderWidth: 2 }, point: { radius: 3, hoverRadius: 6 } }
+    }
+  });
+  _dashboardCharts.push(chart);
+}
 
 async function renderDashboard() {
+  _destroyDashboardCharts();
   const main = document.getElementById('main-content');
   try {
     const data = await api(`/stats/dashboard?period=${dashboardPeriod}`);
     const o = data.overview;
-    const periodLabel = dashboardPeriod === 'week' ? 'cette semaine' : dashboardPeriod === 'year' ? 'cette année' : 'ce mois';
+    const rc = data.realityChecks;
+    const int = data.intentions;
+    const periodLabel = dashboardPeriod === 'week' ? 'cette semaine' : dashboardPeriod === 'year' ? 'cette ann\u00e9e' : 'ce mois';
     const periodLabelShort = dashboardPeriod === 'week' ? '7j' : dashboardPeriod === 'year' ? '365j' : '30j';
 
     // Formater les labels de timeline
-    function fmtTimelineLabel(label, type) {
-      if (type === 'day') {
-        const d = new Date(label + 'T00:00:00');
-        return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-      }
-      if (type === 'week') {
-        const parts = label.split('-W');
-        return 'S' + parts[1];
-      }
-      if (type === 'month') {
-        const [y, m] = label.split('-');
-        const months = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
-        return months[parseInt(m) - 1] + (dashboardPeriod === 'year' ? '' : ' ' + y.slice(2));
-      }
+    function fmtLabel(label, type) {
+      if (type === 'day') { const d = new Date(label + 'T00:00:00'); return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }); }
+      if (type === 'week') { return 'S' + label.split('-W')[1]; }
+      if (type === 'month') { const m = ['Jan','F\u00e9v','Mar','Avr','Mai','Juin','Juil','Ao\u00fbt','Sep','Oct','Nov','D\u00e9c']; return m[parseInt(label.split('-')[1]) - 1]; }
       return label;
     }
 
-    // Timeline chart (barres simples en HTML)
     const tlData = data.timeline.data || [];
-    const maxTl = Math.max(...tlData.map(d => d.total), 1);
-    const tlBarsHTML = tlData.map(d => {
-      const pct = Math.round((d.total / maxTl) * 100);
-      const lucidPct = d.total > 0 ? Math.round((d.lucid / d.total) * 100) : 0;
-      return `<div class="flex flex-col items-center gap-1 flex-1 min-w-0">
-        <span class="text-[9px] text-gray-400 font-semibold">${d.total}</span>
-        <div class="w-full rounded-t relative" style="height:${Math.max(pct, 4)}px;max-height:80px;background:rgba(139,92,246,0.3);">
-          ${d.lucid > 0 ? `<div class="absolute bottom-0 left-0 right-0 rounded-t" style="height:${lucidPct}%;background:rgba(139,92,246,0.7);"></div>` : ''}
-        </div>
-        <span class="text-[8px] text-gray-500 truncate w-full text-center">${fmtTimelineLabel(d.label, data.timeline.label)}</span>
-      </div>`;
-    }).join('');
+    const tlLabels = tlData.map(d => fmtLabel(d.label, data.timeline.label));
+    const rcTlData = rc.timeline || [];
+    const rcLabels = rcTlData.map(d => fmtLabel(d.label, data.timeline.label));
 
-    // Emotions chart
+    // Emotions
+    const emotionEmojis = { joy: '\ud83d\ude0a', fear: '\ud83d\ude28', anxiety: '\ud83d\ude30', wonder: '\ud83e\udd29', sadness: '\ud83d\ude22', anger: '\ud83d\ude21', confusion: '\ud83d\ude35', peace: '\ud83d\ude0c', excitement: '\ud83e\udd2f', love: '\ud83d\udc97', nostalgia: '\ud83e\udd7a' };
+    const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxi\u00e9t\u00e9', wonder: '\u00c9merveillement', sadness: 'Tristesse', anger: 'Col\u00e8re', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
     const emotionsHTML = (data.emotions || []).map(em => {
       const maxEm = data.emotions[0]?.count || 1;
       const pct = Math.round((em.count / maxEm) * 100);
-      return `<div class="flex items-center gap-2 mb-1.5">
-        <span class="text-xs w-20 truncate text-gray-300">${em.emotion}</span>
-        <div class="flex-1 h-3 bg-night-900/40 rounded-full overflow-hidden">
-          <div class="h-full rounded-full" style="width:${pct}%;background:linear-gradient(90deg,rgba(139,92,246,0.6),rgba(56,189,248,0.6));"></div>
+      return `<div class="flex items-center gap-2 py-1.5 border-b border-dream-700/10 last:border-0">
+        <span class="text-base shrink-0">${emotionEmojis[em.emotion] || ''}</span>
+        <span class="text-xs text-gray-200 w-24 sm:w-28 truncate">${emotionLabels[em.emotion] || em.emotion}</span>
+        <div class="flex-1 h-2.5 bg-night-900/40 rounded-full overflow-hidden">
+          <div class="h-full rounded-full" style="width:${pct}%;background:linear-gradient(90deg,rgba(139,92,246,0.5),rgba(56,189,248,0.5));"></div>
         </div>
-        <span class="text-[10px] text-gray-400 w-8 text-right">${em.count}</span>
-        <span class="text-[9px] text-gray-500 w-8 text-right">${em.avg_intensity}/5</span>
+        <span class="text-[10px] font-semibold text-dream-300 w-6 text-right">${em.count}x</span>
+        <span class="text-[10px] text-gray-400 w-12 text-right">\u2300 ${em.avg_intensity}/5</span>
       </div>`;
-    }).join('') || '<p class="text-xs text-gray-500 italic text-center py-2">Pas encore d\'émotions enregistrées</p>';
+    }).join('') || '<p class="text-xs text-gray-500 italic text-center py-3">Pas encore d\'\u00e9motions enregistr\u00e9es</p>';
 
-    // Types
-    const typeEmoji = { normal: '💭', lucid: '✨', nightmare: '😱', recurring: '🔄', sleep_paralysis: '😶', false_awakening: '🔁' };
-    const typeLabel = { normal: 'Normal', lucid: 'Lucide', nightmare: 'Cauchemar', recurring: 'Récurrent', sleep_paralysis: 'Paralysie', false_awakening: 'Faux réveil' };
-    const typesHTML = (data.types || []).map(t => `
-      <div class="flex items-center justify-between px-3 py-1.5 glass rounded-lg">
-        <span class="text-xs text-gray-300">${typeEmoji[t.dream_type] || '💭'} ${typeLabel[t.dream_type] || t.dream_type}</span>
-        <span class="text-xs font-semibold text-dream-300">${t.count}</span>
-      </div>`).join('') || '<p class="text-xs text-gray-500 italic text-center py-2">Aucun rêve sur cette période</p>';
-
-    // Tags par catégorie
-    const catLabels = { person: '👤 Personnages', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
+    // Tags par cat\u00e9gorie
+    const catLabels = { person: '\ud83d\udc64 Personnages', place: '\ud83d\udccd Lieux', theme: '\ud83c\udfad Th\u00e8mes', symbol: '\ud83d\udd2e Symboles', custom: '\ud83c\udff7\ufe0f Tags' };
     const catOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
     let tagsHTML = '';
     for (const cat of catOrder) {
@@ -2154,31 +2167,13 @@ async function renderDashboard() {
         </div>
       </div>`;
     }
-    if (!tagsHTML) tagsHTML = '<p class="text-xs text-gray-500 italic text-center py-2">Aucun tag sur cette période</p>';
-
-    // Reality Checks
-    const rc = data.realityChecks;
-    const rcTypeLabel = { hands: '✋ Doigts', text: '📖 Texte', time: '⏰ Heure', nose: '👃 Nez', gravity: '🪶 Gravité', general: '🔍 Général' };
-    const rcTypesHTML = (rc.byType || []).map(t => `
-      <div class="flex items-center justify-between px-2 py-1">
-        <span class="text-[10px] text-gray-300">${rcTypeLabel[t.check_type] || t.check_type}</span>
-        <span class="text-[10px] font-semibold text-emerald-400">${t.count}</span>
-      </div>`).join('') || '<p class="text-[10px] text-gray-500 italic">Aucun RC</p>';
-
-    // RC timeline mini bars
-    const rcTlData = rc.timeline || [];
-    const maxRc = Math.max(...rcTlData.map(d => d.count), 1);
-    const rcBarsHTML = rcTlData.length > 0 ? `<div class="flex items-end gap-0.5 h-10 mt-2">
-      ${rcTlData.map(d => {
-        const h = Math.max(Math.round((d.count / maxRc) * 100), 8);
-        return `<div class="flex-1 rounded-t" style="height:${h}%;background:rgba(16,185,129,0.4);" title="${d.label}: ${d.count}"></div>`;
-      }).join('')}
-    </div>` : '';
+    if (!tagsHTML) tagsHTML = '<p class="text-xs text-gray-500 italic text-center py-2">Aucun tag sur cette p\u00e9riode</p>';
 
     // Intentions
-    const int = data.intentions;
-    const intTotal = int.total || 0;
-    const intRealizedPct = intTotal > 0 ? Math.round((int.realized / intTotal) * 100) : 0;
+    const intActive = int.active || 0;
+    const intRealized = int.realized || 0;
+    const intTotal = intActive + intRealized;
+    const intRealizedPct = intTotal > 0 ? Math.round((intRealized / intTotal) * 100) : 0;
 
     main.innerHTML = `
     <div class="animate-slideUp">
@@ -2186,30 +2181,25 @@ async function renderDashboard() {
       <div class="relative rounded-2xl p-5 mb-5 overflow-hidden" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(56,189,248,0.10), rgba(139,92,246,0.08));">
         <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
         <div class="relative text-center">
-          <div class="text-3xl mb-2">🌙</div>
-          <h2 class="text-xl font-display font-bold text-white mb-1">Rêve Mieux</h2>
+          <div class="text-3xl mb-2">\ud83c\udf19</div>
+          <h2 class="text-xl font-display font-bold text-white mb-1">R\u00eave Mieux</h2>
           <p class="text-xs text-gray-400">Ton tableau de bord onirique</p>
         </div>
       </div>
 
-      <!-- ===== SÉLECTEUR DE PÉRIODE ===== -->
+      <!-- ===== S\u00c9LECTEUR DE P\u00c9RIODE ===== -->
       <div class="flex justify-center gap-2 mb-5">
         <button onclick="dashboardPeriod='week';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'week' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Semaine</button>
         <button onclick="dashboardPeriod='month';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'month' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Mois</button>
-        <button onclick="dashboardPeriod='year';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'year' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Année</button>
+        <button onclick="dashboardPeriod='year';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'year' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Ann\u00e9e</button>
       </div>
 
-      <!-- ===== COMPTEURS PRINCIPAUX ===== -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <!-- ===== RANG\u00c9E 1 : 3 COMPTEURS ===== -->
+      <div class="grid grid-cols-3 gap-3 mb-3">
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-white">${o.totalPeriod}</div>
-          <div class="text-[10px] text-gray-400">Rêves ${periodLabelShort}</div>
+          <div class="text-[10px] text-gray-400">R\u00eaves ${periodLabelShort}</div>
           <div class="text-[9px] text-gray-500 mt-0.5">${o.totalAllTime} au total</div>
-        </div>
-        <div class="glass rounded-xl p-3 text-center">
-          <div class="text-2xl font-bold text-dream-300">${o.lucidPeriod}</div>
-          <div class="text-[10px] text-gray-400">Lucides ${periodLabelShort}</div>
-          <div class="text-[9px] text-dream-400/60 mt-0.5">${o.lucidRate}% taux</div>
         </div>
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-amber-400">${o.streak}</div>
@@ -2223,118 +2213,96 @@ async function renderDashboard() {
         </div>
       </div>
 
-      <!-- ===== MOYENNES ===== -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <!-- ===== RANG\u00c9E 2 : 4 TYPES + S\u00c9RIES ===== -->
+      <div class="grid grid-cols-4 sm:grid-cols-4 gap-2 mb-5">
         <div class="glass rounded-xl p-2.5 text-center">
-          <div class="text-lg font-bold text-sky-400">${o.avgSleep || '-'}<span class="text-[10px] text-gray-500">/5</span></div>
-          <div class="text-[9px] text-gray-400">Qualité sommeil moy.</div>
+          <div class="text-lg font-bold text-dream-300">${o.lucidPeriod}</div>
+          <div class="text-[9px] text-gray-400">\u2728 Lucides</div>
         </div>
         <div class="glass rounded-xl p-2.5 text-center">
-          <div class="text-lg font-bold text-violet-400">${o.avgLucidity || '-'}<span class="text-[10px] text-gray-500">/5</span></div>
-          <div class="text-[9px] text-gray-400">Lucidité moy.</div>
+          <div class="text-lg font-bold text-sky-400">${o.normalPeriod}</div>
+          <div class="text-[9px] text-gray-400">\ud83d\udcad Normaux</div>
         </div>
         <div class="glass rounded-xl p-2.5 text-center">
           <div class="text-lg font-bold text-rose-400">${o.nightmaresPeriod}</div>
-          <div class="text-[9px] text-gray-400">Cauchemars</div>
+          <div class="text-[9px] text-gray-400">\ud83d\ude31 Cauchemars</div>
         </div>
         <div class="glass rounded-xl p-2.5 text-center">
           <div class="text-lg font-bold text-cyan-400">${o.recurringPeriod}</div>
-          <div class="text-[9px] text-gray-400">Récurrents</div>
+          <div class="text-[9px] text-gray-400">\ud83d\udd04 R\u00e9currents</div>
         </div>
       </div>
 
-      <!-- ===== EVOLUTION TEMPORELLE ===== -->
-      ${tlData.length > 0 ? `
+      <!-- ===== GRAPHIQUE : \u00c9VOLUTION DES R\u00caVES ===== -->
       <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-chart-bar mr-1.5 text-dream-400"></i>Evolution des rêves</h3>
-        <div class="flex items-end gap-1" style="height:100px;">
-          ${tlBarsHTML}
-        </div>
-        <div class="flex items-center gap-3 mt-2 justify-center">
-          <span class="flex items-center gap-1 text-[9px] text-gray-400"><span class="w-2 h-2 rounded" style="background:rgba(139,92,246,0.3);"></span>Total</span>
-          <span class="flex items-center gap-1 text-[9px] text-gray-400"><span class="w-2 h-2 rounded" style="background:rgba(139,92,246,0.7);"></span>Lucides</span>
-        </div>
-      </div>
-      ` : ''}
-
-      <!-- ===== TYPES DE RÊVES ===== -->
-      <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-shapes mr-1.5 text-dream-400"></i>Types de rêves</h3>
-        <div class="space-y-1.5">${typesHTML}</div>
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-chart-line mr-1.5 text-dream-400"></i>\u00c9volution des r\u00eaves</h3>
+        <div style="height:180px;"><canvas id="chart-dreams"></canvas></div>
       </div>
 
-      <!-- ===== EMOTIONS ===== -->
+      <!-- ===== GRAPHIQUE : REALITY CHECKS ===== -->
       <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-heart mr-1.5 text-rose-400"></i>Émotions ressenties</h3>
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-chart-line mr-1.5 text-emerald-400"></i>Contr\u00f4les de r\u00e9alit\u00e9</h3>
+        <div class="flex items-center gap-4 mb-3">
+          <span class="text-[10px] text-gray-400"><strong class="text-emerald-400 text-sm">${rc.totalPeriod}</strong> sur la p\u00e9riode</span>
+          <span class="text-[10px] text-gray-400"><strong class="text-emerald-300 text-sm">${rc.today}</strong> aujourd'hui</span>
+        </div>
+        <div style="height:140px;"><canvas id="chart-rc"></canvas></div>
+      </div>
+
+      <!-- ===== \u00c9MOTIONS ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-heart mr-1.5 text-rose-400"></i>\u00c9motions ressenties</h3>
         <div>${emotionsHTML}</div>
       </div>
 
       <!-- ===== TAGS / PERSONNAGES / LIEUX ===== -->
       <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-tags mr-1.5 text-amber-400"></i>Éléments récurrents</h3>
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-tags mr-1.5 text-amber-400"></i>\u00c9l\u00e9ments r\u00e9currents</h3>
         ${tagsHTML}
       </div>
 
-      <!-- ===== REALITY CHECKS ===== -->
-      <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-check-circle mr-1.5 text-emerald-400"></i>Contrôles de réalité</h3>
-        <div class="grid grid-cols-3 gap-2 mb-2">
-          <div class="text-center">
-            <div class="text-lg font-bold text-emerald-400">${rc.totalPeriod}</div>
-            <div class="text-[9px] text-gray-400">Sur la période</div>
+      <!-- ===== INTENTIONS + S\u00c9RIES ===== -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+        <!-- Intentions -->
+        <div class="glass rounded-xl p-4">
+          <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-lightbulb mr-1.5 text-yellow-400"></i>Intentions</h3>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div class="text-center">
+              <div class="text-lg font-bold text-yellow-400">${intActive}</div>
+              <div class="text-[9px] text-gray-400">Actives</div>
+            </div>
+            <div class="text-center">
+              <div class="text-lg font-bold text-emerald-400">${intRealized}</div>
+              <div class="text-[9px] text-gray-400">R\u00e9alis\u00e9es</div>
+            </div>
           </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-emerald-300">${rc.today}</div>
-            <div class="text-[9px] text-gray-400">Aujourd'hui</div>
-          </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-emerald-500">${rc.totalAllTime}</div>
-            <div class="text-[9px] text-gray-400">Total</div>
-          </div>
+          ${intTotal > 0 ? `
+          <div class="mt-2">
+            <div class="flex items-center justify-between text-[9px] text-gray-400 mb-1">
+              <span>Taux de r\u00e9alisation</span>
+              <span class="font-semibold text-emerald-400">${intRealizedPct}%</span>
+            </div>
+            <div class="w-full h-2 bg-night-900/40 rounded-full overflow-hidden">
+              <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style="width:${intRealizedPct}%"></div>
+            </div>
+          </div>` : ''}
         </div>
-        <div class="space-y-0.5">${rcTypesHTML}</div>
-        ${rcBarsHTML}
-      </div>
-
-      <!-- ===== INTENTIONS ===== -->
-      <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-lightbulb mr-1.5 text-yellow-400"></i>Intentions oniriques</h3>
-        <div class="grid grid-cols-3 gap-2 mb-2">
-          <div class="text-center">
-            <div class="text-lg font-bold text-yellow-400">${int.active}</div>
-            <div class="text-[9px] text-gray-400">Actives</div>
+        <!-- S\u00e9ries + Lucidité moy. -->
+        <div class="glass rounded-xl p-4">
+          <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-layer-group mr-1.5 text-violet-400"></i>S\u00e9ries et lucidité</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="text-center">
+              <div class="text-lg font-bold text-violet-400">${o.seriesCount}</div>
+              <div class="text-[9px] text-gray-400">S\u00e9ries de r\u00eaves</div>
+            </div>
+            <div class="text-center">
+              <div class="text-lg font-bold text-dream-300">${o.avgLucidity || '-'}<span class="text-[9px] text-gray-500">/5</span></div>
+              <div class="text-[9px] text-gray-400">Lucidit\u00e9 moy.</div>
+            </div>
           </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-emerald-400">${int.realized}</div>
-            <div class="text-[9px] text-gray-400">Réalisées</div>
+          <div class="mt-3 text-center">
+            <span class="text-[9px] text-gray-500">${o.lucidRate}% de r\u00eaves lucides</span>
           </div>
-          <div class="text-center">
-            <div class="text-lg font-bold text-gray-400">${int.archived}</div>
-            <div class="text-[9px] text-gray-400">Archivées</div>
-          </div>
-        </div>
-        ${intTotal > 0 ? `
-        <div class="mt-2">
-          <div class="flex items-center justify-between text-[9px] text-gray-400 mb-1">
-            <span>Taux de réalisation</span>
-            <span class="font-semibold text-emerald-400">${intRealizedPct}%</span>
-          </div>
-          <div class="w-full h-2 bg-night-900/40 rounded-full overflow-hidden">
-            <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style="width:${intRealizedPct}%"></div>
-          </div>
-        </div>` : ''}
-        ${int.createdPeriod > 0 ? `<p class="text-[9px] text-gray-500 mt-2">${int.createdPeriod} intention(s) créée(s) ${periodLabel}</p>` : ''}
-      </div>
-
-      <!-- ===== COMPTEURS COMPLÉMENTAIRES ===== -->
-      <div class="grid grid-cols-2 gap-3 mb-5">
-        <div class="glass rounded-xl p-3 text-center">
-          <div class="text-lg font-bold text-violet-400">${o.seriesCount}</div>
-          <div class="text-[9px] text-gray-400">Séries de rêves</div>
-        </div>
-        <div class="glass rounded-xl p-3 text-center">
-          <div class="text-lg font-bold text-cyan-400">${o.connectionsCount}</div>
-          <div class="text-[9px] text-gray-400">Connexions entre rêves</div>
         </div>
       </div>
 
@@ -2343,15 +2311,15 @@ async function renderDashboard() {
         <h3 class="text-sm font-display font-bold text-dream-100 mb-3 text-center"><i class="fas fa-graduation-cap mr-1.5 text-dream-400"></i>Techniques et apprentissage</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button onclick="navigate('lucidity-level1')" class="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95" style="background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(139,92,246,0.05));border:1px solid rgba(139,92,246,0.2);">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:rgba(139,92,246,0.2);">👁️</div>
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:rgba(139,92,246,0.2);">\ud83d\udc41\ufe0f</div>
             <div class="text-left">
               <div class="text-xs font-semibold text-dream-200">Niveau 1</div>
-              <div class="text-[10px] text-gray-400">Déclenche des rêves lucides</div>
+              <div class="text-[10px] text-gray-400">D\u00e9clenche des r\u00eaves lucides</div>
             </div>
             <i class="fas fa-chevron-right text-xs text-gray-500 ml-auto"></i>
           </button>
           <button onclick="navigate('lucidity-level2')" class="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05));border:1px solid rgba(245,158,11,0.2);">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:rgba(245,158,11,0.2);">🧪</div>
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:rgba(245,158,11,0.2);">\ud83e\uddea</div>
             <div class="text-left">
               <div class="text-xs font-semibold text-amber-200">Niveau 2</div>
               <div class="text-[10px] text-gray-400">Optimise ton sommeil paradoxal</div>
@@ -2360,8 +2328,25 @@ async function renderDashboard() {
           </button>
         </div>
       </div>
-
     </div>`;
+
+    // --- Render Chart.js graphs after DOM is ready ---
+    setTimeout(() => {
+      // Graphique \u00e9volution des r\u00eaves (courbe type crypto)
+      if (tlData.length > 0) {
+        _createLineChart('chart-dreams', tlLabels, [
+          { label: 'Total r\u00eaves', data: tlData.map(d => d.total), borderColor: 'rgba(139,92,246,0.8)', backgroundColor: 'rgba(139,92,246,0.1)', fill: true },
+          { label: 'Lucides', data: tlData.map(d => d.lucid), borderColor: 'rgba(56,189,248,0.8)', backgroundColor: 'rgba(56,189,248,0.1)', fill: true }
+        ]);
+      }
+      // Graphique RC
+      if (rcTlData.length > 0) {
+        _createLineChart('chart-rc', rcLabels, [
+          { label: 'Reality checks', data: rcTlData.map(d => d.count), borderColor: 'rgba(16,185,129,0.8)', backgroundColor: 'rgba(16,185,129,0.1)', fill: true }
+        ]);
+      }
+    }, 50);
+
   } catch (err) {
     main.innerHTML = `<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>${err.message}</div>`;
   }

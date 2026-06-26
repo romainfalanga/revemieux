@@ -40,22 +40,30 @@ dreamRoutes.get('/', async (c) => {
     where += ' AND d.is_favorite = 1'
   }
 
-  // Emotion filter: find dreams with a specific emotion at a given intensity range
+  // Emotion filter: find dreams with specific emotion(s) at a given intensity range
+  // Supports multiple emotions (comma-separated): dreams must have AT LEAST ONE of the selected emotions
   if (emotionParam) {
-    let emotionSubquery = ` AND d.id IN (
-      SELECT de_filter.dream_id FROM dream_emotions de_filter
-      WHERE de_filter.emotion = ?`
-    params.push(emotionParam)
-    if (minIntensity) {
-      emotionSubquery += ` AND de_filter.intensity >= ?`
-      params.push(parseInt(minIntensity))
+    const emotions = emotionParam.split(',').map((e: string) => e.trim()).filter((e: string) => e)
+    if (emotions.length === 1) {
+      let emotionSubquery = ` AND d.id IN (
+        SELECT de_filter.dream_id FROM dream_emotions de_filter
+        WHERE de_filter.emotion = ?`
+      params.push(emotions[0])
+      if (minIntensity) { emotionSubquery += ` AND de_filter.intensity >= ?`; params.push(parseInt(minIntensity)) }
+      if (maxIntensity) { emotionSubquery += ` AND de_filter.intensity <= ?`; params.push(parseInt(maxIntensity)) }
+      emotionSubquery += `)`
+      where += emotionSubquery
+    } else if (emotions.length > 1) {
+      const placeholders = emotions.map(() => '?').join(',')
+      let emotionSubquery = ` AND d.id IN (
+        SELECT de_filter.dream_id FROM dream_emotions de_filter
+        WHERE de_filter.emotion IN (${placeholders})`
+      params.push(...emotions)
+      if (minIntensity) { emotionSubquery += ` AND de_filter.intensity >= ?`; params.push(parseInt(minIntensity)) }
+      if (maxIntensity) { emotionSubquery += ` AND de_filter.intensity <= ?`; params.push(parseInt(maxIntensity)) }
+      emotionSubquery += `)`
+      where += emotionSubquery
     }
-    if (maxIntensity) {
-      emotionSubquery += ` AND de_filter.intensity <= ?`
-      params.push(parseInt(maxIntensity))
-    }
-    emotionSubquery += `)`
-    where += emotionSubquery
   }
 
   // If tag filtering is active, we need to find dreams that have ALL selected tags (intersection)

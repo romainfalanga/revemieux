@@ -123,6 +123,7 @@ statsRoutes.get('/dashboard', async (c) => {
        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmares,
        SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring,
+       SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
        AVG(sleep_quality) as avg_sleep,
        AVG(lucidity_level) as avg_lucidity,
        SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) as favorites
@@ -279,6 +280,7 @@ statsRoutes.get('/dashboard', async (c) => {
       lucidPeriod: periodDreams?.lucid || 0,
       nightmaresPeriod: periodDreams?.nightmares || 0,
       recurringPeriod: periodDreams?.recurring || 0,
+      normalPeriod: periodDreams?.normal || 0,
       favoritesPeriod: periodDreams?.favorites || 0,
       lucidRate,
       avgSleep: periodDreams?.avg_sleep ? parseFloat(Number(periodDreams.avg_sleep).toFixed(1)) : 0,
