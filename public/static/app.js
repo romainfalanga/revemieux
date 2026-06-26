@@ -198,13 +198,27 @@ function renderApp() {
             </svg>
           </div>
         </div>
-        <!-- Bouton Nouveau Rêve -->
-        <button onclick="openDreamEditor()"
-          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
-          style="background:linear-gradient(135deg,rgba(99,102,241,0.9),rgba(139,92,246,0.9));backdrop-filter:blur(8px);"
-          title="Nouveau rêve">
-          <i class="fas fa-plus text-sm"></i>
-        </button>
+        <!-- Bouton + Menu (3 options) -->
+        <div class="relative">
+          <div id="fab-menu" class="hidden absolute bottom-14 right-0 flex flex-col items-end gap-2 animate-slideUp">
+            <button onclick="closeFabMenu(); openIntentionEditor()" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-white shadow-lg whitespace-nowrap" style="background:linear-gradient(135deg,rgba(99,102,241,0.9),rgba(139,92,246,0.9));backdrop-filter:blur(8px);">
+              <i class="fas fa-lightbulb text-[10px]"></i>Nouvelle intention
+            </button>
+            <button onclick="closeFabMenu(); openSeriesEditor()" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-white shadow-lg whitespace-nowrap" style="background:linear-gradient(135deg,rgba(139,92,246,0.9),rgba(168,85,247,0.9));backdrop-filter:blur(8px);">
+              <i class="fas fa-layer-group text-[10px]"></i>Nouvelle s\u00e9rie
+            </button>
+            <button onclick="closeFabMenu(); openDreamEditor()" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-white shadow-lg whitespace-nowrap" style="background:linear-gradient(135deg,rgba(56,189,248,0.9),rgba(99,102,241,0.9));backdrop-filter:blur(8px);">
+              <i class="fas fa-feather-alt text-[10px]"></i>Nouveau r\u00eave
+            </button>
+          </div>
+          <button onclick="toggleFabMenu()"
+            id="fab-plus-btn"
+            class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
+            style="background:linear-gradient(135deg,rgba(99,102,241,0.9),rgba(139,92,246,0.9));backdrop-filter:blur(8px);"
+            title="Cr\u00e9er">
+            <i id="fab-plus-icon" class="fas fa-plus text-sm transition-transform"></i>
+          </button>
+        </div>
       </div>
       <style>
         @media (min-width: 640px) {
@@ -226,6 +240,37 @@ function renderApp() {
   }
 }
 
+// ========== FAB MENU (bouton +) ==========
+window.toggleFabMenu = function() {
+  const menu = document.getElementById('fab-menu');
+  const icon = document.getElementById('fab-plus-icon');
+  if (!menu) return;
+  const isOpen = !menu.classList.contains('hidden');
+  if (isOpen) {
+    menu.classList.add('hidden');
+    icon.style.transform = 'rotate(0deg)';
+  } else {
+    menu.classList.remove('hidden');
+    icon.style.transform = 'rotate(45deg)';
+  }
+};
+window.closeFabMenu = function() {
+  const menu = document.getElementById('fab-menu');
+  const icon = document.getElementById('fab-plus-icon');
+  if (menu) menu.classList.add('hidden');
+  if (icon) icon.style.transform = 'rotate(0deg)';
+};
+// Fermer le menu fab si on clique ailleurs
+document.addEventListener('click', function(e) {
+  const fab = document.getElementById('fab-plus-btn');
+  const menu = document.getElementById('fab-menu');
+  if (menu && fab && !fab.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.add('hidden');
+    const icon = document.getElementById('fab-plus-icon');
+    if (icon) icon.style.transform = 'rotate(0deg)';
+  }
+});
+
 window.navigate = function(view) {
   state.currentView = view;
   // Highlight nav: lucidity-level1 and lucidity-level2 highlight the lucidity tab
@@ -236,7 +281,12 @@ window.navigate = function(view) {
     btn.classList.toggle('text-gray-400', btn.dataset.nav !== navView);
   });
   const main = document.getElementById('main-content');
-  main.innerHTML = '<div class="flex justify-center py-12"><div class="animate-spin text-dream-400 text-2xl"><i class="fas fa-circle-notch"></i></div></div>';
+  // Pour le dashboard, ne pas afficher de spinner (il gere son propre cache)
+  if (view !== 'lucidity') {
+    main.innerHTML = '<div class="flex justify-center py-12"><div class="animate-spin text-dream-400 text-2xl"><i class="fas fa-circle-notch"></i></div></div>';
+  }
+  // Fermer le fab menu
+  closeFabMenu();
   switch (view) {
     case 'journal': renderJournal(); break;
     case 'series': renderSeries(); break;
@@ -1742,7 +1792,7 @@ async function renderIntentions() {
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-base font-display font-semibold text-dream-200"><i class="fas fa-lightbulb mr-2 text-indigo-400"></i>Mes Intentions</h2>
         <button onclick="openIntentionEditor()" class="px-3 py-2 bg-gradient-to-r from-indigo-500 to-dream-600 text-white rounded-xl text-xs font-medium hover:from-indigo-400 hover:to-dream-500 transition-all">
-          <i class="fas fa-plus mr-1"></i>Nouveau rêve
+          <i class="fas fa-plus mr-1"></i>Nouvelle intention
         </button>
       </div>
 
@@ -2121,35 +2171,71 @@ function _createLineChart(canvasId, labels, datasets, yTitle) {
   _dashboardCharts.push(chart);
 }
 
-function _createRadarChart(canvasId, labels, dataValues) {
+// Couleurs et labels des categories de tags
+const RADAR_CAT_CONFIG = {
+  person: { label: 'Personnages', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.7)' },
+  place:  { label: 'Lieux',       color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.7)' },
+  theme:  { label: 'Th\u00e8mes',      color: '#ec4899', bg: 'rgba(236,72,153,0.15)', border: 'rgba(236,72,153,0.7)' },
+  symbol: { label: 'Symboles',    color: '#06b6d4', bg: 'rgba(6,182,212,0.15)',   border: 'rgba(6,182,212,0.7)' },
+  custom: { label: 'Personnalis\u00e9', color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.7)' }
+};
+const RADAR_CAT_ORDER = ['person', 'place', 'theme', 'symbol', 'custom'];
+
+// Fallback pour afficher les tags sans radar (moins de 3 tags)
+function _buildRadarFallbackTags(labels, datasets) {
+  let html = '<div class="flex flex-wrap gap-1.5 py-2">';
+  labels.forEach((name, i) => {
+    let tagCat = 'custom';
+    for (const ds of datasets) { if (ds.indices.includes(i)) { tagCat = ds.cat; break; } }
+    const clr = RADAR_CAT_CONFIG[tagCat].color;
+    let cnt = 0;
+    for (const ds of datasets) {
+      const pos = ds.indices.indexOf(i);
+      if (pos !== -1) { cnt = ds.values[pos]; break; }
+    }
+    html += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:${clr}20;color:${clr};border:1px solid ${clr}30;">${escapeHtml(name)} <span class="opacity-60">x${cnt}</span></span>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function _createRadarChart(canvasId, radarData) {
+  // radarData = { labels: string[], datasets: [{ cat, indices, values }] }
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
+  const datasets = radarData.datasets.map(ds => {
+    const cfg = RADAR_CAT_CONFIG[ds.cat];
+    // Remplir un tableau avec 0 partout, sauf aux indices de cette categorie
+    const data = new Array(radarData.labels.length).fill(0);
+    ds.indices.forEach((idx, i) => { data[idx] = ds.values[i]; });
+    return {
+      label: cfg.label,
+      data,
+      backgroundColor: cfg.bg,
+      borderColor: cfg.border,
+      borderWidth: 2,
+      pointBackgroundColor: cfg.color,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 1,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    };
+  });
   const chart = new Chart(ctx, {
     type: 'radar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Occurrences',
-        data: dataValues,
-        backgroundColor: 'rgba(139,92,246,0.15)',
-        borderColor: 'rgba(139,92,246,0.6)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgba(139,92,246,0.8)',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 1,
-        pointRadius: 4,
-        pointHoverRadius: 6
-      }]
-    },
+    data: { labels: radarData.labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(15,10,40,0.95)', titleColor: '#c4b5fd', bodyColor: '#d1d5db',
-          borderColor: 'rgba(139,92,246,0.3)', borderWidth: 1, padding: 8,
-          titleFont: { size: 11 }, bodyFont: { size: 11 }, cornerRadius: 8
-        }
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            color: '#9ca3af', font: { size: 9 }, boxWidth: 10, padding: 6,
+            usePointStyle: true, pointStyle: 'circle'
+          }
+        },
+        tooltip: { enabled: false }
       },
       scales: {
         r: {
@@ -2206,15 +2292,25 @@ async function renderDashboard() {
       </div>`;
     }).join('') || '<p class="text-xs text-gray-500 italic text-center py-3">Pas encore d\'\u00e9motions enregistr\u00e9es</p>';
 
-    // Tags radar : top 10 toutes categories confondues
-    const allTags = [];
-    const catOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
-    for (const cat of catOrder) {
-      const tags = data.tagCategories[cat];
-      if (tags) tags.forEach(t => allTags.push(t));
+    // Tags radar : max 2 par categorie, groupes par zone
+    const radarLabels = [];
+    const radarDatasets = [];
+    let labelIdx = 0;
+    for (const cat of RADAR_CAT_ORDER) {
+      const tags = (data.tagCategories[cat] || []).slice(0, 2);
+      if (tags.length === 0) continue;
+      const indices = [];
+      const values = [];
+      for (const t of tags) {
+        radarLabels.push(t.name);
+        indices.push(labelIdx);
+        values.push(t.count);
+        labelIdx++;
+      }
+      radarDatasets.push({ cat, indices, values });
     }
-    allTags.sort((a, b) => b.count - a.count);
-    const radarTags = allTags.slice(0, 10);
+    const radarReady = radarLabels.length >= 3;
+    const radarChartData = { labels: radarLabels, datasets: radarDatasets };
 
     // Intentions
     const intActive = int.active || 0;
@@ -2250,8 +2346,8 @@ async function renderDashboard() {
         </div>
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-emerald-400">${rc.today}</div>
-          <div class="text-[10px] text-gray-400">CR aujourd'hui</div>
-          <div class="text-[9px] text-gray-500 mt-0.5">${rc.totalAllTime} au total</div>
+          <div class="text-[10px] text-gray-400">Contr\u00f4le de r\u00e9alit\u00e9 aujourd'hui</div>
+          <div class="text-[9px] text-gray-500 mt-0.5">${rc.totalPeriod} ${periodLabelShort}</div>
         </div>
       </div>
 
@@ -2260,17 +2356,14 @@ async function renderDashboard() {
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-violet-400">${o.seriesCount}</div>
           <div class="text-[10px] text-gray-400">S\u00e9ries</div>
-          <div class="text-[9px] text-gray-500 mt-0.5">de r\u00eaves</div>
         </div>
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-dream-300">${o.avgLucidity || '-'}<span class="text-xs text-gray-500">/5</span></div>
           <div class="text-[10px] text-gray-400">Lucidit\u00e9 moy.</div>
-          <div class="text-[9px] text-gray-500 mt-0.5">${o.lucidRate}% lucides</div>
         </div>
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-sky-300">${o.avgClarity || '-'}<span class="text-xs text-gray-500">/5</span></div>
           <div class="text-[10px] text-gray-400">Clart\u00e9 moy.</div>
-          <div class="text-[9px] text-gray-500 mt-0.5">nettet\u00e9 du souvenir</div>
         </div>
       </div>
 
@@ -2289,7 +2382,7 @@ async function renderDashboard() {
           <div class="text-[9px] text-gray-400">Cauchemars</div>
         </div>
         <div class="glass rounded-xl py-2 px-1 text-center">
-          <div class="text-lg font-bold text-cyan-400">${o.recurringPeriod}</div>
+          <div class="text-lg font-bold text-orange-400">${o.recurringPeriod}</div>
           <div class="text-[9px] text-gray-400">R\u00e9currents</div>
         </div>
       </div>
@@ -2333,7 +2426,7 @@ async function renderDashboard() {
       <!-- ===== GRAPHIQUE RADAR : \u00c9L\u00c9MENTS R\u00c9CURRENTS ===== -->
       <div class="glass rounded-xl p-4 mb-5">
         <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-spider mr-1.5 text-amber-400"></i>\u00c9l\u00e9ments r\u00e9currents</h3>
-        ${radarTags.length >= 3 ? `<div style="height:260px;"><canvas id="chart-radar"></canvas></div>` : radarTags.length > 0 ? `<div class="flex flex-wrap gap-1.5 py-2">${radarTags.map(t => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:${t.color}20;color:${t.color};border:1px solid ${t.color}30;">${escapeHtml(t.name)} <span class="opacity-60">x${t.count}</span></span>`).join('')}</div>` : '<p class="text-xs text-gray-500 italic text-center py-3">Pas assez de tags sur cette p\u00e9riode</p>'}
+        ${radarReady ? '<div style="height:280px;"><canvas id="chart-radar"></canvas></div>' : radarLabels.length > 0 ? _buildRadarFallbackTags(radarLabels, radarDatasets) : '<p class="text-xs text-gray-500 italic text-center py-3">Pas assez de tags sur cette p\u00e9riode</p>'}
       </div>
 
       <!-- ===== \u00c9MOTIONS ===== -->
@@ -2384,9 +2477,9 @@ async function renderDashboard() {
           { label: 'Reality checks', data: rcTlData.map(d => d.count), borderColor: 'rgba(16,185,129,0.8)', backgroundColor: 'rgba(16,185,129,0.1)', fill: true }
         ]);
       }
-      // Graphique Radar : elements recurrents
-      if (radarTags.length >= 3) {
-        _createRadarChart('chart-radar', radarTags.map(t => t.name), radarTags.map(t => t.count));
+      // Graphique Radar : elements recurrents (5 zones par categorie)
+      if (radarReady) {
+        _createRadarChart('chart-radar', radarChartData);
       }
     }, 50);
 
