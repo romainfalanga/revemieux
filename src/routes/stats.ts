@@ -126,6 +126,7 @@ statsRoutes.get('/dashboard', async (c) => {
        SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
        AVG(sleep_quality) as avg_sleep,
        AVG(lucidity_level) as avg_lucidity,
+       AVG(clarity) as avg_clarity,
        SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) as favorites
      FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-' || ? || ' days')`
   ).bind(userId, days).first<any>()
@@ -158,7 +159,10 @@ statsRoutes.get('/dashboard', async (c) => {
     // Par jour sur 7 jours
     timelineQuery = `
       SELECT dream_date as label, COUNT(*) as total,
-        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid
+        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
+        SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
+        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
+        SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
       FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-7 days')
       GROUP BY dream_date ORDER BY dream_date ASC`
     timelineLabel = 'day'
@@ -166,7 +170,10 @@ statsRoutes.get('/dashboard', async (c) => {
     // Par semaine sur 30 jours (~5 semaines)
     timelineQuery = `
       SELECT strftime('%Y-W%W', dream_date) as label, COUNT(*) as total,
-        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid
+        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
+        SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
+        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
+        SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
       FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-35 days')
       GROUP BY label ORDER BY label ASC`
     timelineLabel = 'week'
@@ -174,7 +181,10 @@ statsRoutes.get('/dashboard', async (c) => {
     // Par mois sur 365 jours
     timelineQuery = `
       SELECT strftime('%Y-%m', dream_date) as label, COUNT(*) as total,
-        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid
+        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
+        SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
+        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
+        SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
       FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-365 days')
       GROUP BY label ORDER BY label ASC`
     timelineLabel = 'month'
@@ -285,6 +295,7 @@ statsRoutes.get('/dashboard', async (c) => {
       lucidRate,
       avgSleep: periodDreams?.avg_sleep ? parseFloat(Number(periodDreams.avg_sleep).toFixed(1)) : 0,
       avgLucidity: periodDreams?.avg_lucidity ? parseFloat(Number(periodDreams.avg_lucidity).toFixed(1)) : 0,
+      avgClarity: periodDreams?.avg_clarity ? parseFloat(Number(periodDreams.avg_clarity).toFixed(1)) : 0,
       totalAllTime: allTimeDreams?.total || 0,
       lucidAllTime: allTimeDreams?.lucid || 0,
       streak,

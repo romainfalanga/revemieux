@@ -246,6 +246,9 @@ window.navigate = function(view) {
     case 'lucidity-level2': renderLucidityLevel2(); break;
     case 'dream-detail': renderDreamDetailPage(state.dreamDetailId); break;
   }
+  // Scroll en haut du contenu a chaque navigation
+  const mc = document.getElementById('main-content');
+  if (mc) mc.scrollTop = 0;
 };
 
 // ========== JOURNAL VIEW ==========
@@ -430,7 +433,7 @@ function renderDreamCard(d) {
 }
 
 // Filter functions — all apply in real-time, panel stays open
-window.filterType = function(val) { state.filters.type = val; state.pagination.page = 1; renderJournalList(); };
+window.filterType = function(val) { state.filters.type = val; state.pagination.page = 1; _filterPanelOpen = true; renderJournal(); };
 window.goToPage = function(p) { state.pagination.page = p; renderJournal(); };
 
 // Tag-based filtering (real-time)
@@ -438,7 +441,8 @@ window.toggleTagFilter = function(tagId) {
   const idx = state.filters.tagIds.indexOf(tagId);
   if (idx >= 0) { state.filters.tagIds.splice(idx, 1); } else { state.filters.tagIds.push(tagId); }
   state.pagination.page = 1;
-  renderJournalList();
+  _filterPanelOpen = true;
+  renderJournal();
 };
 
 // Emotion-based filtering (real-time)
@@ -454,6 +458,7 @@ window.toggleEmotionFilter = function(em) {
     if (state.filters.emotions.length === 0) { state.filters.minIntensity = 1; state.filters.maxIntensity = 5; }
   }
   state.pagination.page = 1;
+  _filterPanelOpen = true;
   renderJournal();
 };
 
@@ -466,7 +471,8 @@ window.setEmotionFilterIntensity = function(which, val) {
     if (state.filters.minIntensity > val) state.filters.minIntensity = val;
   }
   state.pagination.page = 1;
-  renderJournalList();
+  _filterPanelOpen = true;
+  renderJournal();
 };
 
 // Render only the dream list (for real-time filter updates without closing the panel)
@@ -2076,7 +2082,7 @@ window.saveContinuationIntention = async function(e, dreamId) {
 };
 
 // ========== DASHBOARD "RÊVE MIEUX" ==========
-let dashboardPeriod = 'month'; // 'week', 'month', 'year'
+let dashboardPeriod = 'week'; // 'week', 'month', 'year'
 let _dashboardCharts = []; // keep references to destroy before re-render
 
 function _destroyDashboardCharts() {
@@ -2107,6 +2113,50 @@ function _createLineChart(canvasId, labels, datasets, yTitle) {
           title: yTitle ? { display: true, text: yTitle, color: '#6b7280', font: { size: 9 } } : undefined }
       },
       elements: { line: { tension: 0.4, borderWidth: 2 }, point: { radius: 3, hoverRadius: 6 } }
+    }
+  });
+  _dashboardCharts.push(chart);
+}
+
+function _createRadarChart(canvasId, labels, dataValues) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const chart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Occurrences',
+        data: dataValues,
+        backgroundColor: 'rgba(139,92,246,0.15)',
+        borderColor: 'rgba(139,92,246,0.6)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(139,92,246,0.8)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15,10,40,0.95)', titleColor: '#c4b5fd', bodyColor: '#d1d5db',
+          borderColor: 'rgba(139,92,246,0.3)', borderWidth: 1, padding: 8,
+          titleFont: { size: 11 }, bodyFont: { size: 11 }, cornerRadius: 8
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          grid: { color: 'rgba(139,92,246,0.12)' },
+          angleLines: { color: 'rgba(139,92,246,0.12)' },
+          pointLabels: { color: '#d1d5db', font: { size: 9 } },
+          ticks: { display: false, stepSize: 1 }
+        }
+      }
     }
   });
   _dashboardCharts.push(chart);
@@ -2153,21 +2203,15 @@ async function renderDashboard() {
       </div>`;
     }).join('') || '<p class="text-xs text-gray-500 italic text-center py-3">Pas encore d\'\u00e9motions enregistr\u00e9es</p>';
 
-    // Tags par cat\u00e9gorie
-    const catLabels = { person: '\ud83d\udc64 Personnages', place: '\ud83d\udccd Lieux', theme: '\ud83c\udfad Th\u00e8mes', symbol: '\ud83d\udd2e Symboles', custom: '\ud83c\udff7\ufe0f Tags' };
+    // Tags radar : top 10 toutes categories confondues
+    const allTags = [];
     const catOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
-    let tagsHTML = '';
     for (const cat of catOrder) {
       const tags = data.tagCategories[cat];
-      if (!tags || tags.length === 0) continue;
-      tagsHTML += `<div class="mb-3">
-        <p class="text-[10px] text-gray-500 font-semibold uppercase mb-1.5">${catLabels[cat] || cat}</p>
-        <div class="flex flex-wrap gap-1.5">
-          ${tags.slice(0, 10).map(t => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:${t.color}20;color:${t.color};border:1px solid ${t.color}30;">${escapeHtml(t.name)} <span class="opacity-60">x${t.count}</span></span>`).join('')}
-        </div>
-      </div>`;
+      if (tags) tags.forEach(t => allTags.push(t));
     }
-    if (!tagsHTML) tagsHTML = '<p class="text-xs text-gray-500 italic text-center py-2">Aucun tag sur cette p\u00e9riode</p>';
+    allTags.sort((a, b) => b.count - a.count);
+    const radarTags = allTags.slice(0, 10);
 
     // Intentions
     const intActive = int.active || 0;
@@ -2194,7 +2238,7 @@ async function renderDashboard() {
         <button onclick="dashboardPeriod='year';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'year' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Ann\u00e9e</button>
       </div>
 
-      <!-- ===== RANG\u00c9E 1 : 3 COMPTEURS ===== -->
+      <!-- ===== RANG\u00c9E 1 : 3 COMPTEURS PRINCIPAUX ===== -->
       <div class="grid grid-cols-3 gap-3 mb-3">
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-white">${o.totalPeriod}</div>
@@ -2213,30 +2257,71 @@ async function renderDashboard() {
         </div>
       </div>
 
-      <!-- ===== RANG\u00c9E 2 : 4 TYPES + S\u00c9RIES ===== -->
-      <div class="grid grid-cols-4 sm:grid-cols-4 gap-2 mb-5">
-        <div class="glass rounded-xl p-2.5 text-center">
+      <!-- ===== RANG\u00c9E 2 : S\u00c9RIES / LUCIDIT\u00c9 / CLART\u00c9 ===== -->
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-violet-400">${o.seriesCount}</div>
+          <div class="text-[10px] text-gray-400">S\u00e9ries</div>
+          <div class="text-[9px] text-gray-500 mt-0.5">de r\u00eaves</div>
+        </div>
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-dream-300">${o.avgLucidity || '-'}<span class="text-xs text-gray-500">/5</span></div>
+          <div class="text-[10px] text-gray-400">Lucidit\u00e9 moy.</div>
+          <div class="text-[9px] text-gray-500 mt-0.5">${o.lucidRate}% lucides</div>
+        </div>
+        <div class="glass rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-sky-300">${o.avgClarity || '-'}<span class="text-xs text-gray-500">/5</span></div>
+          <div class="text-[10px] text-gray-400">Clart\u00e9 moy.</div>
+          <div class="text-[9px] text-gray-500 mt-0.5">nettet\u00e9 du souvenir</div>
+        </div>
+      </div>
+
+      <!-- ===== RANG\u00c9E 3 : 4 TYPES SANS IC\u00d4NES ===== -->
+      <div class="grid grid-cols-4 gap-2 mb-3">
+        <div class="glass rounded-xl py-2 px-1 text-center">
           <div class="text-lg font-bold text-dream-300">${o.lucidPeriod}</div>
-          <div class="text-[9px] text-gray-400">\u2728 Lucides</div>
+          <div class="text-[9px] text-gray-400">Lucides</div>
         </div>
-        <div class="glass rounded-xl p-2.5 text-center">
+        <div class="glass rounded-xl py-2 px-1 text-center">
           <div class="text-lg font-bold text-sky-400">${o.normalPeriod}</div>
-          <div class="text-[9px] text-gray-400">\ud83d\udcad Normaux</div>
+          <div class="text-[9px] text-gray-400">Normaux</div>
         </div>
-        <div class="glass rounded-xl p-2.5 text-center">
+        <div class="glass rounded-xl py-2 px-1 text-center">
           <div class="text-lg font-bold text-rose-400">${o.nightmaresPeriod}</div>
-          <div class="text-[9px] text-gray-400">\ud83d\ude31 Cauchemars</div>
+          <div class="text-[9px] text-gray-400">Cauchemars</div>
         </div>
-        <div class="glass rounded-xl p-2.5 text-center">
+        <div class="glass rounded-xl py-2 px-1 text-center">
           <div class="text-lg font-bold text-cyan-400">${o.recurringPeriod}</div>
-          <div class="text-[9px] text-gray-400">\ud83d\udd04 R\u00e9currents</div>
+          <div class="text-[9px] text-gray-400">R\u00e9currents</div>
+        </div>
+      </div>
+
+      <!-- ===== RANG\u00c9E 4 : INTENTIONS ===== -->
+      <div class="glass rounded-xl p-3 mb-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="text-center">
+              <div class="text-lg font-bold text-yellow-400">${intActive}</div>
+              <div class="text-[9px] text-gray-400">Intentions actives</div>
+            </div>
+            <div class="text-center">
+              <div class="text-lg font-bold text-emerald-400">${intRealized}</div>
+              <div class="text-[9px] text-gray-400">R\u00e9alis\u00e9es</div>
+            </div>
+          </div>
+          ${intTotal > 0 ? `<div class="flex items-center gap-2">
+            <div class="w-20 h-2 bg-night-900/40 rounded-full overflow-hidden">
+              <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style="width:${intRealizedPct}%"></div>
+            </div>
+            <span class="text-[10px] font-semibold text-emerald-400">${intRealizedPct}%</span>
+          </div>` : ''}
         </div>
       </div>
 
       <!-- ===== GRAPHIQUE : \u00c9VOLUTION DES R\u00caVES ===== -->
       <div class="glass rounded-xl p-4 mb-5">
         <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-chart-line mr-1.5 text-dream-400"></i>\u00c9volution des r\u00eaves</h3>
-        <div style="height:180px;"><canvas id="chart-dreams"></canvas></div>
+        <div style="height:200px;"><canvas id="chart-dreams"></canvas></div>
       </div>
 
       <!-- ===== GRAPHIQUE : REALITY CHECKS ===== -->
@@ -2249,61 +2334,16 @@ async function renderDashboard() {
         <div style="height:140px;"><canvas id="chart-rc"></canvas></div>
       </div>
 
+      <!-- ===== GRAPHIQUE RADAR : \u00c9L\u00c9MENTS R\u00c9CURRENTS ===== -->
+      <div class="glass rounded-xl p-4 mb-5">
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-spider mr-1.5 text-amber-400"></i>\u00c9l\u00e9ments r\u00e9currents</h3>
+        ${radarTags.length >= 3 ? `<div style="height:260px;"><canvas id="chart-radar"></canvas></div>` : radarTags.length > 0 ? `<div class="flex flex-wrap gap-1.5 py-2">${radarTags.map(t => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:${t.color}20;color:${t.color};border:1px solid ${t.color}30;">${escapeHtml(t.name)} <span class="opacity-60">x${t.count}</span></span>`).join('')}</div>` : '<p class="text-xs text-gray-500 italic text-center py-3">Pas assez de tags sur cette p\u00e9riode</p>'}
+      </div>
+
       <!-- ===== \u00c9MOTIONS ===== -->
       <div class="glass rounded-xl p-4 mb-5">
         <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-heart mr-1.5 text-rose-400"></i>\u00c9motions ressenties</h3>
         <div>${emotionsHTML}</div>
-      </div>
-
-      <!-- ===== TAGS / PERSONNAGES / LIEUX ===== -->
-      <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-tags mr-1.5 text-amber-400"></i>\u00c9l\u00e9ments r\u00e9currents</h3>
-        ${tagsHTML}
-      </div>
-
-      <!-- ===== INTENTIONS + S\u00c9RIES ===== -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-        <!-- Intentions -->
-        <div class="glass rounded-xl p-4">
-          <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-lightbulb mr-1.5 text-yellow-400"></i>Intentions</h3>
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <div class="text-center">
-              <div class="text-lg font-bold text-yellow-400">${intActive}</div>
-              <div class="text-[9px] text-gray-400">Actives</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-bold text-emerald-400">${intRealized}</div>
-              <div class="text-[9px] text-gray-400">R\u00e9alis\u00e9es</div>
-            </div>
-          </div>
-          ${intTotal > 0 ? `
-          <div class="mt-2">
-            <div class="flex items-center justify-between text-[9px] text-gray-400 mb-1">
-              <span>Taux de r\u00e9alisation</span>
-              <span class="font-semibold text-emerald-400">${intRealizedPct}%</span>
-            </div>
-            <div class="w-full h-2 bg-night-900/40 rounded-full overflow-hidden">
-              <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style="width:${intRealizedPct}%"></div>
-            </div>
-          </div>` : ''}
-        </div>
-        <!-- S\u00e9ries + Lucidité moy. -->
-        <div class="glass rounded-xl p-4">
-          <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-layer-group mr-1.5 text-violet-400"></i>S\u00e9ries et lucidité</h3>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="text-center">
-              <div class="text-lg font-bold text-violet-400">${o.seriesCount}</div>
-              <div class="text-[9px] text-gray-400">S\u00e9ries de r\u00eaves</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-bold text-dream-300">${o.avgLucidity || '-'}<span class="text-[9px] text-gray-500">/5</span></div>
-              <div class="text-[9px] text-gray-400">Lucidit\u00e9 moy.</div>
-            </div>
-          </div>
-          <div class="mt-3 text-center">
-            <span class="text-[9px] text-gray-500">${o.lucidRate}% de r\u00eaves lucides</span>
-          </div>
-        </div>
       </div>
 
       <!-- ===== BOUTONS NIVEAUX ===== -->
@@ -2332,11 +2372,14 @@ async function renderDashboard() {
 
     // --- Render Chart.js graphs after DOM is ready ---
     setTimeout(() => {
-      // Graphique \u00e9volution des r\u00eaves (courbe type crypto)
+      // Graphique evolution des reves : 5 courbes
       if (tlData.length > 0) {
         _createLineChart('chart-dreams', tlLabels, [
-          { label: 'Total r\u00eaves', data: tlData.map(d => d.total), borderColor: 'rgba(139,92,246,0.8)', backgroundColor: 'rgba(139,92,246,0.1)', fill: true },
-          { label: 'Lucides', data: tlData.map(d => d.lucid), borderColor: 'rgba(56,189,248,0.8)', backgroundColor: 'rgba(56,189,248,0.1)', fill: true }
+          { label: 'Total', data: tlData.map(d => d.total), borderColor: 'rgba(139,92,246,0.8)', backgroundColor: 'rgba(139,92,246,0.08)', fill: true },
+          { label: 'Lucides', data: tlData.map(d => d.lucid), borderColor: 'rgba(56,189,248,0.8)', backgroundColor: 'rgba(56,189,248,0.05)', fill: false },
+          { label: 'Normaux', data: tlData.map(d => d.normal || 0), borderColor: 'rgba(148,163,184,0.7)', backgroundColor: 'transparent', fill: false },
+          { label: 'Cauchemars', data: tlData.map(d => d.nightmare || 0), borderColor: 'rgba(244,63,94,0.7)', backgroundColor: 'transparent', fill: false },
+          { label: 'R\u00e9currents', data: tlData.map(d => d.recurring || 0), borderColor: 'rgba(34,211,238,0.7)', backgroundColor: 'transparent', fill: false }
         ]);
       }
       // Graphique RC
@@ -2344,6 +2387,10 @@ async function renderDashboard() {
         _createLineChart('chart-rc', rcLabels, [
           { label: 'Reality checks', data: rcTlData.map(d => d.count), borderColor: 'rgba(16,185,129,0.8)', backgroundColor: 'rgba(16,185,129,0.1)', fill: true }
         ]);
+      }
+      // Graphique Radar : elements recurrents
+      if (radarTags.length >= 3) {
+        _createRadarChart('chart-radar', radarTags.map(t => t.name), radarTags.map(t => t.count));
       }
     }, 50);
 
