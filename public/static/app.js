@@ -691,13 +691,7 @@ const DREAM_TYPES = [
   { value: 'normal', icon: '🌀', label: 'Normal', desc: 'Rêve standard survenant pendant le sommeil REM. Contenu principalement visuel, souvent influencé par les expériences de la journée (65% du contenu selon Schredl et al., 2003). La plupart des rêves normaux sont oubliés dans les 5 minutes suivant le réveil.' },
   { value: 'lucid', icon: '✨', label: 'Lucide', desc: 'Rêve dans lequel le dormeur prend conscience qu\'il rêve, parfois avec la capacité de contrôler le contenu. Vérifié scientifiquement par Stephen LaBerge (Stanford, 1981). 55% des gens en font au moins un dans leur vie, 23% mensuellement (Saunders et al., 2016).' },
   { value: 'nightmare', icon: '👹', label: 'Cauchemar', desc: 'Rêve intensément perturbant impliquant des menaces à la survie ou au bien-être émotionnel, assez vif pour réveiller le dormeur. Survient en REM, 2e moitié de nuit. 85% des adultes en font au moins un par an (AASM). Fréquence accrue chez les personnes stressées ou souffrant de TSPT (71%, Pigeon et al., 2013).' },
-  { value: 'recurring', icon: '🔄', label: 'Récurrent', desc: 'Rêves qui se répètent avec un contenu, des thèmes ou des schémas émotionnels similaires. 60 à 75% des adultes en font l\'expérience (Zadra, 1996). Tonalité émotionnelle massivement négative. Souvent liés au stress psychologique, ils peuvent diminuer une fois la source de stress résolue.' },
-  { value: 'vivid', icon: '🎨', label: 'Vivide', desc: 'Rêves d\'une clarté sensorielle et émotionnelle exceptionnelle, proches de la perception éveillée. Liés au rebond REM (après privation de sommeil), au stress, à certains médicaments ou à la grossesse. Le cerveau compense le déficit REM en entrant plus vite et plus longtemps en REM les nuits suivantes (Walker, 2017).' },
-  { value: 'hypnagogic', icon: '🌊', label: 'Hypnago.', desc: 'Hallucinations vives (visuelles, auditives, tactiles) survenant lors de la transition éveil-sommeil (stade 1 NREM). 25 à 37% de la population en fait régulièrement. L\'EEG montre un mélange d\'ondes alpha et thêta. Plus fréquentes avec la privation de sommeil et le stress (Ohayon et al., 1996).' },
-  { value: 'false_awakening', icon: '🪞', label: 'Faux éveil', desc: 'Rêve dans lequel on croit s\'être réveillé et avoir commencé sa routine matinale, alors qu\'on dort encore. Survient en REM. Type 1 : banal (routine normale). Type 2 : atmosphère étrange ou menaçante. Co-occurre souvent avec les rêves lucides et la paralysie du sommeil (Green & McCreery, 1994).' },
-  { value: 'sleep_paralysis', icon: '😶‍🌫️', label: 'Paralysie', desc: 'État de conscience avec incapacité de bouger ou parler, survenant à l\'endormissement ou au réveil. Souvent accompagné d\'hallucinations (présence menaçante, pression thoracique). 20 à 40% des gens en font l\'expérience au moins une fois (Sharpless & Barber, 2011). Lié à la persistance de l\'atonie musculaire du REM dans l\'éveil.' },
-  { value: 'night_terror', icon: '🫣', label: 'Terreur noct.', desc: 'Épisodes de peur intense, cris et agitation survenant pendant le sommeil profond NREM (1er tiers de la nuit). Le dormeur ne se réveille pas complètement et n\'a aucun souvenir le lendemain. 1 à 6.5% des enfants, plus rare chez l\'adulte. Différentes des cauchemars : pas de souvenir, pas en REM (AASM / Mayo Clinic).' },
-  { value: 'prophetic', icon: '🔮', label: 'Prémonitoire', desc: 'Rêves qui semblent prédire des événements futurs. Aucune preuve scientifique de capacité paranormale, mais plusieurs explications validées : reconnaissance de patterns inconscients, biais de confirmation (on retient les coïncidences), et probabilité statistique (4 à 6 rêves par nuit sur une vie). Utiles pour la réflexion personnelle.' }
+  { value: 'recurring', icon: '🔄', label: 'Récurrent', desc: 'Rêves qui se répètent avec un contenu, des thèmes ou des schémas émotionnels similaires. 60 à 75% des adultes en font l\'expérience (Zadra, 1996). Tonalité émotionnelle massivement négative. Souvent liés au stress psychologique, ils peuvent diminuer une fois la source de stress résolue.' }
 ];
 
 const EMOTION_LIST = ['joy', 'fear', 'anxiety', 'wonder', 'sadness', 'anger', 'confusion', 'peace', 'excitement', 'love', 'nostalgia'];
@@ -808,7 +802,7 @@ window.openDreamEditor = async function(id) {
               </div>
             `).join('')}
           </div>
-          <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5" id="dream-type-picker">
+          <div class="grid grid-cols-4 gap-1.5" id="dream-type-picker">
             ${DREAM_TYPES.map(t => `
               <button type="button" onclick="selectDreamType('${t.value}')" data-type="${t.value}"
                 class="dream-type-btn flex items-center justify-center gap-1 px-1.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${currentType === t.value ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200 hover:border-dream-700/40'}">
@@ -1733,7 +1727,12 @@ async function renderIntentions() {
   try { intentions = (await api('/intentions')).intentions; } catch {}
 
   const filterState = window._intentionFilter || 'all'; // 'all', 'new_dream', 'dream_continuation'
-  const filtered = filterState === 'all' ? intentions : intentions.filter(i => i.type === filterState);
+  const statusFilter = window._intentionStatusFilter || 'all'; // 'all', 'active', 'realized'
+  const filtered = intentions.filter(i => {
+    const typeMatch = filterState === 'all' || i.type === filterState;
+    const statusMatch = statusFilter === 'all' || i.status === statusFilter;
+    return typeMatch && statusMatch;
+  });
 
   const activeCount = intentions.filter(i => i.status === 'active').length;
   const realizedCount = intentions.filter(i => i.status === 'realized').length;
@@ -1755,19 +1754,22 @@ async function renderIntentions() {
         </div>
         <div class="flex-1 glass rounded-lg p-2.5 text-center">
           <div class="text-lg font-bold text-emerald-300">${realizedCount}</div>
-          <div class="text-[9px] text-gray-400">Réalisée${realizedCount > 1 ? 's' : ''}</div>
-        </div>
-        <div class="flex-1 glass rounded-lg p-2.5 text-center">
-          <div class="text-lg font-bold text-dream-300">${intentions.length}</div>
-          <div class="text-[9px] text-gray-400">Total</div>
+          <div class="text-[9px] text-gray-400">R\u00e9alis\u00e9e${realizedCount > 1 ? 's' : ''}</div>
         </div>
       </div>
 
       <!-- Filtres type -->
-      <div class="flex gap-1.5 mb-4">
+      <div class="flex gap-1.5 mb-2">
         <button onclick="filterIntentions('all')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterState === 'all' ? 'bg-dream-600/40 text-dream-200 border border-dream-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}">Toutes</button>
-        <button onclick="filterIntentions('new_dream')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterState === 'new_dream' ? 'bg-indigo-600/40 text-indigo-200 border border-indigo-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}"><i class="fas fa-star mr-1 text-[9px]"></i>Nouveaux rêves</button>
-        <button onclick="filterIntentions('dream_continuation')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterState === 'dream_continuation' ? 'bg-violet-600/40 text-violet-200 border border-violet-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}"><i class="fas fa-moon mr-1 text-[9px]"></i>Suites de rêves</button>
+        <button onclick="filterIntentions('new_dream')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterState === 'new_dream' ? 'bg-indigo-600/40 text-indigo-200 border border-indigo-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}"><i class="fas fa-star mr-1 text-[9px]"></i>Nouveaux r\u00eaves</button>
+        <button onclick="filterIntentions('dream_continuation')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterState === 'dream_continuation' ? 'bg-violet-600/40 text-violet-200 border border-violet-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}"><i class="fas fa-moon mr-1 text-[9px]"></i>Suites</button>
+      </div>
+
+      <!-- Filtres statut -->
+      <div class="flex gap-1.5 mb-4">
+        <button onclick="filterIntentionStatus('all')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${statusFilter === 'all' ? 'bg-dream-600/40 text-dream-200 border border-dream-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}">Tous statuts</button>
+        <button onclick="filterIntentionStatus('active')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${statusFilter === 'active' ? 'bg-yellow-600/40 text-yellow-200 border border-yellow-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}">Actives</button>
+        <button onclick="filterIntentionStatus('realized')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${statusFilter === 'realized' ? 'bg-emerald-600/40 text-emerald-200 border border-emerald-400/40' : 'bg-night-900/40 text-gray-400 border border-dream-700/20 hover:text-white'}">R\u00e9alis\u00e9es</button>
       </div>
 
       <!-- Liste des intentions -->
@@ -1825,6 +1827,11 @@ function renderIntentionCard(i) {
 
 window.filterIntentions = function(type) {
   window._intentionFilter = type;
+  renderIntentions();
+};
+
+window.filterIntentionStatus = function(status) {
+  window._intentionStatusFilter = status;
   renderIntentions();
 };
 
@@ -2100,12 +2107,8 @@ function _createLineChart(canvasId, labels, datasets, yTitle) {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: datasets.length > 1, labels: { color: '#9ca3af', font: { size: 10 }, boxWidth: 12, padding: 8 } },
-        tooltip: {
-          backgroundColor: 'rgba(15,10,40,0.95)', titleColor: '#c4b5fd', bodyColor: '#d1d5db',
-          borderColor: 'rgba(139,92,246,0.3)', borderWidth: 1, padding: 8,
-          titleFont: { size: 11 }, bodyFont: { size: 11 }, cornerRadius: 8
-        }
+        legend: { display: datasets.length > 1, labels: { color: '#9ca3af', font: { size: 10 }, boxWidth: 12, padding: 8, usePointStyle: true, pointStyle: 'line' } },
+        tooltip: { enabled: false }
       },
       scales: {
         x: { grid: { color: 'rgba(139,92,246,0.08)' }, ticks: { color: '#6b7280', font: { size: 9 }, maxRotation: 0 } },
@@ -2238,21 +2241,16 @@ async function renderDashboard() {
         <button onclick="dashboardPeriod='year';renderDashboard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${dashboardPeriod === 'year' ? 'bg-dream-600 text-white' : 'glass text-gray-400 hover:text-white'}">Ann\u00e9e</button>
       </div>
 
-      <!-- ===== RANG\u00c9E 1 : 3 COMPTEURS PRINCIPAUX ===== -->
-      <div class="grid grid-cols-3 gap-3 mb-3">
+      <!-- ===== RANG\u00c9E 1 : 2 COMPTEURS PRINCIPAUX ===== -->
+      <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-white">${o.totalPeriod}</div>
           <div class="text-[10px] text-gray-400">R\u00eaves ${periodLabelShort}</div>
           <div class="text-[9px] text-gray-500 mt-0.5">${o.totalAllTime} au total</div>
         </div>
         <div class="glass rounded-xl p-3 text-center">
-          <div class="text-2xl font-bold text-amber-400">${o.streak}</div>
-          <div class="text-[10px] text-gray-400">Jours de suite</div>
-          <div class="text-[9px] text-gray-500 mt-0.5">journalisation</div>
-        </div>
-        <div class="glass rounded-xl p-3 text-center">
           <div class="text-2xl font-bold text-emerald-400">${rc.today}</div>
-          <div class="text-[10px] text-gray-400">RC aujourd'hui</div>
+          <div class="text-[10px] text-gray-400">CR aujourd'hui</div>
           <div class="text-[9px] text-gray-500 mt-0.5">${rc.totalAllTime} au total</div>
         </div>
       </div>
@@ -2298,24 +2296,22 @@ async function renderDashboard() {
 
       <!-- ===== RANG\u00c9E 4 : INTENTIONS ===== -->
       <div class="glass rounded-xl p-3 mb-5">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="text-center">
-              <div class="text-lg font-bold text-yellow-400">${intActive}</div>
-              <div class="text-[9px] text-gray-400">Intentions actives</div>
-            </div>
-            <div class="text-center">
-              <div class="text-lg font-bold text-emerald-400">${intRealized}</div>
-              <div class="text-[9px] text-gray-400">R\u00e9alis\u00e9es</div>
-            </div>
+        <div class="flex items-center justify-center gap-6">
+          <div class="text-center">
+            <div class="text-lg font-bold text-yellow-400">${intActive}</div>
+            <div class="text-[9px] text-gray-400">Intentions actives</div>
           </div>
-          ${intTotal > 0 ? `<div class="flex items-center gap-2">
-            <div class="w-20 h-2 bg-night-900/40 rounded-full overflow-hidden">
-              <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style="width:${intRealizedPct}%"></div>
-            </div>
-            <span class="text-[10px] font-semibold text-emerald-400">${intRealizedPct}%</span>
-          </div>` : ''}
+          <div class="text-center">
+            <div class="text-lg font-bold text-emerald-400">${intRealized}</div>
+            <div class="text-[9px] text-gray-400">R\u00e9alis\u00e9es</div>
+          </div>
         </div>
+        ${intTotal > 0 ? `<div class="flex items-center justify-center gap-2 mt-2">
+          <div class="w-32 h-2 bg-night-900/40 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400" style="width:${intRealizedPct}%"></div>
+          </div>
+          <span class="text-[10px] font-semibold text-emerald-400">${intRealizedPct}%</span>
+        </div>` : ''}
       </div>
 
       <!-- ===== GRAPHIQUE : \u00c9VOLUTION DES R\u00caVES ===== -->
@@ -2379,7 +2375,7 @@ async function renderDashboard() {
           { label: 'Lucides', data: tlData.map(d => d.lucid), borderColor: 'rgba(56,189,248,0.8)', backgroundColor: 'rgba(56,189,248,0.05)', fill: false },
           { label: 'Normaux', data: tlData.map(d => d.normal || 0), borderColor: 'rgba(148,163,184,0.7)', backgroundColor: 'transparent', fill: false },
           { label: 'Cauchemars', data: tlData.map(d => d.nightmare || 0), borderColor: 'rgba(244,63,94,0.7)', backgroundColor: 'transparent', fill: false },
-          { label: 'R\u00e9currents', data: tlData.map(d => d.recurring || 0), borderColor: 'rgba(34,211,238,0.7)', backgroundColor: 'transparent', fill: false }
+          { label: 'R\u00e9currents', data: tlData.map(d => d.recurring || 0), borderColor: 'rgba(251,146,60,0.7)', backgroundColor: 'transparent', fill: false }
         ]);
       }
       // Graphique RC
