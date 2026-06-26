@@ -263,9 +263,7 @@ statsRoutes.get('/dashboard', async (c) => {
 
   // --- Connexions ---
   const connectionsCount = await c.env.DB.prepare(
-    `SELECT COUNT(*) as count FROM dream_connections dc
-     JOIN dreams d ON d.id = dc.dream_id
-     WHERE d.user_id = ?`
+    `SELECT COUNT(*) as count FROM dream_connections WHERE user_id = ?`
   ).bind(userId).first<any>()
 
   // Taux de lucidité
@@ -306,7 +304,7 @@ statsRoutes.get('/dashboard', async (c) => {
       active: intentionCounts['active'] || 0,
       realized: intentionCounts['realized'] || 0,
       archived: intentionCounts['archived'] || 0,
-      total: Object.values(intentionCounts).reduce((a: number, b: number) => a + b, 0),
+      total: (Object.values(intentionCounts) as number[]).reduce((a, b) => a + b, 0),
       createdPeriod: intentionsPeriod?.count || 0
     }
   })
