@@ -178,13 +178,13 @@ function renderApp() {
       <div id="floating-player" class="fixed z-[9998] flex flex-col items-center gap-2" style="bottom:85px;right:12px;">
         <!-- Bouton Reality Check -->
         <button onclick="quickRealityCheck()" id="floating-rc-btn"
-          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all active:scale-90"
+          class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 active:scale-90"
           style="background:linear-gradient(135deg,rgba(16,185,129,0.85),rgba(6,182,212,0.85));backdrop-filter:blur(8px);"
           title="Reality Check validé">
           <i class="fas fa-check text-sm"></i>
         </button>
         <!-- Bouton Refrain -->
-        <div class="relative">
+        <div class="relative transition-all duration-200" id="floating-play-wrapper">
           <button onclick="toggleReveMieuxPlayer()" id="floating-play-btn"
             class="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg transition-all"
             style="background:linear-gradient(135deg,rgba(245,158,11,0.85),rgba(139,92,246,0.85));backdrop-filter:blur(8px);"
@@ -241,6 +241,17 @@ function renderApp() {
 }
 
 // ========== FAB MENU (bouton +) ==========
+function _setOtherFabButtonsVisible(visible) {
+  const rcBtn = document.getElementById('floating-rc-btn');
+  const playWrapper = document.getElementById('floating-play-wrapper');
+  if (visible) {
+    if (rcBtn) { rcBtn.style.opacity = '1'; rcBtn.style.pointerEvents = ''; rcBtn.style.transform = ''; }
+    if (playWrapper) { playWrapper.style.opacity = '1'; playWrapper.style.pointerEvents = ''; playWrapper.style.transform = ''; }
+  } else {
+    if (rcBtn) { rcBtn.style.opacity = '0'; rcBtn.style.pointerEvents = 'none'; rcBtn.style.transform = 'scale(0.5)'; }
+    if (playWrapper) { playWrapper.style.opacity = '0'; playWrapper.style.pointerEvents = 'none'; playWrapper.style.transform = 'scale(0.5)'; }
+  }
+}
 window.toggleFabMenu = function() {
   const menu = document.getElementById('fab-menu');
   const icon = document.getElementById('fab-plus-icon');
@@ -249,9 +260,11 @@ window.toggleFabMenu = function() {
   if (isOpen) {
     menu.classList.add('hidden');
     icon.style.transform = 'rotate(0deg)';
+    _setOtherFabButtonsVisible(true);
   } else {
     menu.classList.remove('hidden');
     icon.style.transform = 'rotate(45deg)';
+    _setOtherFabButtonsVisible(false);
   }
 };
 window.closeFabMenu = function() {
@@ -259,15 +272,19 @@ window.closeFabMenu = function() {
   const icon = document.getElementById('fab-plus-icon');
   if (menu) menu.classList.add('hidden');
   if (icon) icon.style.transform = 'rotate(0deg)';
+  _setOtherFabButtonsVisible(true);
 };
 // Fermer le menu fab si on clique ailleurs
 document.addEventListener('click', function(e) {
   const fab = document.getElementById('fab-plus-btn');
   const menu = document.getElementById('fab-menu');
   if (menu && fab && !fab.contains(e.target) && !menu.contains(e.target)) {
-    menu.classList.add('hidden');
-    const icon = document.getElementById('fab-plus-icon');
-    if (icon) icon.style.transform = 'rotate(0deg)';
+    if (!menu.classList.contains('hidden')) {
+      menu.classList.add('hidden');
+      const icon = document.getElementById('fab-plus-icon');
+      if (icon) icon.style.transform = 'rotate(0deg)';
+      _setOtherFabButtonsVisible(true);
+    }
   }
 });
 
@@ -368,8 +385,8 @@ async function renderJournal() {
             ${activeFilterCount > 0 ? `<span class="w-4 h-4 bg-dream-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">${activeFilterCount}</span>` : ''}
           </button>
           ${activeFilterCount > 0 ? `<button onclick="clearAllFilters()" class="px-2.5 py-2.5 text-red-400/70 hover:text-red-300 text-xs transition-all"><i class="fas fa-times-circle mr-1"></i>Réinit.</button>` : ''}
-          <button onclick="openDreamEditor()" class="hidden sm:flex px-4 py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl text-sm font-medium hover:from-dream-400 hover:to-dream-600 transition-all whitespace-nowrap items-center gap-1.5 ml-auto">
-            <i class="fas fa-plus"></i> Nouveau rêve
+          <button onclick="openDreamEditor()" class="flex px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-dream-500 to-dream-700 text-white rounded-xl text-xs sm:text-sm font-medium hover:from-dream-400 hover:to-dream-600 transition-all whitespace-nowrap items-center gap-1.5 ml-auto">
+            <i class="fas fa-plus"></i> Nouveau r\u00eave
           </button>
         </div>
         <!-- Active filters display -->
@@ -614,6 +631,7 @@ window.cancelDeleteDream = function(id) {
 window.executeDeleteDream = async function(id) {
   try {
     await api(`/dreams/${id}`, { method: 'DELETE' });
+    invalidateDashboardCache();
     showToast('🗑️ Rêve supprimé');
     goBackFromDreamDetail();
   } catch (err) { alert(err.message); }
@@ -1470,6 +1488,7 @@ window.saveDream = async function(e, id) {
       } catch {}
     }
     closeModal();
+    invalidateDashboardCache();
     const tagCount = body.tags?.length || 0;
     showToast(id ? 'Rêve mis à jour' + (tagCount ? ' (' + tagCount + ' tag' + (tagCount > 1 ? 's' : '') + ')' : '') : 'Rêve enregistré !');
     if (state.currentView === 'dream-detail') { renderDreamDetailPage(state.dreamDetailId || dreamId); }
@@ -1484,6 +1503,7 @@ window.deleteDream = async function(id) {
   if (!confirm('Supprimer ce rêve ? Cette action est irréversible.')) return;
   try {
     await api(`/dreams/${id}`, { method: 'DELETE' });
+    invalidateDashboardCache();
     showToast('🗑️ Rêve supprimé');
     if (state.currentView === 'dream-detail') goBackFromDreamDetail();
     else renderJournal();
@@ -1987,6 +2007,7 @@ window.saveIntention = async function(e, id) {
     if (id) { await api(`/intentions/${id}`, { method: 'PUT', body: JSON.stringify(body) }); }
     else { await api('/intentions', { method: 'POST', body: JSON.stringify(body) }); }
     closeModal();
+    invalidateDashboardCache();
     showToast(id ? 'Intention mise à jour' : '💭 Intention créée !');
     renderIntentions();
   } catch (err) { alert(err.message); }
@@ -2091,7 +2112,7 @@ window.confirmRealizeIntention = async function(intentionId) {
 
 window.deleteIntention = async function(id) {
   if (!confirm('Supprimer cette intention ?')) return;
-  try { await api(`/intentions/${id}`, { method: 'DELETE' }); showToast('Intention supprimée'); renderIntentions(); } catch (err) { alert(err.message); }
+  try { await api(`/intentions/${id}`, { method: 'DELETE' }); invalidateDashboardCache(); showToast('Intention supprimée'); renderIntentions(); } catch (err) { alert(err.message); }
 };
 
 // Créer une intention de suite depuis un rêve existant
@@ -2141,6 +2162,7 @@ window.saveContinuationIntention = async function(e, dreamId) {
 // ========== DASHBOARD "RÊVE MIEUX" ==========
 let dashboardPeriod = 'week'; // 'week', 'month', 'year'
 let _dashboardCharts = []; // keep references to destroy before re-render
+let _dashboardCache = {}; // { week: data, month: data, year: data }
 
 function _destroyDashboardCharts() {
   _dashboardCharts.forEach(c => { try { c.destroy(); } catch {} });
@@ -2251,29 +2273,53 @@ function _createRadarChart(canvasId, radarData) {
   _dashboardCharts.push(chart);
 }
 
+// Invalider le cache dashboard (appeler apres ajout/modif de reve, RC, intention, etc.)
+function invalidateDashboardCache() { _dashboardCache = {}; }
+
 async function renderDashboard() {
-  _destroyDashboardCharts();
   const main = document.getElementById('main-content');
+  const cached = _dashboardCache[dashboardPeriod];
+
+  // Afficher instantanement depuis le cache s'il existe
+  if (cached) {
+    _destroyDashboardCharts();
+    _renderDashboardHTML(cached, main);
+  }
+
+  // Fetch en background (ou en premier plan si pas de cache)
   try {
     const data = await api(`/stats/dashboard?period=${dashboardPeriod}`);
+    _dashboardCache[dashboardPeriod] = data;
+    // Si on a deja affiche le cache, ne re-render que si la vue est toujours le dashboard
+    if (state.currentView === 'lucidity') {
+      _destroyDashboardCharts();
+      _renderDashboardHTML(data, main);
+    }
+  } catch (err) {
+    // Si pas de cache, afficher l'erreur
+    if (!cached) {
+      main.innerHTML = `<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>${err.message}</div>`;
+    }
+  }
+}
+
+function _fmtDashLabel(label, type) {
+  if (type === 'day') { const d = new Date(label + 'T00:00:00'); return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }); }
+  if (type === 'week') { return 'S' + label.split('-W')[1]; }
+  if (type === 'month') { const m = ['Jan','F\u00e9v','Mar','Avr','Mai','Juin','Juil','Ao\u00fbt','Sep','Oct','Nov','D\u00e9c']; return m[parseInt(label.split('-')[1]) - 1]; }
+  return label;
+}
+
+function _renderDashboardHTML(data, main) {
     const o = data.overview;
     const rc = data.realityChecks;
     const int = data.intentions;
-    const periodLabel = dashboardPeriod === 'week' ? 'cette semaine' : dashboardPeriod === 'year' ? 'cette ann\u00e9e' : 'ce mois';
     const periodLabelShort = dashboardPeriod === 'week' ? '7j' : dashboardPeriod === 'year' ? '365j' : '30j';
 
-    // Formater les labels de timeline
-    function fmtLabel(label, type) {
-      if (type === 'day') { const d = new Date(label + 'T00:00:00'); return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }); }
-      if (type === 'week') { return 'S' + label.split('-W')[1]; }
-      if (type === 'month') { const m = ['Jan','F\u00e9v','Mar','Avr','Mai','Juin','Juil','Ao\u00fbt','Sep','Oct','Nov','D\u00e9c']; return m[parseInt(label.split('-')[1]) - 1]; }
-      return label;
-    }
-
     const tlData = data.timeline.data || [];
-    const tlLabels = tlData.map(d => fmtLabel(d.label, data.timeline.label));
+    const tlLabels = tlData.map(d => _fmtDashLabel(d.label, data.timeline.label));
     const rcTlData = rc.timeline || [];
-    const rcLabels = rcTlData.map(d => fmtLabel(d.label, data.timeline.label));
+    const rcLabels = rcTlData.map(d => _fmtDashLabel(d.label, data.timeline.label));
 
     // Emotions
     const emotionEmojis = { joy: '\ud83d\ude0a', fear: '\ud83d\ude28', anxiety: '\ud83d\ude30', wonder: '\ud83e\udd29', sadness: '\ud83d\ude22', anger: '\ud83d\ude21', confusion: '\ud83d\ude35', peace: '\ud83d\ude0c', excitement: '\ud83e\udd2f', love: '\ud83d\udc97', nostalgia: '\ud83e\udd7a' };
@@ -2293,11 +2339,15 @@ async function renderDashboard() {
     }).join('') || '<p class="text-xs text-gray-500 italic text-center py-3">Pas encore d\'\u00e9motions enregistr\u00e9es</p>';
 
     // Tags radar : max 2 par categorie, groupes par zone
+    // Si pas assez de tags (< 3 total), on prend jusqu'a 3 par categorie pour compenser
     const radarLabels = [];
     const radarDatasets = [];
     let labelIdx = 0;
+    // Premier passage : 2 par categorie
+    const usedPerCat = {};
     for (const cat of RADAR_CAT_ORDER) {
       const tags = (data.tagCategories[cat] || []).slice(0, 2);
+      usedPerCat[cat] = tags.length;
       if (tags.length === 0) continue;
       const indices = [];
       const values = [];
@@ -2309,6 +2359,24 @@ async function renderDashboard() {
       }
       radarDatasets.push({ cat, indices, values });
     }
+    // Second passage si < 3 : ajouter des tags supplementaires
+    if (radarLabels.length < 3) {
+      for (const cat of RADAR_CAT_ORDER) {
+        const allCatTags = data.tagCategories[cat] || [];
+        const already = usedPerCat[cat] || 0;
+        const extra = allCatTags.slice(already, already + 3);
+        for (const t of extra) {
+          if (radarLabels.length >= 3) break;
+          radarLabels.push(t.name);
+          let ds = radarDatasets.find(d => d.cat === cat);
+          if (!ds) { ds = { cat, indices: [], values: [] }; radarDatasets.push(ds); }
+          ds.indices.push(labelIdx);
+          ds.values.push(t.count);
+          labelIdx++;
+        }
+        if (radarLabels.length >= 3) break;
+      }
+    }
     const radarReady = radarLabels.length >= 3;
     const radarChartData = { labels: radarLabels, datasets: radarDatasets };
 
@@ -2319,7 +2387,7 @@ async function renderDashboard() {
     const intRealizedPct = intTotal > 0 ? Math.round((intRealized / intTotal) * 100) : 0;
 
     main.innerHTML = `
-    <div class="animate-slideUp">
+    <div>
       <!-- ===== HERO TITRE ===== -->
       <div class="relative rounded-2xl p-5 mb-5 overflow-hidden" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(56,189,248,0.10), rgba(139,92,246,0.08));">
         <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 20% 50%, rgba(139,92,246,0.4), transparent 60%), radial-gradient(circle at 80% 30%, rgba(56,189,248,0.3), transparent 50%);"></div>
@@ -2482,10 +2550,6 @@ async function renderDashboard() {
         _createRadarChart('chart-radar', radarChartData);
       }
     }, 50);
-
-  } catch (err) {
-    main.innerHTML = `<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>${err.message}</div>`;
-  }
 }
 
 // ========== LUCIDITY VIEW (NIVEAU 1) ==========
@@ -3191,6 +3255,7 @@ window.quickRealityCheck = async function() {
   if (btn) { btn.style.transform = 'scale(1.2)'; setTimeout(() => btn.style.transform = '', 200); }
   try {
     await api('/reality-checks', { method: 'POST', body: JSON.stringify({ checkType: 'general', wasDreaming: false }) });
+    invalidateDashboardCache();
     showToast('✅ Check validé !');
     if (state.currentView === 'lucidity-level1') renderLucidity();
     else if (state.currentView === 'lucidity') renderDashboard();
