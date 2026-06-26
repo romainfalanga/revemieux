@@ -369,7 +369,7 @@ async function renderJournal() {
               <input type="range" min="1" max="5" value="${state.filters.maxIntensity}" class="flex-1 accent-dream-400"
                 oninput="setEmotionFilterIntensity('max', parseInt(this.value))">
             </div>
-          </div>` : ''
+          </div>` : ''}
         </div>
         <!-- Tags filter -->
         <div>
