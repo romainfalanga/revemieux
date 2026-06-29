@@ -773,7 +773,7 @@ const TAG_CATEGORIES = [
   { value: 'theme', icon: '🎭', label: 'Thème' },
   { value: 'symbol', icon: '🔮', label: 'Symbole' }
 ];
-const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', object: '#eab308', theme: '#ec4899', symbol: '#06b6d4' };
+const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', object: '#ef4444', theme: '#ec4899', symbol: '#06b6d4' };
 
 window.openDreamEditor = async function(id) {
   let dream = null;
@@ -2209,7 +2209,7 @@ function _createLineChart(canvasId, labels, datasets, yTitle) {
 const RADAR_CAT_CONFIG = {
   person: { label: 'Personnages', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.7)' },
   place:  { label: 'Lieux',       color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.7)' },
-  object: { label: 'Objets',      color: '#eab308', bg: 'rgba(234,179,8,0.15)',  border: 'rgba(234,179,8,0.7)' },
+  object: { label: 'Objets',      color: '#ef4444', bg: 'rgba(239,68,68,0.15)',  border: 'rgba(239,68,68,0.7)' },
   theme:  { label: 'Th\u00e8mes',      color: '#ec4899', bg: 'rgba(236,72,153,0.15)', border: 'rgba(236,72,153,0.7)' },
   symbol: { label: 'Symboles',    color: '#06b6d4', bg: 'rgba(6,182,212,0.15)',   border: 'rgba(6,182,212,0.7)' },
   custom: { label: 'Personnalis\u00e9', color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.7)' }
@@ -2543,13 +2543,13 @@ function _renderDashboardHTML(data, main) {
 
     // --- Render Chart.js graphs after DOM is ready ---
     setTimeout(() => {
-      // Graphique evolution des reves : 5 courbes CUMULATIVES
-      // Chaque point additionne tous les reves jusqu'a cette periode (+ baseline = reves anterieurs a la fenetre),
-      // de sorte que la derniere valeur de "Total" corresponde au vrai nombre total de reves.
+      // Graphique evolution des reves : 5 courbes CUMULATIVES (dans la fenetre affichee)
+      // Le cumul demarre a 0 au debut de la periode selectionnee : chaque point additionne
+      // les reves enregistres depuis le debut de la fenetre jusqu'a cette tranche.
+      // => La vue ne montre QUE ce qui s'est passe dans la periode affichee (pas d'historique anterieur fantome).
       if (tlData.length > 0) {
-        const base = (data.timeline.baseline) || { total: 0, lucid: 0, normal: 0, nightmare: 0, recurring: 0 };
         const cumulate = (key) => {
-          let acc = base[key] || 0;
+          let acc = 0;
           return tlData.map(d => { acc += (d[key] || 0); return acc; });
         };
         _createLineChart('chart-dreams', tlLabels, [
