@@ -20,7 +20,7 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 ### Catégorisation Riche
 - **Types de rêves** : normal, lucide, cauchemar, récurrent, hypnagogique, faux éveil
 - **Émotions** avec intensité (1-5) : joie, peur, anxiété, émerveillement, tristesse, colère, confusion, paix, excitation, amour, nostalgie
-- **Tags multi-catégories** : personnes, lieux, thèmes, symboles, tags personnalisés — sélection par catégories avec emojis
+- **Tags multi-catégories** : personnes, lieux, objets, thèmes, symboles, tags personnalisés — sélection par catégories avec emojis
 - **Niveaux** : lucidité (0-5), clarté du souvenir (1-5)
 
 ### Cartographie Interactive (D3.js)
@@ -120,4 +120,10 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 - **Domaine** : `www.revemieux.app` + `revemieux.app` (DNS sur Cloudflare, zone de Romain)
 - **Status** : ✅ Production
 - **Tech Stack** : Hono + TypeScript + D1 + TailwindCSS + D3.js + Chart.js
-- **Last Updated** : 2026-06-23
+- **Last Updated** : 2026-06-29
+
+## Changelog récent (2026-06-29)
+- **Suppression de série** : bouton « Supprimer la série » ajouté dans le détail d'une série (les rêves sont détachés, pas supprimés).
+- **Graphique d'évolution des rêves corrigé** : les courbes (Total, Lucides, Normaux, Cauchemars, Récurrents) sont désormais **cumulatives**. Le bug venait du groupement par semaine/mois qui affichait des rêves *répartis* (chaque point = rêves de la tranche isolée) au lieu du cumul. La courbe Total reflète maintenant le vrai nombre total de rêves. Une `baseline` (rêves antérieurs à la fenêtre) est calculée côté backend pour ancrer le cumul.
+- **Radar des éléments récurrents** : passage de 2 à **4 tags max par catégorie**.
+- **Nouveau type de tag « Objet » (📦)** : disponible à la création/édition de rêve, dans la visualisation, le filtre du journal et le radar des éléments récurrents du dashboard.

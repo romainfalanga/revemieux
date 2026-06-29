@@ -341,8 +341,8 @@ async function renderJournal() {
 
   const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + state.filters.emotions.length;
 
-  const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
-  const categoryOrder = ['person', 'place', 'theme', 'symbol', 'custom'];
+  const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', object: '📦 Objets', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
+  const categoryOrder = ['person', 'place', 'object', 'theme', 'symbol', 'custom'];
   const hasAnyTags = Object.keys(groupedTags).length > 0;
 
   // Build tag filter chips grouped by category
@@ -769,10 +769,11 @@ const TAG_CATEGORIES = [
   { value: 'custom', icon: '🏷️', label: 'Tag' },
   { value: 'person', icon: '👤', label: 'Personne' },
   { value: 'place', icon: '📍', label: 'Lieu' },
+  { value: 'object', icon: '📦', label: 'Objet' },
   { value: 'theme', icon: '🎭', label: 'Thème' },
   { value: 'symbol', icon: '🔮', label: 'Symbole' }
 ];
-const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', theme: '#ec4899', symbol: '#06b6d4' };
+const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', object: '#eab308', theme: '#ec4899', symbol: '#06b6d4' };
 
 window.openDreamEditor = async function(id) {
   let dream = null;
@@ -1593,9 +1594,20 @@ window.openSeriesDetail = async function(id) {
           <button onclick="closeModal(); openDreamEditorForSeries(${id})" class="w-full py-2 bg-night-800/40 text-gray-300 rounded-lg text-xs hover:bg-night-800/60 transition-all"><i class="fas fa-feather-alt mr-1"></i>Créer un nouveau rêve</button>
           <button onclick="closeModal(); openSeriesDreamSelector(${id})" class="w-full py-2 bg-dream-600/20 text-dream-300 rounded-lg text-xs hover:bg-dream-600/30 transition-all"><i class="fas fa-check-square mr-1"></i>Gérer les rêves de la série</button>
           <button onclick="closeModal(); openSeriesEditor({id:${id}, name:'${escapeHtml(series.name).replace(/'/g, "\\'")}', description:'${escapeHtml(series.description || '').replace(/'/g, "\\'")}', color:'${series.color}'})" class="w-full py-2 bg-amber-600/15 text-amber-300 rounded-lg text-xs hover:bg-amber-600/25 transition-all"><i class="fas fa-pen mr-1"></i>Modifier la série</button>
+          <button onclick="deleteSeries(${id}, '${escapeHtml(series.name).replace(/'/g, "\\'")}')" class="w-full py-2 bg-red-600/15 text-red-300 rounded-lg text-xs hover:bg-red-600/25 transition-all"><i class="fas fa-trash-alt mr-1"></i>Supprimer la série</button>
         </div>
       </div>
     `);
+  } catch (err) { alert(err.message); }
+};
+
+window.deleteSeries = async function(id, name) {
+  if (!confirm(`Supprimer la série « ${name} » ?\n\nLes rêves qu'elle contient ne seront PAS supprimés, ils seront simplement détachés de la série. Cette action est irréversible.`)) return;
+  try {
+    await api(`/series/${id}`, { method: 'DELETE' });
+    closeModal();
+    invalidateDashboardCache();
+    if (state.currentView === 'series') renderSeries();
   } catch (err) { alert(err.message); }
 };
 
@@ -2197,11 +2209,12 @@ function _createLineChart(canvasId, labels, datasets, yTitle) {
 const RADAR_CAT_CONFIG = {
   person: { label: 'Personnages', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.7)' },
   place:  { label: 'Lieux',       color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.7)' },
+  object: { label: 'Objets',      color: '#eab308', bg: 'rgba(234,179,8,0.15)',  border: 'rgba(234,179,8,0.7)' },
   theme:  { label: 'Th\u00e8mes',      color: '#ec4899', bg: 'rgba(236,72,153,0.15)', border: 'rgba(236,72,153,0.7)' },
   symbol: { label: 'Symboles',    color: '#06b6d4', bg: 'rgba(6,182,212,0.15)',   border: 'rgba(6,182,212,0.7)' },
   custom: { label: 'Personnalis\u00e9', color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.7)' }
 };
-const RADAR_CAT_ORDER = ['person', 'place', 'theme', 'symbol', 'custom'];
+const RADAR_CAT_ORDER = ['person', 'place', 'object', 'theme', 'symbol', 'custom'];
 
 // Fallback pour afficher les tags sans radar (moins de 3 tags)
 function _buildRadarFallbackTags(labels, datasets) {
@@ -2338,15 +2351,15 @@ function _renderDashboardHTML(data, main) {
       </div>`;
     }).join('') || '<p class="text-xs text-gray-500 italic text-center py-3">Pas encore d\'\u00e9motions enregistr\u00e9es</p>';
 
-    // Tags radar : max 2 par categorie, groupes par zone
-    // Si pas assez de tags (< 3 total), on prend jusqu'a 3 par categorie pour compenser
+    // Tags radar : max 4 par categorie, groupes par zone
+    // Si pas assez de tags (< 3 total), on prend jusqu'a 4 par categorie pour compenser
     const radarLabels = [];
     const radarDatasets = [];
     let labelIdx = 0;
-    // Premier passage : 2 par categorie
+    // Premier passage : 4 par categorie
     const usedPerCat = {};
     for (const cat of RADAR_CAT_ORDER) {
-      const tags = (data.tagCategories[cat] || []).slice(0, 2);
+      const tags = (data.tagCategories[cat] || []).slice(0, 4);
       usedPerCat[cat] = tags.length;
       if (tags.length === 0) continue;
       const indices = [];
@@ -2477,7 +2490,8 @@ function _renderDashboardHTML(data, main) {
 
       <!-- ===== GRAPHIQUE : \u00c9VOLUTION DES R\u00caVES ===== -->
       <div class="glass rounded-xl p-4 mb-5">
-        <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-chart-line mr-1.5 text-dream-400"></i>\u00c9volution des r\u00eaves</h3>
+        <h3 class="text-sm font-display font-bold text-dream-100 mb-1"><i class="fas fa-chart-line mr-1.5 text-dream-400"></i>\u00c9volution des r\u00eaves</h3>
+        <p class="text-[10px] text-gray-500 mb-3">Cumul des r\u00eaves enregistr\u00e9s au fil du temps</p>
         <div style="height:200px;"><canvas id="chart-dreams"></canvas></div>
       </div>
 
@@ -2529,14 +2543,21 @@ function _renderDashboardHTML(data, main) {
 
     // --- Render Chart.js graphs after DOM is ready ---
     setTimeout(() => {
-      // Graphique evolution des reves : 5 courbes
+      // Graphique evolution des reves : 5 courbes CUMULATIVES
+      // Chaque point additionne tous les reves jusqu'a cette periode (+ baseline = reves anterieurs a la fenetre),
+      // de sorte que la derniere valeur de "Total" corresponde au vrai nombre total de reves.
       if (tlData.length > 0) {
+        const base = (data.timeline.baseline) || { total: 0, lucid: 0, normal: 0, nightmare: 0, recurring: 0 };
+        const cumulate = (key) => {
+          let acc = base[key] || 0;
+          return tlData.map(d => { acc += (d[key] || 0); return acc; });
+        };
         _createLineChart('chart-dreams', tlLabels, [
-          { label: 'Total', data: tlData.map(d => d.total), borderColor: 'rgba(139,92,246,0.8)', backgroundColor: 'rgba(139,92,246,0.08)', fill: true },
-          { label: 'Lucides', data: tlData.map(d => d.lucid), borderColor: 'rgba(56,189,248,0.8)', backgroundColor: 'rgba(56,189,248,0.05)', fill: false },
-          { label: 'Normaux', data: tlData.map(d => d.normal || 0), borderColor: 'rgba(148,163,184,0.7)', backgroundColor: 'transparent', fill: false },
-          { label: 'Cauchemars', data: tlData.map(d => d.nightmare || 0), borderColor: 'rgba(244,63,94,0.7)', backgroundColor: 'transparent', fill: false },
-          { label: 'R\u00e9currents', data: tlData.map(d => d.recurring || 0), borderColor: 'rgba(251,146,60,0.7)', backgroundColor: 'transparent', fill: false }
+          { label: 'Total', data: cumulate('total'), borderColor: 'rgba(139,92,246,0.8)', backgroundColor: 'rgba(139,92,246,0.08)', fill: true },
+          { label: 'Lucides', data: cumulate('lucid'), borderColor: 'rgba(56,189,248,0.8)', backgroundColor: 'rgba(56,189,248,0.05)', fill: false },
+          { label: 'Normaux', data: cumulate('normal'), borderColor: 'rgba(148,163,184,0.7)', backgroundColor: 'transparent', fill: false },
+          { label: 'Cauchemars', data: cumulate('nightmare'), borderColor: 'rgba(244,63,94,0.7)', backgroundColor: 'transparent', fill: false },
+          { label: 'R\u00e9currents', data: cumulate('recurring'), borderColor: 'rgba(251,146,60,0.7)', backgroundColor: 'transparent', fill: false }
         ]);
       }
       // Graphique RC

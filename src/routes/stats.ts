@@ -191,6 +191,18 @@ statsRoutes.get('/dashboard', async (c) => {
   }
   const timeline = await c.env.DB.prepare(timelineQuery).bind(userId).all<any>()
 
+  // --- Baseline : nombre de reves AVANT le debut de la fenetre temporelle ---
+  // Permet de rendre la courbe d'evolution cumulative coherente avec le total all-time.
+  const baselineDays = period === 'week' ? 7 : period === 'month' ? 35 : 365
+  const baseline = await c.env.DB.prepare(
+    `SELECT COUNT(*) as total,
+       SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
+       SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
+       SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
+       SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
+     FROM dreams WHERE user_id = ? AND dream_date < date('now', '-' || ? || ' days')`
+  ).bind(userId, baselineDays).first<any>()
+
   // --- Emotions (toutes, sur la période) ---
   const emotions = await c.env.DB.prepare(`
     SELECT de.emotion, COUNT(*) as count, ROUND(AVG(de.intensity), 1) as avg_intensity
@@ -302,7 +314,17 @@ statsRoutes.get('/dashboard', async (c) => {
       seriesCount: seriesCount?.count || 0,
       connectionsCount: connectionsCount?.count || 0
     },
-    timeline: { label: timelineLabel, data: timeline.results },
+    timeline: {
+      label: timelineLabel,
+      data: timeline.results,
+      baseline: {
+        total: baseline?.total || 0,
+        lucid: baseline?.lucid || 0,
+        normal: baseline?.normal || 0,
+        nightmare: baseline?.nightmare || 0,
+        recurring: baseline?.recurring || 0
+      }
+    },
     emotions: emotions.results,
     types: types.results,
     tagCategories,
