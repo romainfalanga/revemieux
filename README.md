@@ -122,6 +122,9 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 - **Tech Stack** : Hono + TypeScript + D1 + TailwindCSS + D3.js + Chart.js
 - **Last Updated** : 2026-06-29
 
+## Changelog récent (2026-06-29 — v3)
+- **Graphique d'évolution : grille temporelle complète.** Le graphe commençait au premier rêve enregistré (ex: 26/06) au lieu du vrai début de la fenêtre. Désormais la timeline est générée via une **CTE récursive SQL** qui produit TOUS les intervalles de la période (jours/semaines/mois), même vides (valeur 0), puis fait un LEFT JOIN avec les rêves. Résultat : la vue semaine commence toujours au 1er des 7 jours, la vue mois couvre 6 semaines pleines, la vue année les 12 mois. La courbe reste plate sur les périodes sans rêve puis monte.
+
 ## Changelog récent (2026-06-29)
 - **Suppression de série** : bouton « Supprimer la série » ajouté dans le détail d'une série (les rêves sont détachés, pas supprimés).
 - **Graphique d'évolution des rêves corrigé** : les courbes (Total, Lucides, Normaux, Cauchemars, Récurrents) sont désormais **cumulatives, dans la fenêtre affichée uniquement**. Le cumul démarre à 0 au début de la période sélectionnée (semaine/mois/année) : chaque vue ne montre QUE ce qui s'est passé sur sa propre période, sans historique antérieur fantôme. (Correction d'un 1er essai où une baseline faisait apparaître des rêves antérieurs à la fenêtre, ex: un cauchemar fantôme en vue semaine.)

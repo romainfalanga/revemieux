@@ -152,40 +152,65 @@ statsRoutes.get('/dashboard', async (c) => {
     else break
   }
 
-  // --- Evolution temporelle (barres) ---
+  // --- Evolution temporelle (barres / courbe) ---
+  // On genere la GRILLE COMPLETE de la periode (tous les jours/semaines/mois, meme vides)
+  // via une CTE recursive, puis on LEFT JOIN les reves. Ainsi la courbe commence toujours
+  // au vrai debut de la fenetre (et non au premier reve enregistre), avec des 0 sur les
+  // periodes sans reve. Le strftime reste cote SQL -> labels coherents.
   let timelineQuery = ''
   let timelineLabel = ''
   if (period === 'week') {
-    // Par jour sur 7 jours
+    // Grille : 7 jours (de J-6 a aujourd'hui inclus), par jour
     timelineQuery = `
-      SELECT dream_date as label, COUNT(*) as total,
-        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
-        SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
-        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
-        SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
-      FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-7 days')
-      GROUP BY dream_date ORDER BY dream_date ASC`
+      WITH RECURSIVE grid(d) AS (
+        SELECT date('now', '-6 days')
+        UNION ALL
+        SELECT date(d, '+1 day') FROM grid WHERE d < date('now')
+      )
+      SELECT g.d as label,
+        COUNT(dr.id) as total,
+        SUM(CASE WHEN dr.dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
+        SUM(CASE WHEN dr.dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
+        SUM(CASE WHEN dr.dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
+        SUM(CASE WHEN dr.dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
+      FROM grid g
+      LEFT JOIN dreams dr ON dr.dream_date = g.d AND dr.user_id = ?
+      GROUP BY g.d ORDER BY g.d ASC`
     timelineLabel = 'day'
   } else if (period === 'month') {
-    // Par semaine sur 30 jours (~5 semaines)
+    // Grille : ~6 semaines (de 5 semaines avant le lundi courant a aujourd'hui), par semaine
     timelineQuery = `
-      SELECT strftime('%Y-W%W', dream_date) as label, COUNT(*) as total,
-        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
-        SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
-        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
-        SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
-      FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-35 days')
+      WITH RECURSIVE grid(d) AS (
+        SELECT date('now', 'weekday 1', '-42 days')
+        UNION ALL
+        SELECT date(d, '+7 days') FROM grid WHERE d < date('now')
+      )
+      SELECT strftime('%Y-W%W', g.d) as label,
+        COUNT(dr.id) as total,
+        SUM(CASE WHEN dr.dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
+        SUM(CASE WHEN dr.dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
+        SUM(CASE WHEN dr.dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
+        SUM(CASE WHEN dr.dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
+      FROM grid g
+      LEFT JOIN dreams dr ON strftime('%Y-W%W', dr.dream_date) = strftime('%Y-W%W', g.d) AND dr.user_id = ?
       GROUP BY label ORDER BY label ASC`
     timelineLabel = 'week'
   } else {
-    // Par mois sur 365 jours
+    // Grille : 12 mois (du 1er du mois 11 mois en arriere a aujourd'hui), par mois
     timelineQuery = `
-      SELECT strftime('%Y-%m', dream_date) as label, COUNT(*) as total,
-        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
-        SUM(CASE WHEN dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
-        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
-        SUM(CASE WHEN dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
-      FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-365 days')
+      WITH RECURSIVE grid(d) AS (
+        SELECT date('now', 'start of month', '-11 months')
+        UNION ALL
+        SELECT date(d, '+1 month') FROM grid WHERE d < date('now', 'start of month')
+      )
+      SELECT strftime('%Y-%m', g.d) as label,
+        COUNT(dr.id) as total,
+        SUM(CASE WHEN dr.dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
+        SUM(CASE WHEN dr.dream_type = 'normal' THEN 1 ELSE 0 END) as normal,
+        SUM(CASE WHEN dr.dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmare,
+        SUM(CASE WHEN dr.dream_type = 'recurring' THEN 1 ELSE 0 END) as recurring
+      FROM grid g
+      LEFT JOIN dreams dr ON strftime('%Y-%m', dr.dream_date) = strftime('%Y-%m', g.d) AND dr.user_id = ?
       GROUP BY label ORDER BY label ASC`
     timelineLabel = 'month'
   }
