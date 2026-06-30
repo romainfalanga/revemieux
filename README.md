@@ -20,7 +20,7 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 ### Catégorisation Riche
 - **Types de rêves** : normal, lucide, cauchemar, récurrent, hypnagogique, faux éveil
 - **Émotions** avec intensité (1-5) : joie, peur, anxiété, émerveillement, tristesse, colère, confusion, paix, excitation, amour, nostalgie
-- **Tags multi-catégories** : personnes, lieux, objets, thèmes, symboles, tags personnalisés — sélection par catégories avec emojis
+- **Tags multi-catégories** : personnes, lieux, objets, thèmes, tags personnalisés — sélection par catégories avec emojis
 - **Niveaux** : lucidité (0-5), clarté du souvenir (1-5)
 
 ### Cartographie Interactive (D3.js)
@@ -120,7 +120,13 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 - **Domaine** : `www.revemieux.app` + `revemieux.app` (DNS sur Cloudflare, zone de Romain)
 - **Status** : ✅ Production
 - **Tech Stack** : Hono + TypeScript + D1 + TailwindCSS + D3.js + Chart.js
-- **Last Updated** : 2026-06-29
+- **Last Updated** : 2026-06-30
+
+## Changelog récent (2026-06-30 — v4)
+- **Suppression du type de tag « Symbole »** : retiré PARTOUT — création/édition de rêve, visualisation d'un rêve, filtre du journal, et radar des éléments récurrents du dashboard. (0 tag « symbole » existant en base, donc aucune donnée orpheline.)
+- **Éditeur de tags regroupé par catégorie** : dans le formulaire de création/édition de rêve, la liste des tags existants (pour piocher/supprimer) est désormais **groupée par type** (👤 Personnes, 📍 Lieux, 📦 Objets, 🎭 Thèmes, 🏷️ Tags) avec en-têtes de section, au lieu d'une liste à plat au tri obscur.
+- **Lucidité & clarté toujours affichées** : sur la page journal et dans le détail d'un rêve, les badges Lucidité et Clarté s'affichent désormais **même quand la valeur est à 0** (avant ils étaient masqués à 0).
+- **Nuit / Sieste** : nouveau sélecteur dans le formulaire de création/édition de rêve. On peut choisir **🌙 Nuit du rêve** (2 dates : soir + matin, comportement historique) ou **☀️ Sieste** (une seule date). Le choix est persisté en base via la nouvelle colonne `sleep_period` (`night`/`nap`, migration `0007`), réappliqué à l'édition, et affiché sous forme de badge dans le journal et le détail.
 
 ## Changelog récent (2026-06-29 — v3)
 - **Graphique d'évolution : grille temporelle complète.** Le graphe commençait au premier rêve enregistré (ex: 26/06) au lieu du vrai début de la fenêtre. Désormais la timeline est générée via une **CTE récursive SQL** qui produit TOUS les intervalles de la période (jours/semaines/mois), même vides (valeur 0), puis fait un LEFT JOIN avec les rêves. Résultat : la vue semaine commence toujours au 1er des 7 jours, la vue mois couvre 6 semaines pleines, la vue année les 12 mois. La courbe reste plate sur les périodes sans rêve puis monte.

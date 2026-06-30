@@ -341,8 +341,8 @@ async function renderJournal() {
 
   const activeFilterCount = state.filters.tagIds.length + (state.filters.type !== 'all' ? 1 : 0) + state.filters.emotions.length;
 
-  const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', object: '📦 Objets', theme: '🎭 Thèmes', symbol: '🔮 Symboles', custom: '🏷️ Tags' };
-  const categoryOrder = ['person', 'place', 'object', 'theme', 'symbol', 'custom'];
+  const categoryLabels = { person: '👤 Personnes', place: '📍 Lieux', object: '📦 Objets', theme: '🎭 Thèmes', custom: '🏷️ Tags' };
+  const categoryOrder = ['person', 'place', 'object', 'theme', 'custom'];
   const hasAnyTags = Object.keys(groupedTags).length > 0;
 
   // Build tag filter chips grouped by category
@@ -480,13 +480,14 @@ function renderDreamCard(d) {
           <h3 class="font-semibold text-dream-100 text-sm truncate max-w-[55vw] sm:max-w-none mb-1">${escapeHtml(d.title)}</h3>
           <div class="flex items-center gap-1.5 mb-1 flex-wrap">
             <span class="badge-${d.dream_type} text-[9px] px-1.5 py-0.5 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
-            ${d.lucidity_level > 0 ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
-            ${d.clarity ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity}/5</span>` : ''}
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level ?? 0}/5</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity ?? 0}/5</span>
           </div>
           ${sortedEmotions.length ? `<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">${sortedEmotions.map((e, i) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full ${i === 0 ? 'bg-dream-600/30 text-dream-200 font-medium' : 'bg-dream-800/20 text-dream-300/70'}">${emotionEmojis[e.emotion] || ''} ${emotionLabels[e.emotion] || e.emotion} ${e.intensity}/5</span>`).join('')}</div>` : ''}
           <p class="text-xs text-gray-400 mb-2 line-clamp-2">${escapeHtml(preview)}</p>
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-[10px] text-gray-500"><i class="far fa-calendar mr-1"></i>${dateStr}</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full ${d.sleep_period === 'nap' ? 'bg-amber-600/25 text-amber-300' : 'bg-indigo-600/20 text-indigo-300'}">${d.sleep_period === 'nap' ? '☀️ Sieste' : '🌙 Nuit'}</span>
             ${d.tags?.length ? `<div class="flex gap-1 flex-wrap">${d.tags.slice(0, 3).map(t => `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/40 text-dream-300">${escapeHtml(t.name)}</span>`).join('')}${d.tags.length > 3 ? `<span class="text-[9px] text-gray-500">+${d.tags.length - 3}</span>` : ''}</div>` : ''}
           </div>
         </div>
@@ -688,8 +689,9 @@ function renderDreamDetailContent(d, intentions, realizedIntention) {
         <button onclick="goBackFromDreamDetail()" class="p-2 text-gray-400 hover:text-dream-300 transition-all rounded-lg hover:bg-night-900/40" title="Retour"><i class="fas fa-arrow-left"></i></button>
         <div class="flex items-center gap-2 flex-wrap flex-1">
           <span class="badge-${d.dream_type} text-[10px] px-2 py-1 rounded-full text-white font-medium">${typeLabels[d.dream_type] || 'Normal'}</span>
-          ${d.lucidity_level > 0 ? `<span class="text-[10px] px-2 py-1 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level}/5</span>` : ''}
-          ${d.clarity ? `<span class="text-[10px] px-2 py-1 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity}/5</span>` : ''}
+          <span class="text-[10px] px-2 py-1 rounded-full ${d.sleep_period === 'nap' ? 'bg-amber-600/25 text-amber-300' : 'bg-indigo-600/20 text-indigo-300'}">${d.sleep_period === 'nap' ? '☀️ Sieste' : '🌙 Nuit'}</span>
+          <span class="text-[10px] px-2 py-1 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level ?? 0}/5</span>
+          <span class="text-[10px] px-2 py-1 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity ?? 0}/5</span>
         </div>
       </div>
 
@@ -770,10 +772,9 @@ const TAG_CATEGORIES = [
   { value: 'person', icon: '👤', label: 'Personne' },
   { value: 'place', icon: '📍', label: 'Lieu' },
   { value: 'object', icon: '📦', label: 'Objet' },
-  { value: 'theme', icon: '🎭', label: 'Thème' },
-  { value: 'symbol', icon: '🔮', label: 'Symbole' }
+  { value: 'theme', icon: '🎭', label: 'Thème' }
 ];
-const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', object: '#ef4444', theme: '#ec4899', symbol: '#06b6d4' };
+const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', object: '#ef4444', theme: '#ec4899' };
 
 window.openDreamEditor = async function(id) {
   let dream = null;
@@ -800,6 +801,7 @@ window.openDreamEditor = async function(id) {
   const selectedTags = dream?.tags || [];
   const dreamSeriesIds = dream?.series?.map(s => s.id) || [];
   const currentType = dream?.dream_type || 'normal';
+  const currentSleepPeriod = dream?.sleep_period === 'nap' ? 'nap' : 'night';
   const existingPhases = dream?.phases || [];
   const existingInterpretations = dream?.interpretations || [];
 
@@ -809,6 +811,7 @@ window.openDreamEditor = async function(id) {
     dream,
     seriesIds: [...dreamSeriesIds],
     dreamType: currentType,
+    sleepPeriod: currentSleepPeriod,
     phases: existingPhases.map(p => ({
       title: p.title || '',
       content: p.content,
@@ -836,23 +839,47 @@ window.openDreamEditor = async function(id) {
             class="w-full px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none">${dream ? escapeHtml(dream.content) : ''}</textarea>
         </div>
 
-        <!-- Nuit du rêve (soir + matin) -->
+        <!-- Quand le rêve a eu lieu : Nuit (soir + matin) ou Sieste (une seule date) -->
         <div class="mb-3">
-          <label class="text-[10px] text-gray-400 mb-1.5 block">Nuit du rêve</label>
-          <div class="flex gap-2 items-center">
-            <div class="flex-1">
-              <span class="text-[9px] text-gray-500 block mb-0.5">Soir du</span>
-              <input type="date" id="dream-night-evening" value="${(() => { const d = dream?.dream_date ? new Date(dream.dream_date + 'T00:00:00') : new Date(); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()}"
-                onchange="document.getElementById('dream-night-morning').value = (() => { const d = new Date(this.value + 'T00:00:00'); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()"
-                class="w-full px-2.5 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-xs">
+          <!-- Toggle Nuit / Sieste -->
+          <div class="flex gap-1.5 mb-2" id="sleep-period-picker">
+            <button type="button" onclick="selectSleepPeriod('night')" data-period="night"
+              class="sleep-period-btn flex-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${currentSleepPeriod === 'night' ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200'}">
+              🌙 Nuit
+            </button>
+            <button type="button" onclick="selectSleepPeriod('nap')" data-period="nap"
+              class="sleep-period-btn flex-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${currentSleepPeriod === 'nap' ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200'}">
+              ☀️ Sieste
+            </button>
+          </div>
+          <input type="hidden" name="dreamDate" id="dream-date-hidden" value="${dream?.dream_date || new Date().toISOString().split('T')[0]}">
+
+          <!-- Mode NUIT : soir + matin -->
+          <div id="sleep-night-fields" class="${currentSleepPeriod === 'night' ? '' : 'hidden'}">
+            <label class="text-[10px] text-gray-400 mb-1.5 block">Nuit du rêve</label>
+            <div class="flex gap-2 items-center">
+              <div class="flex-1">
+                <span class="text-[9px] text-gray-500 block mb-0.5">Soir du</span>
+                <input type="date" id="dream-night-evening" value="${(() => { const d = dream?.dream_date ? new Date(dream.dream_date + 'T00:00:00') : new Date(); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()}"
+                  onchange="(() => { const m = (() => { const d = new Date(this.value + 'T00:00:00'); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })(); document.getElementById('dream-night-morning').value = m; document.getElementById('dream-date-hidden').value = m; })()"
+                  class="w-full px-2.5 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-xs">
+              </div>
+              <span class="text-gray-500 text-xs mt-3">→</span>
+              <div class="flex-1">
+                <span class="text-[9px] text-gray-500 block mb-0.5">Matin du</span>
+                <input type="date" id="dream-night-morning" value="${dream?.dream_date || new Date().toISOString().split('T')[0]}"
+                  onchange="(() => { document.getElementById('dream-date-hidden').value = this.value; document.getElementById('dream-night-evening').value = (() => { const d = new Date(this.value + 'T00:00:00'); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })(); })()"
+                  class="w-full px-2.5 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-xs">
+              </div>
             </div>
-            <span class="text-gray-500 text-xs mt-3">→</span>
-            <div class="flex-1">
-              <span class="text-[9px] text-gray-500 block mb-0.5">Matin du</span>
-              <input type="date" id="dream-night-morning" name="dreamDate" value="${dream?.dream_date || new Date().toISOString().split('T')[0]}"
-                onchange="document.getElementById('dream-night-evening').value = (() => { const d = new Date(this.value + 'T00:00:00'); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })()"
-                class="w-full px-2.5 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-xs">
-            </div>
+          </div>
+
+          <!-- Mode SIESTE : une seule date -->
+          <div id="sleep-nap-fields" class="${currentSleepPeriod === 'nap' ? '' : 'hidden'}">
+            <label class="text-[10px] text-gray-400 mb-1.5 block">Jour de la sieste</label>
+            <input type="date" id="dream-nap-date" value="${dream?.dream_date || new Date().toISOString().split('T')[0]}"
+              onchange="document.getElementById('dream-date-hidden').value = this.value"
+              class="w-full px-2.5 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-white focus:border-dream-400 focus:outline-none text-xs">
           </div>
         </div>
 
@@ -970,21 +997,42 @@ window.openDreamEditor = async function(id) {
               <span class="text-[9px] text-gray-500">Tags existants :</span>
               <button type="button" onclick="toggleTagManageMode()" id="tag-manage-btn" class="text-[9px] text-gray-500 hover:text-dream-300 transition-all" title="Gérer les tags"><i class="fas fa-pen text-[8px] mr-0.5"></i>Gérer</button>
             </div>
-            <div id="existing-tags-container" class="flex flex-wrap gap-1 p-2 bg-night-900/30 rounded-lg border border-dream-700/10 max-h-28 overflow-y-auto">
-              ${allTags.map(t => `
-                <span class="existing-tag-item inline-flex items-center gap-0.5" id="tag-item-${t.id}">
-                  <button type="button" onclick="pickExistingTag(${t.id})"
-                    id="pick-tag-${t.id}"
-                    class="existing-tag-btn px-2 py-0.5 rounded-full text-[10px] transition-all cursor-pointer ${selectedTags.find(st => st.name === t.name) ? 'opacity-40 pointer-events-none' : 'hover:scale-105'}"
-                    style="background:${t.color}15; color:${t.color}; border: 1px solid ${t.color}30"
-                    ${selectedTags.find(st => st.name === t.name) ? 'disabled' : ''}>
-                    ${TAG_CATEGORIES.find(c => c.value === t.category)?.icon || '🏷️'} ${escapeHtml(t.name)}
-                  </button>
-                  <button type="button" onclick="deleteExistingTag(${t.id}, '${escapeHtml(t.name).replace(/'/g, "\\'")}')"
-                    class="tag-delete-btn hidden w-4 h-4 rounded-full bg-red-600/40 text-red-300 text-[8px] flex items-center justify-center hover:bg-red-600/60 transition-all shrink-0"
-                    title="Supprimer ce tag définitivement"><i class="fas fa-times"></i></button>
-                </span>
-              `).join('')}
+            <div id="existing-tags-container" class="p-2 bg-night-900/30 rounded-lg border border-dream-700/10 max-h-40 overflow-y-auto space-y-2">
+              ${(() => {
+                // Regrouper les tags existants par catégorie (ordre défini par TAG_CATEGORIES)
+                const order = TAG_CATEGORIES.map(c => c.value);
+                const grouped = {};
+                for (const t of allTags) {
+                  const cat = order.includes(t.category) ? t.category : 'custom';
+                  if (!grouped[cat]) grouped[cat] = [];
+                  grouped[cat].push(t);
+                }
+                return order
+                  .filter(cat => grouped[cat]?.length)
+                  .map(cat => {
+                    const meta = TAG_CATEGORIES.find(c => c.value === cat) || { icon: '🏷️', label: 'Tag' };
+                    return `
+                    <div class="existing-tag-group">
+                      <p class="text-[8px] text-gray-500 font-semibold uppercase mb-1">${meta.icon} ${meta.label}</p>
+                      <div class="flex flex-wrap gap-1">
+                        ${grouped[cat].map(t => `
+                          <span class="existing-tag-item inline-flex items-center gap-0.5" id="tag-item-${t.id}">
+                            <button type="button" onclick="pickExistingTag(${t.id})"
+                              id="pick-tag-${t.id}"
+                              class="existing-tag-btn px-2 py-0.5 rounded-full text-[10px] transition-all cursor-pointer ${selectedTags.find(st => st.name === t.name) ? 'opacity-40 pointer-events-none' : 'hover:scale-105'}"
+                              style="background:${t.color}15; color:${t.color}; border: 1px solid ${t.color}30"
+                              ${selectedTags.find(st => st.name === t.name) ? 'disabled' : ''}>
+                              ${escapeHtml(t.name)}
+                            </button>
+                            <button type="button" onclick="deleteExistingTag(${t.id}, '${escapeHtml(t.name).replace(/'/g, "\\'")}')"
+                              class="tag-delete-btn hidden w-4 h-4 rounded-full bg-red-600/40 text-red-300 text-[8px] flex items-center justify-center hover:bg-red-600/60 transition-all shrink-0"
+                              title="Supprimer ce tag définitivement"><i class="fas fa-times"></i></button>
+                          </span>
+                        `).join('')}
+                      </div>
+                    </div>`;
+                  }).join('');
+              })()}
             </div>
           </div>` : ''}
           <div class="mb-2">
@@ -1242,6 +1290,31 @@ window.toggleDreamTypeInfo = function() {
   if (panel) panel.classList.toggle('hidden');
 };
 
+window.selectSleepPeriod = function(period) {
+  window._editorState.sleepPeriod = period;
+  const nightFields = document.getElementById('sleep-night-fields');
+  const napFields = document.getElementById('sleep-nap-fields');
+  const hidden = document.getElementById('dream-date-hidden');
+  if (period === 'nap') {
+    nightFields?.classList.add('hidden');
+    napFields?.classList.remove('hidden');
+    // La date effective devient celle de la sieste
+    const napDate = document.getElementById('dream-nap-date');
+    if (napDate && hidden) hidden.value = napDate.value;
+  } else {
+    napFields?.classList.add('hidden');
+    nightFields?.classList.remove('hidden');
+    // La date effective devient le matin de la nuit
+    const morning = document.getElementById('dream-night-morning');
+    if (morning && hidden) hidden.value = morning.value;
+  }
+  // Mettre à jour le style des boutons
+  document.querySelectorAll('.sleep-period-btn').forEach(btn => {
+    const isSelected = btn.dataset.period === period;
+    btn.className = `sleep-period-btn flex-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200'}`;
+  });
+};
+
 function renderTagChip(t) {
   const catIcon = TAG_CATEGORIES.find(c => c.value === t.category)?.icon || '🏷️';
   return `<span class="tag-chip px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${catIcon} ${escapeHtml(t.name)} <i class="fas fa-times cursor-pointer text-[8px] opacity-50 hover:opacity-100" onclick="removeTag('${escapeHtml(t.name).replace(/'/g, "\\'")}')"></i></span>`;
@@ -1446,6 +1519,7 @@ window.saveDream = async function(e, id) {
     title: form.get('title'), content: form.get('content'), dreamDate: form.get('dreamDate'),
     dreamType: form.get('dreamType'), lucidityLevel: parseInt(form.get('lucidityLevel')),
     clarity: parseInt(form.get('clarity')), sleepQuality: 0,
+    sleepPeriod: window._editorState.sleepPeriod || 'night',
     isFavorite: window._editorState.dream?.is_favorite || false,
     emotions: Object.entries(window._editorState.emotions).map(([emotion, intensity]) => ({ emotion, intensity })),
     tags: window._editorState.tags,
@@ -2211,10 +2285,9 @@ const RADAR_CAT_CONFIG = {
   place:  { label: 'Lieux',       color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.7)' },
   object: { label: 'Objets',      color: '#ef4444', bg: 'rgba(239,68,68,0.15)',  border: 'rgba(239,68,68,0.7)' },
   theme:  { label: 'Th\u00e8mes',      color: '#ec4899', bg: 'rgba(236,72,153,0.15)', border: 'rgba(236,72,153,0.7)' },
-  symbol: { label: 'Symboles',    color: '#06b6d4', bg: 'rgba(6,182,212,0.15)',   border: 'rgba(6,182,212,0.7)' },
   custom: { label: 'Personnalis\u00e9', color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.7)' }
 };
-const RADAR_CAT_ORDER = ['person', 'place', 'object', 'theme', 'symbol', 'custom'];
+const RADAR_CAT_ORDER = ['person', 'place', 'object', 'theme', 'custom'];
 
 // Fallback pour afficher les tags sans radar (moins de 3 tags)
 function _buildRadarFallbackTags(labels, datasets) {

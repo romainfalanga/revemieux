@@ -187,20 +187,21 @@ dreamRoutes.get('/:id', async (c) => {
 dreamRoutes.post('/', async (c) => {
   const userId = c.get('userId')
   const body = await c.req.json()
-  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, emotions, tags, phases, interpretations, wishedContinuation } = body
+  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, sleepPeriod, emotions, tags, phases, interpretations, wishedContinuation } = body
 
   if (!title || !content) {
     return c.json({ error: 'Titre et contenu requis' }, 400)
   }
 
   const result = await c.env.DB.prepare(`
-    INSERT INTO dreams (user_id, title, content, dream_date, dream_type, lucidity_level, clarity, sleep_quality, wished_continuation)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO dreams (user_id, title, content, dream_date, dream_type, lucidity_level, clarity, sleep_quality, sleep_period, wished_continuation)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     userId, title, content,
     dreamDate || new Date().toISOString().split('T')[0],
     dreamType || 'normal',
     lucidityLevel || 0, clarity || 3, sleepQuality || 0,
+    sleepPeriod === 'nap' ? 'nap' : 'night',
     wishedContinuation || null
   ).run()
 
@@ -292,13 +293,13 @@ dreamRoutes.put('/:id', async (c) => {
   ).bind(id, userId).first()
   if (!existing) return c.json({ error: 'Rêve non trouvé' }, 404)
 
-  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, isFavorite, emotions, tags, phases, interpretations, wishedContinuation } = body
+  const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, sleepPeriod, isFavorite, emotions, tags, phases, interpretations, wishedContinuation } = body
 
   await c.env.DB.prepare(`
     UPDATE dreams SET title = ?, content = ?, dream_date = ?, dream_type = ?,
-    lucidity_level = ?, clarity = ?, sleep_quality = ?, is_favorite = ?,
+    lucidity_level = ?, clarity = ?, sleep_quality = ?, sleep_period = ?, is_favorite = ?,
     wished_continuation = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
-  `).bind(title, content, dreamDate, dreamType || 'normal', lucidityLevel || 0, clarity || 3, sleepQuality || 0, isFavorite ? 1 : 0, wishedContinuation || null, id, userId).run()
+  `).bind(title, content, dreamDate, dreamType || 'normal', lucidityLevel || 0, clarity || 3, sleepQuality || 0, sleepPeriod === 'nap' ? 'nap' : 'night', isFavorite ? 1 : 0, wishedContinuation || null, id, userId).run()
 
   // Mettre à jour les émotions
   if (emotions) {
