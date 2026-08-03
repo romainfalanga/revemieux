@@ -39,8 +39,12 @@ export function renderApp(): string {
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/static/style.css?v=${Date.now()}">
   <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
-  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/static/icon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 </head>
 <body class="bg-night-950 text-gray-100 font-sans min-h-screen overflow-x-hidden">
   <div id="app">
@@ -49,7 +53,7 @@ export function renderApp(): string {
         <div class="relative w-20 h-20 mx-auto mb-6">
           <div class="absolute inset-0 rounded-full border-2 border-dream-400/20 animate-ping"></div>
           <div class="absolute inset-2 rounded-full border-2 border-dream-300/40 animate-pulse"></div>
-          <div class="absolute inset-0 flex items-center justify-center text-4xl">🌙</div>
+          <img src="/static/logo-192.png" alt="Rêve Mieux" class="absolute inset-0 w-full h-full rounded-full object-cover">
         </div>
         <h2 class="text-xl font-display font-semibold text-dream-200 mb-2">Rêve Mieux</h2>
         <p class="text-sm text-gray-400">Chargement de votre univers onirique...</p>
