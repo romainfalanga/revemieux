@@ -58,7 +58,7 @@ function renderAuth() {
     <div class="min-h-screen flex items-center justify-center p-4 stars-bg">
       <div class="glass rounded-2xl p-6 sm:p-8 w-full max-w-md animate-slideUp">
         <div class="text-center mb-8">
-          <img src="/static/logo-192.png" alt="Rêve Mieux" class="w-20 h-20 mx-auto mb-3 rounded-2xl animate-float shadow-lg shadow-dream-900/50">
+          <img src="/static/logo-192-v2.png" alt="Rêve Mieux" class="w-20 h-20 mx-auto mb-3 rounded-2xl animate-float shadow-lg shadow-dream-900/50">
           <h1 class="text-3xl font-display font-bold bg-gradient-to-r from-dream-300 to-dream-500 bg-clip-text text-transparent">Rêve Mieux</h1>
           <p class="text-gray-400 mt-2 text-sm">Journal de Rêves Lucides</p>
         </div>
@@ -137,7 +137,7 @@ function renderApp() {
       <header class="glass sticky top-0 z-30 px-3 sm:px-4 py-2.5 sm:py-3 shrink-0">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 shrink-0">
-            <img src="/static/logo-192.png" alt="Rêve Mieux" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg shrink-0">
+            <img src="/static/logo-192-v2.png" alt="Rêve Mieux" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg shrink-0">
             <h1 class="text-sm sm:text-lg font-display font-bold text-dream-200">Rêve Mieux</h1>
           </div>
           <nav class="hidden sm:flex gap-1" id="main-nav-desktop">

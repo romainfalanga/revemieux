@@ -85,8 +85,8 @@ function refreshNotification() {
 
   self.registration.showNotification('🌙 Rêve Mieux', {
     body: body,
-    icon: '/static/icon-192.png',
-    badge: '/static/icon-192.png',
+    icon: '/static/icon-192-v2.png',
+    badge: '/static/icon-192-v2.png',
     tag: 'tlr-persistent',
     renotify: false,
     requireInteraction: true,
@@ -142,8 +142,8 @@ async function showTriggerNotification() {
   try {
     await self.registration.showNotification('Rêve Mieux : Déclencheur Lucide !', {
       body: 'Le refrain se joue à volume ultra-faible. Faites de beaux rêves lucides.',
-      icon: '/static/icon-192.png',
-      badge: '/static/icon-192.png',
+      icon: '/static/icon-192-v2.png',
+      badge: '/static/icon-192-v2.png',
       tag: 'tlr-trigger',
       requireInteraction: true,
       silent: true,
@@ -212,8 +212,8 @@ self.addEventListener('push', (event) => {
         body: appReached 
           ? 'Le refrain se joue...' 
           : 'Touche ici pour écouter le refrain',
-        icon: '/static/icon-192.png',
-        badge: '/static/icon-192.png',
+        icon: '/static/icon-192-v2.png',
+        badge: '/static/icon-192-v2.png',
         tag: 'tlr-push-trigger',
         requireInteraction: !appReached,
         silent: true, // Pas de son/vibration système — c'est le refrain qui joue
