@@ -224,7 +224,7 @@ statsRoutes.get('/dashboard', async (c) => {
 
   // --- Tags par catégorie ---
   const tagsByCategoryStatement = c.env.DB.prepare(`
-    SELECT t.category, t.name, t.color, COUNT(*) as count
+    SELECT t.id, t.category, t.name, t.color, COUNT(*) as count
     FROM tags t JOIN dream_tags dt ON dt.tag_id = t.id JOIN dreams d ON d.id = dt.dream_id
     WHERE t.user_id = ? AND d.dream_date >= date('now', '-' || ? || ' days')
     GROUP BY t.category, t.id ORDER BY t.category, count DESC

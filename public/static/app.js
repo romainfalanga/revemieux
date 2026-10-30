@@ -42,6 +42,9 @@ function logout() {
   invalidateDashboardCache();
   _destroyDashboardCharts();
   _recurringData = null;
+  _recurringSelection = null;
+  resetEmotionEditor();
+  state.filters.emotions = [];
   localStorage.removeItem('ds_token');
   renderAuth();
 }
@@ -328,15 +331,19 @@ async function renderJournal() {
   const main = document.getElementById('main-content');
 
   // Load user tags grouped by category for the filter UI
-  let groupedTags = {};
-  try { groupedTags = (await api('/tags/grouped')).grouped || {}; } catch {}
+  const [tagData, emotionData] = await Promise.all([
+    api('/tags/grouped').catch(() => ({ grouped: {} })),
+    api('/emotions').catch(() => ({ emotions: [] }))
+  ]);
+  const groupedTags = tagData.grouped || {};
+  window._journalEmotionChoices = [...new Set([...EMOTION_LIST, ...emotionData.emotions.map(emotion => emotion.name), ...state.filters.emotions])];
 
   try {
     const params = new URLSearchParams({ page: state.pagination.page, limit: state.pagination.limit });
     if (state.filters.type !== 'all') params.set('type', state.filters.type);
     if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
     if (state.filters.emotions.length > 0) {
-      params.set('emotion', state.filters.emotions.join(','));
+      params.set('emotions', JSON.stringify(state.filters.emotions));
       params.set('minIntensity', state.filters.minIntensity);
       params.set('maxIntensity', state.filters.maxIntensity);
     }
@@ -372,11 +379,11 @@ async function renderJournal() {
   }
 
   // Build emotion filter HTML
-  const emotionFilterHTML = EMOTION_LIST.map(em => {
+  const emotionFilterHTML = window._journalEmotionChoices.map((em, index) => {
     const isActive = state.filters.emotions.includes(em);
-    return `<button onclick="toggleEmotionFilter('${em}')"
+    return `<button onclick="toggleEmotionFilterByIndex(${window._journalEmotionChoices.indexOf(em)})"
       class="px-2 py-1 rounded-full text-[10px] font-medium transition-all cursor-pointer ${isActive ? 'border-dream-400 bg-dream-600/30 text-dream-200 ring-1 ring-dream-400/40' : 'border-dream-700/20 bg-night-900/40 text-gray-400 hover:text-gray-200'}" style="border:1px solid ${isActive ? 'rgba(139,92,246,0.5)' : 'rgba(139,92,246,0.15)'}">
-      ${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]}${isActive ? ' <i class="fas fa-times text-[8px] ml-0.5"></i>' : ''}
+      ${emotionEmoji(em)} ${escapeHtml(emotionLabel(em))}${isActive ? ' <i class="fas fa-times text-[8px] ml-0.5"></i>' : ''}
     </button>`;
   }).join('');
 
@@ -399,7 +406,7 @@ async function renderJournal() {
         <div class="flex flex-wrap gap-1 items-center">
           <span class="text-[9px] text-gray-500 mr-1">Filtres actifs :</span>
           ${state.filters.type !== 'all' ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).icon||''} ${(DREAM_TYPES.find(t=>t.value===state.filters.type)||{}).label||state.filters.type} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="filterType('all')"></i></span>` : ''}
-          ${state.filters.emotions.map(em => `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${EMOTION_EMOJIS[em]} ${EMOTION_LABELS[em]} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleEmotionFilter('${em}')"></i></span>`).join('')}
+          ${state.filters.emotions.map(em => `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1 bg-dream-600/30 text-dream-200 border border-dream-400/40">${emotionEmoji(em)} ${escapeHtml(emotionLabel(em))} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleEmotionFilterByIndex(${window._journalEmotionChoices.indexOf(em)})"></i></span>`).join('')}
           ${state.filters.tagIds.map(tid => {
             const tag = Object.values(groupedTags).flat().find(t => t.id === tid);
             return tag ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium flex items-center gap-1" style="background:${tag.color}30; color:${tag.color}; border:1px solid ${tag.color}50">${escapeHtml(tag.name)} <i class="fas fa-times cursor-pointer text-[7px] opacity-60 hover:opacity-100" onclick="toggleTagFilter(${tid})"></i></span>` : '';
@@ -434,7 +441,7 @@ async function renderJournal() {
           ${state.filters.emotions.length > 0 ? `
           <div class="mt-2 p-2 rounded-lg bg-night-900/50 border border-dream-700/20">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-[10px] text-dream-200 font-medium">${state.filters.emotions.map(em => EMOTION_EMOJIS[em]).join(' ')} Intensit\u00e9 : ${state.filters.minIntensity} - ${state.filters.maxIntensity}</span>
+              <span class="text-[10px] text-dream-200 font-medium">${state.filters.emotions.map(em => emotionEmoji(em)).join(' ')} Intensit\u00e9 : ${state.filters.minIntensity} - ${state.filters.maxIntensity}</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-[9px] text-gray-500 shrink-0">Min</span>
@@ -471,8 +478,6 @@ async function renderJournal() {
 function renderDreamCard(d) {
   const typeIcons = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.icon]));
   const typeLabels = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.label]));
-  const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
-  const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
   const preview = d.content.length > 150 ? d.content.substring(0, 150) + '...' : d.content;
   // Toutes les émotions classées par intensité décroissante
@@ -488,7 +493,7 @@ function renderDreamCard(d) {
             <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-300">Lucidité ${d.lucidity_level ?? 0}/5</span>
             <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-600/25 text-blue-300">Clarté ${d.clarity ?? 0}/5</span>
           </div>
-          ${sortedEmotions.length ? `<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">${sortedEmotions.map((e, i) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full ${i === 0 ? 'bg-dream-600/30 text-dream-200 font-medium' : 'bg-dream-800/20 text-dream-300/70'}">${emotionEmojis[e.emotion] || ''} ${emotionLabels[e.emotion] || e.emotion} ${e.intensity}/5</span>`).join('')}</div>` : ''}
+          ${sortedEmotions.length ? `<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">${sortedEmotions.map((e, i) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full ${i === 0 ? 'bg-dream-600/30 text-dream-200 font-medium' : 'bg-dream-800/20 text-dream-300/70'}">${emotionEmoji(e.emotion)} ${escapeHtml(emotionLabel(e.emotion))} ${e.intensity}/5</span>`).join('')}</div>` : ''}
           <p class="text-xs text-gray-400 mb-2 line-clamp-2">${escapeHtml(preview)}</p>
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-[10px] text-gray-500"><i class="far fa-calendar mr-1"></i>${dateStr}</span>
@@ -519,6 +524,10 @@ window.toggleTagFilter = function(tagId) {
 };
 
 // Emotion-based filtering (real-time)
+window.toggleEmotionFilterByIndex = function(index) {
+  const emotion = window._journalEmotionChoices?.[index];
+  if (emotion !== undefined) toggleEmotionFilter(emotion);
+};
 window.toggleEmotionFilter = function(em) {
   if (!em) {
     state.filters.emotions = [];
@@ -554,7 +563,7 @@ async function renderJournalList() {
   if (state.filters.type !== 'all') params.set('type', state.filters.type);
   if (state.filters.tagIds.length > 0) params.set('tags', state.filters.tagIds.join(','));
   if (state.filters.emotions.length > 0) {
-    params.set('emotion', state.filters.emotions.join(','));
+    params.set('emotions', JSON.stringify(state.filters.emotions));
     params.set('minIntensity', state.filters.minIntensity);
     params.set('maxIntensity', state.filters.maxIntensity);
   }
@@ -649,31 +658,30 @@ window.goBackFromDreamDetail = function() {
   navigate(prev);
 };
 
+function unifiedDream(dream) {
+  if (!dream?.phases?.length) return dream;
+  const phases = dream.phases;
+  const emotions = new Map();
+  for (const emotion of [...(dream.emotions || []), ...phases.flatMap(phase => phase.emotions || [])]) {
+    const key = emotion.emotion.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const previous = emotions.get(key);
+    emotions.set(key, { ...emotion, emotion: previous?.emotion || emotion.emotion, intensity: Math.max(previous?.intensity || 0, emotion.intensity || 3) });
+  }
+  return {
+    ...dream,
+    content: [dream.content, ...phases.map(phase => [phase.title, phase.content].filter(Boolean).join('\n'))].filter(Boolean).join('\n\n'),
+    emotions: [...emotions.values()],
+    interpretations: [...(dream.interpretations || []), ...phases.flatMap(phase => (phase.interpretations || []).map(interp => ({ ...interp, content: phase.title ? `${phase.title} : ${interp.content}` : interp.content })))],
+    phases: []
+  };
+}
+
 function renderDreamDetailContent(d, intentions, realizedIntention) {
+  d = unifiedDream(d);
   intentions = intentions || [];
   realizedIntention = realizedIntention || null;
   const typeLabels = Object.fromEntries(DREAM_TYPES.map(t => [t.value, t.label]));
-  const emotionEmojis = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
-  const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
   const dateStr = new Date(d.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-  const phasesHTML = d.phases?.length ? `
-      <div class="mb-5">
-        <h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2"><i class="fas fa-route mr-1"></i>Étapes du rêve</h4>
-        <div class="space-y-2">
-          ${d.phases.map((p, i) => `
-            <div class="p-3 rounded-lg bg-night-900/40 border-l-2 border-dream-500/40">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="w-5 h-5 rounded-full bg-dream-600/30 text-dream-300 text-[10px] flex items-center justify-center font-bold shrink-0">${i + 1}</span>
-                <span class="text-xs font-semibold text-dream-200">${escapeHtml(p.title || 'Étape ' + (i + 1))}</span>
-              </div>
-              <p class="text-xs text-gray-300 leading-relaxed ml-7 whitespace-pre-wrap">${escapeHtml(p.content)}</p>
-              ${p.emotions?.length ? `<div class="flex flex-wrap gap-1 ml-7 mt-1.5">${p.emotions.map(e => `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dream-800/30">${emotionEmojis[e.emotion] || ''} ${e.emotion}</span>`).join('')}</div>` : ''}
-              ${p.interpretations?.length ? `<div class="ml-7 mt-1.5">${p.interpretations.map(interp => `<p class="text-[10px] text-amber-300/80 italic"><i class="fas fa-lightbulb mr-1 text-amber-400/60"></i>${escapeHtml(interp.content)}</p>`).join('')}</div>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      </div>` : '';
 
   const interpretationsHTML = d.interpretations?.length ? `
       <div class="mb-4">
@@ -704,7 +712,6 @@ function renderDreamDetailContent(d, intentions, realizedIntention) {
       <p class="text-xs text-gray-400 mb-4"><i class="far fa-calendar mr-1"></i>${dateStr}</p>
       <div class="glass rounded-xl p-4 mb-5"><p class="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(d.content)}</p></div>
 
-      ${phasesHTML}
       ${interpretationsHTML}
 
       ${realizedIntention ? `
@@ -749,7 +756,7 @@ function renderDreamDetailContent(d, intentions, realizedIntention) {
         <button onclick="createContinuationIntention(${d.id}, '${escapeHtml(d.title).replace(/'/g, "\\'")}')" class="w-full py-2 text-xs text-indigo-300/70 bg-indigo-600/10 border border-indigo-500/15 rounded-lg hover:bg-indigo-600/20 transition-all"><i class="fas fa-lightbulb mr-1"></i>Créer une intention de suite pour ce rêve</button>
       </div>`}
 
-      ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions globales</h4><div class="flex flex-wrap gap-1.5">${[...d.emotions].sort((a, b) => b.intensity - a.intensity).map((e, i) => `<span class="flex items-center gap-1 px-2 py-1 rounded-full text-xs ${i === 0 ? 'bg-dream-600/30 ring-1 ring-dream-400/30' : 'bg-dream-800/30'}">${emotionEmojis[e.emotion] || ''} <span class="text-dream-200 capitalize">${emotionLabels[e.emotion] || e.emotion}</span> <span class="text-[9px] ${i === 0 ? 'text-dream-300 font-medium' : 'text-gray-500'}">${e.intensity}/5</span>${i === 0 ? '<span class="text-[8px] text-dream-400/60 ml-0.5">principale</span>' : ''}</span>`).join('')}</div></div>` : ''}
+      ${d.emotions?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Émotions du rêve</h4><div class="flex flex-wrap gap-1.5">${[...d.emotions].sort((a, b) => b.intensity - a.intensity).map((e, i) => `<span class="flex items-center gap-1 px-2 py-1 rounded-full text-xs ${i === 0 ? 'bg-dream-600/30 ring-1 ring-dream-400/30' : 'bg-dream-800/30'}">${emotionEmoji(e.emotion)} <span class="text-dream-200 capitalize">${escapeHtml(emotionLabel(e.emotion))}</span> <span class="text-[9px] ${i === 0 ? 'text-dream-300 font-medium' : 'text-gray-500'}">${e.intensity}/5</span>${i === 0 ? '<span class="text-[8px] text-dream-400/60 ml-0.5">principale</span>' : ''}</span>`).join('')}</div></div>` : ''}
       ${d.tags?.length ? `<div class="mb-4"><h4 class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Tags</h4><div class="flex flex-wrap gap-1.5">${d.tags.map(t => `<span class="px-2 py-1 rounded-full text-[10px] font-medium" style="background:${t.color}20; color:${t.color}; border: 1px solid ${t.color}40">${escapeHtml(t.name)}</span>`).join('')}</div></div>` : ''}
       ${connectionsHTML}
       ${seriesHTML}
@@ -771,7 +778,10 @@ const DREAM_TYPES = [
 
 const EMOTION_LIST = ['joy', 'fear', 'anxiety', 'wonder', 'sadness', 'anger', 'confusion', 'peace', 'excitement', 'love', 'nostalgia'];
 const EMOTION_EMOJIS = { joy: '😊', fear: '😨', anxiety: '😰', wonder: '🤩', sadness: '😢', anger: '😡', confusion: '😵', peace: '😌', excitement: '🤯', love: '💗', nostalgia: '🥺' };
-const EMOTION_LABELS = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveil.', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
+const EMOTION_LABELS = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxiété', wonder: 'Émerveillement', sadness: 'Tristesse', anger: 'Colère', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
+function emotionLabel(key) { return Object.hasOwn(EMOTION_LABELS, key) ? EMOTION_LABELS[key] : key; }
+function emotionEmoji(key) { return Object.hasOwn(EMOTION_EMOJIS, key) ? EMOTION_EMOJIS[key] : '💭'; }
+
 const TAG_CATEGORIES = [
   { value: 'custom', icon: '🏷️', label: 'Tag' },
   { value: 'person', icon: '👤', label: 'Personne' },
@@ -781,13 +791,24 @@ const TAG_CATEGORIES = [
 ];
 const TAG_COLORS = { custom: '#6366f1', person: '#f59e0b', place: '#10b981', object: '#ef4444', theme: '#ec4899' };
 
+let _editorOpenRequest = 0;
 window.openDreamEditor = async function(id) {
+  const request = ++_editorOpenRequest;
+  const token = state.token;
+  resetEmotionEditor();
   let dream = null;
   let allTags = [], allSeries = [], activeIntentions = [], currentRealizedIntention = null;
-  try { allTags = (await api('/tags')).tags; } catch {}
-  try { allSeries = (await api('/series')).series; } catch {}
-  try { activeIntentions = (await api('/intentions/active')).intentions; } catch {}
-  if (id) { try { dream = await api(`/dreams/${id}`); } catch {} }
+  const [tagsResult, seriesResult, intentionsResult] = await Promise.all([
+    api('/tags').catch(() => ({ tags: [] })),
+    api('/series').catch(() => ({ series: [] })),
+    api('/intentions/active').catch(() => ({ intentions: [] })),
+    loadEmotionCatalog()
+  ]);
+  allTags = tagsResult.tags; allSeries = seriesResult.series; activeIntentions = intentionsResult.intentions;
+  if (id) {
+    try { dream = unifiedDream(await api(`/dreams/${id}`)); }
+    catch (err) { showToast(err.message); return; }
+  }
   // Charger l'intention déjà réalisée par ce rêve (si modification)
   if (id) {
     try {
@@ -802,12 +823,13 @@ window.openDreamEditor = async function(id) {
     } catch {}
   }
 
-  const selectedEmotions = dream?.emotions?.reduce((acc, e) => { acc[e.emotion] = e.intensity; return acc; }, {}) || {};
+  if (request !== _editorOpenRequest || token !== state.token) return;
+  const selectedEmotions = Object.create(null);
+  for (const emotion of dream?.emotions || []) selectedEmotions[emotion.emotion] = emotion.intensity;
   const selectedTags = dream?.tags || [];
   const dreamSeriesIds = dream?.series?.map(s => s.id) || [];
   const currentType = dream?.dream_type || 'normal';
   const currentSleepPeriod = dream?.sleep_period === 'nap' ? 'nap' : 'night';
-  const existingPhases = dream?.phases || [];
   const existingInterpretations = dream?.interpretations || [];
 
   window._editorState = {
@@ -817,12 +839,6 @@ window.openDreamEditor = async function(id) {
     seriesIds: [...dreamSeriesIds],
     dreamType: currentType,
     sleepPeriod: currentSleepPeriod,
-    phases: existingPhases.map(p => ({
-      title: p.title || '',
-      content: p.content,
-      emotions: p.emotions?.reduce((acc, e) => { acc[e.emotion] = e.intensity; return acc; }, {}) || {},
-      interpretations: p.interpretations?.map(i => i.content) || []
-    })),
     interpretations: existingInterpretations.map(i => i.content),
     realizedIntentionId: currentRealizedIntention ? currentRealizedIntention.id : null, // intention que ce rêve réalise
     _previousRealizedIntentionId: currentRealizedIntention ? currentRealizedIntention.id : null // pour détecter les changements
@@ -837,10 +853,11 @@ window.openDreamEditor = async function(id) {
       </div>
       <div class="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-3" style="min-height:0;">
       <form onsubmit="saveDream(event, ${id || 'null'})" id="dream-form">
-        <input type="text" name="title" value="${dream ? escapeHtml(dream.title) : ''}" placeholder="Titre du rêve..." required
+        <input type="text" name="title" placeholder="Titre du rêve..." required
           class="w-full mb-3 px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white font-medium placeholder-gray-500 focus:border-dream-400 focus:outline-none text-sm">
         <div class="mb-3">
-          <textarea name="content" rows="3" placeholder="Récit global du rêve..." required
+          <label for="dream-narrative" class="block text-sm font-medium text-dream-100 mb-2">Mon rêve</label>
+          <textarea id="dream-narrative" name="content" rows="7" placeholder="Racontez votre rêve, du début à la fin…" required
             class="w-full px-3 py-2.5 bg-night-900/60 border border-dream-700/30 rounded-lg text-white text-sm placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-none">${dream ? escapeHtml(dream.content) : ''}</textarea>
         </div>
 
@@ -928,18 +945,6 @@ window.openDreamEditor = async function(id) {
           </div>
         </div>
 
-        <!-- ========== PHASES / ÉTAPES DU RÊVE ========== -->
-        <div class="mb-3 border border-dream-700/15 rounded-lg p-3 bg-night-900/20">
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-[10px] text-gray-400 font-semibold uppercase"><i class="fas fa-route mr-1"></i>Étapes du rêve</label>
-            <button type="button" onclick="addPhase()" class="text-[10px] px-2 py-1 bg-dream-600/30 text-dream-300 rounded-lg hover:bg-dream-600/50 transition-all"><i class="fas fa-plus mr-1"></i>Ajouter</button>
-          </div>
-          <p class="text-[9px] text-gray-500 mb-2">Découpez votre rêve en scènes avec émotions et interprétations pour chacune.</p>
-          <div id="phases-container" class="space-y-2">
-            ${window._editorState.phases.length ? window._editorState.phases.map((p, i) => renderPhaseEditor(i, p)).join('') : '<p id="no-phases-msg" class="text-[10px] text-gray-600 italic text-center py-2">Aucune étape ajoutée</p>'}
-          </div>
-        </div>
-
         <!-- ========== INTERPRÉTATIONS GLOBALES ========== -->
         <div class="mb-3 border border-amber-700/15 rounded-lg p-3 bg-amber-900/5">
           <div class="flex items-center justify-between mb-2">
@@ -975,20 +980,7 @@ window.openDreamEditor = async function(id) {
           </div>
         </div>` : ''}
 
-        <!-- Emotions globales -->
-        <div class="mb-3">
-          <label class="text-[10px] text-gray-400 mb-1.5 block">Émotions globales du rêve</label>
-          <div class="flex flex-wrap gap-1.5" id="emotions-picker">
-            ${EMOTION_LIST.map(em => {
-              const sel = selectedEmotions[em];
-              return `<button type="button" onclick="toggleEmotion('${em}')" id="em-${em}"
-                class="emotion-btn inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-all ${sel ? 'border-dream-400 bg-dream-600/30 text-dream-200 font-medium' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}">
-                <span>${EMOTION_EMOJIS[em]}</span><span>${EMOTION_LABELS[em]}</span>
-              </button>`;
-            }).join('')}
-          </div>
-          <div id="emotion-intensity-panel" class="hidden mt-2 p-2.5 rounded-lg bg-night-900/50 border border-dream-700/20"></div>
-        </div>
+        <section id="emotion-editor" class="mb-4" aria-label="Émotions du rêve"></section>
 
         <!-- Tags -->
         <div class="mb-4">
@@ -1100,152 +1092,9 @@ window.openDreamEditor = async function(id) {
         </button>
       </div>
   `, '650px', true);
+  document.querySelector('#dream-form [name=title]').value = dream?.title || '';
+  renderEmotionEditor();
 };
-
-// ========== Phase Editor Helper ==========
-function renderPhaseEditor(idx, phase) {
-  phase = phase || { title: '', content: '', emotions: {}, interpretations: [] };
-  return `
-    <div class="phase-item p-2.5 rounded-lg bg-night-900/30 border border-dream-700/10" id="phase-${idx}">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="w-5 h-5 rounded-full bg-dream-600/40 text-dream-300 text-[10px] flex items-center justify-center font-bold shrink-0">${idx + 1}</span>
-        <input type="text" placeholder="Titre de l'étape (optionnel)" value="${escapeHtml(phase.title || '')}"
-          class="flex-1 px-2 py-1 bg-night-900/60 border border-dream-700/20 rounded text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none"
-          oninput="updatePhase(${idx}, 'title', this.value)">
-        <button type="button" onclick="removePhase(${idx})" class="text-gray-500 hover:text-red-400 p-1 shrink-0"><i class="fas fa-times text-xs"></i></button>
-      </div>
-      <textarea rows="4" placeholder="Que se passe-t-il dans cette scène ?"
-        class="w-full px-2 py-1.5 bg-night-900/60 border border-dream-700/20 rounded text-white text-xs placeholder-gray-500 focus:border-dream-400 focus:outline-none resize-y mb-2 min-h-[5rem]"
-        oninput="updatePhase(${idx}, 'content', this.value); autoGrowTextarea(this)">${escapeHtml(phase.content || '')}</textarea>
-      <div class="mb-1.5">
-        <span class="text-[9px] text-gray-500">Émotions :</span>
-        <div class="flex flex-wrap gap-1 mt-1">
-          ${EMOTION_LIST.map(em => `
-            <button type="button" onclick="togglePhaseEmotion(${idx}, '${em}')" id="phase-em-${idx}-${em}"
-              class="px-1.5 py-0.5 rounded-full text-[9px] border transition-all ${phase.emotions?.[em] ? 'border-dream-400 bg-dream-600/30 text-dream-200 font-medium' : 'border-dream-700/20 bg-night-900/40 text-gray-500'}">
-              ${EMOTION_EMOJIS[em]}
-            </button>
-          `).join('')}
-        </div>
-        <div id="phase-emotion-panel-${idx}" class="hidden mt-1.5 p-2 rounded-lg bg-night-900/50 border border-dream-700/20"></div>
-      </div>
-      <div>
-        <div class="flex items-center justify-between">
-          <span class="text-[9px] text-gray-500">Interprétations :</span>
-          <button type="button" onclick="addPhaseInterpretation(${idx})" class="text-[9px] text-amber-400/60 hover:text-amber-300"><i class="fas fa-plus mr-0.5"></i>Ajouter</button>
-        </div>
-        <div id="phase-interps-${idx}" class="space-y-1 mt-1">
-          ${(phase.interpretations || []).map((interp, j) => `
-            <div class="flex gap-1 items-start">
-              <input type="text" value="${escapeHtml(interp)}" placeholder="Interprétation..."
-                class="flex-1 px-2 py-1 bg-night-900/60 border border-amber-700/15 rounded text-white text-[10px] placeholder-gray-500 focus:border-amber-400 focus:outline-none"
-                oninput="updatePhaseInterpretation(${idx}, ${j}, this.value)">
-              <button type="button" onclick="removePhaseInterpretation(${idx}, ${j})" class="text-gray-500 hover:text-red-400 p-0.5"><i class="fas fa-times text-[9px]"></i></button>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    </div>`;
-}
-
-// ========== Phase Management ==========
-window.addPhase = function() {
-  window._editorState.phases.push({ title: '', content: '', emotions: {}, interpretations: [] });
-  refreshPhasesUI();
-};
-
-window.removePhase = function(idx) {
-  window._editorState.phases.splice(idx, 1);
-  refreshPhasesUI();
-};
-
-window.updatePhase = function(idx, field, value) {
-  if (window._editorState.phases[idx]) window._editorState.phases[idx][field] = value;
-};
-
-window.togglePhaseEmotion = function(idx, em) {
-  const phase = window._editorState.phases[idx];
-  if (!phase) return;
-  if (!phase.emotions) phase.emotions = {};
-  if (phase.emotions[em]) {
-    // Déjà sélectionnée → réouvrir le panel d'intensité
-    showPhaseEmotionIntensityPanel(idx, em);
-  } else {
-    phase.emotions[em] = 3;
-    refreshPhaseEmotionButton(idx, em);
-    showPhaseEmotionIntensityPanel(idx, em);
-  }
-};
-
-function refreshPhaseEmotionButton(idx, em) {
-  const phase = window._editorState.phases[idx];
-  const btn = document.getElementById(`phase-em-${idx}-${em}`);
-  if (!btn) return;
-  const isSelected = !!phase?.emotions?.[em];
-  btn.className = `px-1.5 py-0.5 rounded-full text-[9px] border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200 font-medium' : 'border-dream-700/20 bg-night-900/40 text-gray-500'}`;
-  btn.innerHTML = `${EMOTION_EMOJIS[em]}`;
-}
-
-function showPhaseEmotionIntensityPanel(idx, em) {
-  const panel = document.getElementById(`phase-emotion-panel-${idx}`);
-  if (!panel) return;
-  const phase = window._editorState.phases[idx];
-  const intensity = phase?.emotions?.[em] || 3;
-  panel.dataset.emotion = em;
-  panel.classList.remove('hidden');
-  panel.innerHTML = `
-    <div class="flex items-center gap-2">
-      <span class="text-xs">${EMOTION_EMOJIS[em]}</span>
-      <input type="range" min="1" max="5" value="${intensity}" class="flex-1 accent-dream-400"
-        oninput="setPhaseEmotionIntensity(${idx}, '${em}', parseInt(this.value)); this.nextElementSibling.textContent = this.value + '/5'">
-      <span class="text-[10px] text-dream-300 w-8 text-right">${intensity}/5</span>
-      <button type="button" onclick="removePhaseEmotion(${idx}, '${em}')" class="w-4 h-4 rounded-full bg-red-600/30 text-red-300 text-[8px] flex items-center justify-center hover:bg-red-600/50 transition-all shrink-0" title="Retirer"><i class="fas fa-times"></i></button>
-    </div>`;
-}
-
-window.removePhaseEmotion = function(idx, em) {
-  const phase = window._editorState.phases[idx];
-  if (!phase?.emotions) return;
-  delete phase.emotions[em];
-  refreshPhaseEmotionButton(idx, em);
-  const panel = document.getElementById(`phase-emotion-panel-${idx}`);
-  if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
-};
-
-window.setPhaseEmotionIntensity = function(idx, em, val) {
-  const phase = window._editorState.phases[idx];
-  if (phase?.emotions) { phase.emotions[em] = val; refreshPhaseEmotionButton(idx, em); }
-};
-
-window.addPhaseInterpretation = function(idx) {
-  const phase = window._editorState.phases[idx];
-  if (!phase) return;
-  if (!phase.interpretations) phase.interpretations = [];
-  phase.interpretations.push('');
-  refreshPhasesUI();
-};
-
-window.removePhaseInterpretation = function(idx, j) {
-  const phase = window._editorState.phases[idx];
-  if (!phase?.interpretations) return;
-  phase.interpretations.splice(j, 1);
-  refreshPhasesUI();
-};
-
-window.updatePhaseInterpretation = function(idx, j, value) {
-  const phase = window._editorState.phases[idx];
-  if (phase?.interpretations) phase.interpretations[j] = value;
-};
-
-function refreshPhasesUI() {
-  const container = document.getElementById('phases-container');
-  if (!container) return;
-  if (window._editorState.phases.length === 0) {
-    container.innerHTML = '<p id="no-phases-msg" class="text-[10px] text-gray-600 italic text-center py-2">Aucune étape ajoutée</p>';
-  } else {
-    container.innerHTML = window._editorState.phases.map((p, i) => renderPhaseEditor(i, p)).join('');
-  }
-}
 
 // ========== Global Interpretations ==========
 window.addGlobalInterpretation = function() {
@@ -1339,54 +1188,6 @@ window.toggleSeriesInEditor = function(seriesId) {
     btn.querySelector('i').className = 'fas fa-plus text-[8px] opacity-70';
     btn.className = 'series-toggle-btn flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all border-dream-700/20 bg-night-900/30 text-gray-400 hover:text-white hover:border-dream-700/40';
   }
-};
-
-window.toggleEmotion = function(em) {
-  if (window._editorState.emotions[em]) {
-    // Déjà sélectionnée → réouvrir le panel d'intensité (pas désélectionner)
-    showEmotionIntensityPanel(em);
-  } else {
-    window._editorState.emotions[em] = 3;
-    refreshEmotionButton(em);
-    showEmotionIntensityPanel(em);
-  }
-};
-
-function refreshEmotionButton(em) {
-  const btn = document.getElementById(`em-${em}`);
-  if (!btn) return;
-  const isSelected = !!window._editorState.emotions[em];
-  btn.className = `emotion-btn inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-all ${isSelected ? 'border-dream-400 bg-dream-600/30 text-dream-200 font-medium' : 'border-dream-700/30 bg-night-900/40 text-gray-400'}`;
-  btn.innerHTML = `<span>${EMOTION_EMOJIS[em]}</span><span>${EMOTION_LABELS[em]}</span>`;
-}
-
-function showEmotionIntensityPanel(em) {
-  const panel = document.getElementById('emotion-intensity-panel');
-  if (!panel) return;
-  const intensity = window._editorState.emotions[em] || 3;
-  panel.dataset.emotion = em;
-  panel.classList.remove('hidden');
-  panel.innerHTML = `
-    <div class="flex items-center gap-3">
-      <span class="text-sm">${EMOTION_EMOJIS[em]}</span>
-      <span class="text-xs text-dream-200 font-medium w-16">${EMOTION_LABELS[em]}</span>
-      <input type="range" min="1" max="5" value="${intensity}" class="flex-1 accent-dream-400"
-        oninput="setEmotionIntensity('${em}', parseInt(this.value)); this.nextElementSibling.textContent = this.value + '/5'">
-      <span class="text-xs text-dream-300 w-8 text-right">${intensity}/5</span>
-      <button type="button" onclick="removeEmotion('${em}')" class="w-5 h-5 rounded-full bg-red-600/30 text-red-300 text-[10px] flex items-center justify-center hover:bg-red-600/50 transition-all shrink-0" title="Retirer cette émotion"><i class="fas fa-times"></i></button>
-    </div>`;
-}
-
-window.removeEmotion = function(em) {
-  delete window._editorState.emotions[em];
-  refreshEmotionButton(em);
-  const panel = document.getElementById('emotion-intensity-panel');
-  if (panel && panel.dataset.emotion === em) panel.classList.add('hidden');
-};
-
-window.setEmotionIntensity = function(em, val) {
-  window._editorState.emotions[em] = val;
-  refreshEmotionButton(em);
 };
 
 // Tag management — pick existing
@@ -1502,48 +1303,50 @@ function updateTagsDisplay() {
 
 window.saveDream = async function(e, id) {
   e.preventDefault();
+  const editor = window._editorState;
+  if (!editor || editor.saving) return;
   const form = new FormData(e.target);
   const errEl = document.getElementById('save-error');
   errEl.classList.add('hidden');
 
-  // Build phases data from editor state
-  const phasesData = window._editorState.phases
-    .filter(p => p.content?.trim())
-    .map(p => ({
-      title: p.title || '',
-      content: p.content,
-      emotions: Object.entries(p.emotions || {}).map(([emotion, intensity]) => ({ emotion, intensity })),
-      interpretations: (p.interpretations || []).filter(i => i?.trim()).map(i => ({ content: i }))
-    }));
+  if (editor.emotionCatalogBusy) {
+    errEl.textContent = 'Attendez la fin de la modification des émotions.';
+    errEl.classList.remove('hidden');
+    return;
+  }
 
-  const interpData = window._editorState.interpretations
+  const interpData = editor.interpretations
     .filter(i => i?.trim())
     .map(i => ({ content: i }));
 
   const body = {
     title: form.get('title'), content: form.get('content'), dreamDate: form.get('dreamDate'),
     dreamType: form.get('dreamType'), lucidityLevel: parseInt(form.get('lucidityLevel')),
-    clarity: parseInt(form.get('clarity')), sleepQuality: 0,
-    sleepPeriod: window._editorState.sleepPeriod || 'night',
-    isFavorite: window._editorState.dream?.is_favorite || false,
-    emotions: Object.entries(window._editorState.emotions).map(([emotion, intensity]) => ({ emotion, intensity })),
-    tags: window._editorState.tags,
-    phases: phasesData,
+    clarity: parseInt(form.get('clarity')), sleepQuality: editor.dream?.sleep_quality || 0,
+    sleepPeriod: editor.sleepPeriod || 'night',
+    isFavorite: editor.dream?.is_favorite || false,
+    emotions: Object.entries(editor.emotions).map(([emotion, intensity]) => ({ emotion, intensity })),
+    tags: editor.tags,
+    phases: [], // Les anciennes étapes sont intégrées au récit et aux métadonnées ci-dessus.
     interpretations: interpData,
     wishedContinuation: form.get('wishedContinuation')?.trim() || null
   };
+  editor.saving = true;
+  const saveButton = document.querySelector('button[form="dream-form"]');
+  if (saveButton) saveButton.disabled = true;
+  renderEmotionEditor();
   try {
     let dreamId = id;
     if (id) { await api(`/dreams/${id}`, { method: 'PUT', body: JSON.stringify(body) }); }
     else { const res = await api('/dreams', { method: 'POST', body: JSON.stringify(body) }); dreamId = res.id; }
-    if (dreamId && window._editorState.seriesIds.length) {
-      for (const sid of window._editorState.seriesIds) {
+    if (dreamId && editor.seriesIds.length) {
+      for (const sid of editor.seriesIds) {
         try { await api(`/series/${sid}/dreams`, { method: 'POST', body: JSON.stringify({ dreamId }) }); } catch {}
       }
     }
     // Gérer le lien intention <-> rêve (bidirectionnel)
-    const previousIntentionId = window._editorState._previousRealizedIntentionId;
-    const newIntentionId = window._editorState.realizedIntentionId;
+    const previousIntentionId = editor._previousRealizedIntentionId;
+    const newIntentionId = editor.realizedIntentionId;
     // Si l'intention a changé, d'abord détacher l'ancienne
     if (previousIntentionId && previousIntentionId !== newIntentionId) {
       try { await api(`/intentions/${previousIntentionId}/unrealize`, { method: 'PUT' }); } catch {}
@@ -1567,6 +1370,7 @@ window.saveDream = async function(e, id) {
         }
       } catch {}
     }
+    if (window._editorState !== editor || document.getElementById('dream-form') !== e.target) return;
     closeModal();
     invalidateDashboardCache();
     const tagCount = body.tags?.length || 0;
@@ -1575,8 +1379,14 @@ window.saveDream = async function(e, id) {
     else if (state.currentView === 'journal') renderJournal();
     else if (state.currentView === 'series') renderSeries();
     else if (state.currentView === 'intentions') renderIntentions();
+    else if (state.currentView === 'lucidity') renderDashboard();
     else renderJournal();
-  } catch (err) { errEl.textContent = err.message; errEl.classList.remove('hidden'); }
+  } catch (err) { if (errEl.isConnected) { errEl.textContent = err.message; errEl.classList.remove('hidden'); } }
+  finally {
+    editor.saving = false;
+    if (saveButton?.isConnected) saveButton.disabled = false;
+    if (window._editorState === editor) renderEmotionEditor();
+  }
 };
 
 window.deleteDream = async function(id) {
@@ -2314,15 +2124,15 @@ const RADAR_CAT_ORDER = ['person', 'place', 'object', 'theme', 'custom'];
 const RECURRING_PAGE_SIZE = 12;
 let _recurringCategory = 'person';
 let _recurringPage = 0;
-let _recurringQuery = '';
+let _recurringSelection = null;
+let _recurringPeriod = null;
+let _associatedRequest = 0;
+let _associatedCache = new Map();
 let _recurringData = null;
 let _recurringChart = null;
 
 function recurringPageData() {
-  const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
-  const query = normalize(_recurringQuery.trim());
-  const all = (_recurringData?.[_recurringCategory] || [])
-    .filter(tag => normalize(tag.name).includes(query))
+  const all = [...(_recurringData?.[_recurringCategory] || [])]
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'fr'));
   const pages = Math.max(1, Math.ceil(all.length / RECURRING_PAGE_SIZE));
   _recurringPage = Math.min(_recurringPage, pages - 1);
@@ -2334,11 +2144,8 @@ window.selectRecurringCategory = function(category) {
   if (!RADAR_CAT_ORDER.includes(category)) return;
   _recurringCategory = category;
   _recurringPage = 0;
-  renderRecurringElements();
-};
-window.searchRecurringElements = function(query) {
-  _recurringQuery = query;
-  _recurringPage = 0;
+  _recurringSelection = null;
+  _associatedRequest++;
   renderRecurringElements();
 };
 window.changeRecurringPage = function(delta) {
@@ -2355,23 +2162,80 @@ function renderRecurringElements() {
     _dashboardCharts = _dashboardCharts.filter(chart => chart !== _recurringChart);
     _recurringChart = null;
   }
-  document.getElementById('recurring-categories').innerHTML = RADAR_CAT_ORDER.map(cat => {
-    const cfg = RADAR_CAT_CONFIG[cat];
-    return `<button type="button" onclick="selectRecurringCategory('${cat}')" aria-pressed="${cat === _recurringCategory}" class="px-3 py-2 rounded-lg text-xs border transition-colors" style="color:${cfg.color};border-color:${cat === _recurringCategory ? cfg.color : 'transparent'};background:${cat === _recurringCategory ? cfg.bg : 'transparent'}">${cfg.label} (${(_recurringData[cat] || []).length})</button>`;
-  }).join('');
+  const categorySelect = document.getElementById('recurring-category');
+  categorySelect.innerHTML = RADAR_CAT_ORDER.map(cat => `<option value="${cat}">${RADAR_CAT_CONFIG[cat].label} (${(_recurringData[cat] || []).length})</option>`).join('');
+  categorySelect.value = _recurringCategory;
   const { all, pages, start, tags } = recurringPageData();
   const cfg = RADAR_CAT_CONFIG[_recurringCategory];
   container.innerHTML = `
     <p class="text-xs text-gray-400 my-3" role="status">${all.length ? `${start + 1}–${start + tags.length} sur ${all.length} éléments` : 'Aucun élément'}</p>
     ${tags.length >= 3 ? '<div style="height:320px"><canvas id="chart-radar" role="img" aria-label="Fréquence des éléments récurrents, détaillée dans la liste ci-dessous"></canvas></div>' : ''}
-    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2 mt-3">${tags.map(tag => `<li class="flex items-start justify-between gap-3 text-xs border-b border-dream-700/20 py-2"><span class="min-w-0 break-words">${escapeHtml(tag.name)}</span><span class="shrink-0 font-semibold" style="color:${cfg.color}">${tag.count} rêve${tag.count > 1 ? 's' : ''}</span></li>`).join('')}</ul>
-    ${!tags.length ? `<p class="text-sm text-gray-400 py-4">${_recurringQuery.trim() ? 'Aucun résultat pour cette recherche.' : 'Aucun élément de ce type sur cette période.'}</p>` : ''}
+    <p class="text-xs text-gray-400 mt-3 mb-2">Sélectionnez un élément pour retrouver ses rêves.</p>
+    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 mt-2">${tags.map(tag => `<li><button type="button" data-recurring-tag="${tag.id}" onclick="selectRecurringTag(${tag.id})" aria-pressed="${_recurringSelection?.id === tag.id}" class="w-full flex items-start justify-between gap-3 text-left text-sm rounded-lg px-3 py-3 border border-transparent hover:bg-dream-900/40 focus-visible:ring-2 focus-visible:ring-dream-300 transition-colors" style="${_recurringSelection?.id === tag.id ? `background:${cfg.bg};border-color:${cfg.border};` : ''}"><span class="min-w-0 break-words">${escapeHtml(tag.name)}</span><span class="shrink-0 text-xs font-semibold" style="color:${cfg.color}">${tag.count} rêve${tag.count > 1 ? 's' : ''}</span></button></li>`).join('')}</ul>
+    ${!tags.length ? '<p class="text-sm text-gray-400 py-4">Aucun élément de ce type sur cette période.</p>' : ''}
     ${pages > 1 ? `<div class="flex items-center justify-between gap-2 mt-4"><button type="button" onclick="changeRecurringPage(-1)" ${_recurringPage === 0 ? 'disabled' : ''} class="px-3 py-2 rounded-lg bg-night-800 text-xs disabled:opacity-40">Précédent</button><span class="text-xs text-gray-400">Page ${_recurringPage + 1} / ${pages}</span><button type="button" onclick="changeRecurringPage(1)" ${_recurringPage === pages - 1 ? 'disabled' : ''} class="px-3 py-2 rounded-lg bg-night-800 text-xs disabled:opacity-40">Suivant</button></div>` : ''}`;
   if (tags.length >= 3 && window.Chart) {
     _recurringChart = _createRadarChart('chart-radar', {
       labels: tags.map(tag => tag.name),
+      tagIds: tags.map(tag => tag.id),
       datasets: [{ cat: _recurringCategory, indices: tags.map((_, i) => i), values: tags.map(tag => tag.count) }]
     });
+  }
+  renderAssociatedDreams();
+}
+
+window.selectRecurringTag = function(id) {
+  const tag = (_recurringData?.[_recurringCategory] || []).find(tag => tag.id === id);
+  if (!tag) return;
+  _recurringSelection = { id: tag.id, name: tag.name, page: 1 };
+  // Keep the canvas alive while Chart.js finishes dispatching its click event.
+  const cfg = RADAR_CAT_CONFIG[_recurringCategory];
+  document.querySelectorAll('#recurring-content [data-recurring-tag]').forEach(button => {
+    const selected = Number(button.dataset.recurringTag) === id;
+    button.setAttribute('aria-pressed', String(selected));
+    button.style.background = selected ? cfg.bg : '';
+    button.style.borderColor = selected ? cfg.border : 'transparent';
+  });
+  renderAssociatedDreams(true);
+};
+window.changeAssociatedDreamPage = function(page) {
+  if (!_recurringSelection || page < 1) return;
+  _recurringSelection.page = page;
+  renderAssociatedDreams(true);
+};
+
+async function renderAssociatedDreams(scroll = false) {
+  const container = document.getElementById('recurring-dreams');
+  if (!container) return;
+  const request = ++_associatedRequest;
+  if (!_recurringSelection) { container.innerHTML = ''; return; }
+  const selection = { ..._recurringSelection };
+  const token = state.token;
+  const generation = _dashboardGeneration;
+  const period = dashboardPeriod;
+  const key = `${period}/${selection.id}/${selection.page}`;
+  const isCurrent = () => request === _associatedRequest && state.currentView === 'lucidity' &&
+    token === state.token && generation === _dashboardGeneration && dashboardPeriod === period &&
+    container === document.getElementById('recurring-dreams');
+  const heading = `<h4 class="text-base font-display font-semibold text-dream-100 mb-1">Rêves associés à « ${escapeHtml(selection.name)} »</h4>`;
+  container.innerHTML = heading + '<p class="text-xs text-gray-400 py-3" role="status">Chargement des rêves…</p>';
+  if (scroll) container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    let entry = _associatedCache.get(key);
+    if (!entry || Date.now() - entry.loadedAt >= 60000) {
+      const params = new URLSearchParams({tags: selection.id, period, page: selection.page, limit: 5});
+      entry = { loadedAt: Date.now(), promise: api(`/dreams?${params}`) };
+      _associatedCache.set(key, entry);
+      entry.promise.catch(() => { if (_associatedCache.get(key) === entry) _associatedCache.delete(key); });
+    }
+    const data = await entry.promise;
+    if (!isCurrent()) return;
+    const { page, pages, total } = data.pagination;
+    container.innerHTML = heading + `<p class="text-xs text-gray-400 mb-3">${total} rêve${total > 1 ? 's' : ''} sur la période sélectionnée</p>` +
+      (data.dreams.length ? data.dreams.map(dream => `<button type="button" onclick="openDreamDetail(${dream.id})" class="block w-full text-left px-3 py-3 rounded-lg mb-2 bg-night-900/50 hover:bg-dream-900/30 border border-dream-700/20 focus-visible:ring-2 focus-visible:ring-dream-300"><span class="block font-medium text-sm text-dream-100 break-words">${escapeHtml(dream.title)}</span><span class="block text-xs text-gray-400 my-1">${new Date(dream.dream_date + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span><span class="block text-xs text-gray-300 line-clamp-2 break-words">${escapeHtml(dream.content)}</span><span class="block text-xs text-dream-300 mt-2">Lire le rêve</span></button>`).join('') : '<p class="text-sm text-gray-400 py-3">Aucun rêve associé sur cette période.</p>') +
+      (pages > 1 ? `<div class="flex items-center justify-between gap-2 mt-3"><button type="button" onclick="changeAssociatedDreamPage(${page - 1})" ${page <= 1 ? 'disabled' : ''} class="text-xs px-3 py-2 bg-night-800 rounded-lg disabled:opacity-40">Rêves précédents</button><span class="text-xs text-gray-400">${page} / ${pages}</span><button type="button" onclick="changeAssociatedDreamPage(${page + 1})" ${page >= pages ? 'disabled' : ''} class="text-xs px-3 py-2 bg-night-800 rounded-lg disabled:opacity-40">Rêves suivants</button></div>` : '');
+  } catch (err) {
+    if (isCurrent()) container.innerHTML = heading + `<p class="text-sm text-red-300 my-3">${escapeHtml(err.message)}</p><button type="button" onclick="renderAssociatedDreams()" class="text-sm text-dream-300 underline">Réessayer</button>`;
   }
 }
 
@@ -2394,7 +2258,8 @@ function _createRadarChart(canvasId, radarData) {
       pointBorderColor: '#fff',
       pointBorderWidth: 1,
       pointRadius: 4,
-      pointHoverRadius: 6
+      pointHoverRadius: 7,
+      pointHitRadius: 12
     };
   });
   const chart = new Chart(ctx, {
@@ -2402,6 +2267,14 @@ function _createRadarChart(canvasId, radarData) {
     data: { labels: radarData.labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
+      onClick(event, elements, chart) {
+        let index = elements[0]?.index;
+        if (index === undefined) index = radarData.labels.findIndex((_, i) => {
+          const box = chart.scales.r.getPointLabelPosition(i);
+          return box && event.x >= box.left - 6 && event.x <= box.right + 6 && event.y >= box.top - 6 && event.y <= box.bottom + 6;
+        });
+        if (index >= 0 && radarData.tagIds[index] !== undefined) selectRecurringTag(radarData.tagIds[index]);
+      },
       plugins: {
         legend: {
           display: true,
@@ -2429,7 +2302,7 @@ function _createRadarChart(canvasId, radarData) {
 }
 
 // Invalider le cache dashboard (appeler apres ajout/modif de reve, RC, intention, etc.)
-function invalidateDashboardCache() { _dashboardCache = {}; _dashboardGeneration++; _dashboardRequest++; }
+function invalidateDashboardCache() { _dashboardCache = {}; _dashboardGeneration++; _dashboardRequest++; _associatedCache.clear(); _associatedRequest++; }
 
 async function renderDashboard() {
   const main = document.getElementById('main-content');
@@ -2478,14 +2351,12 @@ function _renderDashboardHTML(data, main) {
     const rcLabels = rcTlData.map(d => _fmtDashLabel(d.label, data.timeline.label));
 
     // Emotions
-    const emotionEmojis = { joy: '\ud83d\ude0a', fear: '\ud83d\ude28', anxiety: '\ud83d\ude30', wonder: '\ud83e\udd29', sadness: '\ud83d\ude22', anger: '\ud83d\ude21', confusion: '\ud83d\ude35', peace: '\ud83d\ude0c', excitement: '\ud83e\udd2f', love: '\ud83d\udc97', nostalgia: '\ud83e\udd7a' };
-    const emotionLabels = { joy: 'Joie', fear: 'Peur', anxiety: 'Anxi\u00e9t\u00e9', wonder: '\u00c9merveillement', sadness: 'Tristesse', anger: 'Col\u00e8re', confusion: 'Confusion', peace: 'Paix', excitement: 'Excitation', love: 'Amour', nostalgia: 'Nostalgie' };
     const emotionsHTML = (data.emotions || []).map(em => {
       const maxEm = data.emotions[0]?.count || 1;
       const pct = Math.round((em.count / maxEm) * 100);
       return `<div class="flex items-center gap-2 py-1.5 border-b border-dream-700/10 last:border-0">
-        <span class="text-base shrink-0">${emotionEmojis[em.emotion] || ''}</span>
-        <span class="text-xs text-gray-200 w-24 sm:w-28 truncate">${emotionLabels[em.emotion] || em.emotion}</span>
+        <span class="text-base shrink-0">${emotionEmoji(em.emotion)}</span>
+        <span class="text-xs text-gray-200 w-24 sm:w-28 truncate">${escapeHtml(emotionLabel(em.emotion))}</span>
         <div class="flex-1 h-2.5 bg-night-900/40 rounded-full overflow-hidden">
           <div class="h-full rounded-full" style="width:${pct}%;background:linear-gradient(90deg,rgba(139,92,246,0.5),rgba(56,189,248,0.5));"></div>
         </div>
@@ -2609,10 +2480,12 @@ function _renderDashboardHTML(data, main) {
       <!-- ===== GRAPHIQUE RADAR : \u00c9L\u00c9MENTS R\u00c9CURRENTS ===== -->
       <div class="glass rounded-xl p-4 mb-5">
         <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-spider mr-1.5 text-amber-400"></i>\u00c9l\u00e9ments r\u00e9currents</h3>
-        <div id="recurring-categories" class="flex flex-wrap gap-1" role="group" aria-label="Type d'élément récurrent"></div>
-        <label for="recurring-search" class="sr-only">Rechercher dans cette catégorie</label>
-        <input id="recurring-search" type="search" oninput="searchRecurringElements(this.value)" placeholder="Rechercher dans cette catégorie…" class="w-full mt-3 px-3 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-sm">
+        <div class="flex items-center justify-between gap-3 mb-2">
+          <label for="recurring-category" class="text-sm text-gray-400 shrink-0">Explorer</label>
+          <select id="recurring-category" onchange="selectRecurringCategory(this.value)" class="min-w-0 w-full sm:w-72 px-3 py-2.5 rounded-lg bg-night-900 border border-dream-700/40 text-sm text-dream-100 focus:ring-2 focus:ring-dream-400 focus:outline-none"></select>
+        </div>
         <div id="recurring-content"></div>
+        <div id="recurring-dreams" class="mt-5 border-t border-dream-700/20 pt-4 empty:hidden" aria-live="polite"></div>
       </div>
 
       <!-- ===== \u00c9MOTIONS ===== -->
@@ -2645,7 +2518,8 @@ function _renderDashboardHTML(data, main) {
       </div>
     </div>`;
 
-    document.getElementById('recurring-search').value = _recurringQuery;
+    if (_recurringPeriod !== data.period) { _recurringSelection = null; _recurringPage = 0; }
+    _recurringPeriod = data.period;
     _recurringData = data.tagCategories || {};
     renderRecurringElements();
     // Charger Chart.js uniquement pour le tableau de bord, sans bloquer les compteurs.

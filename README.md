@@ -144,3 +144,11 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 - Statistiques : 16 lectures regroupées dans un seul batch D1. Cache navigateur en mémoire de 60 secondes, invalidé après les mutations et à la déconnexion. Les réponses obsolètes après changement de période/session sont ignorées.
 - Développement : `npm ci`, puis `npm run dev` ; compilation : `npm run build` (prépare aussi les styles et Chart.js).
 - Production confirmée via Cloudflare : projet Pages `revemieux`, GitHub `romainfalanga/revemieux`, branche `main`, commande `npm run build`, sortie `dist`, liaison D1 `DB` vers `revemieux-production`. Aucune migration nécessaire pour cette modification.
+
+## Formulaire et éléments récurrents (2026-10-30, deuxième révision)
+
+- Sélecteur compact des cinq catégories, sans champ de recherche. Cliquer sur un point/nom du radar ou un élément de la liste affiche les rêves associés sous la section, avec pagination et respect de la période sélectionnée. Les données sont chargées à la demande et isolées par compte.
+- Un seul champ « Mon rêve » remplace le récit global et les étapes. À la lecture et à l’édition, les anciennes étapes sont réunies au récit ; leurs émotions (intensité maximale par émotion) et interprétations sont conservées. La conversion définitive intervient seulement lors de l’enregistrement, dans une transaction D1 annulée intégralement en cas d’erreur.
+- Catalogue d’émotions personnelles : ajouter, réutiliser, régler l’intensité, renommer ou supprimer. Renommer met à jour les rêves associés ; supprimer demande une confirmation explicite et retire l’émotion des rêves. Les émotions par défaut restent disponibles. Les filtres du journal acceptent aussi les émotions personnelles.
+- Migration préalable au déploiement : `0008_user_emotions.sql` ajoute uniquement le catalogue `user_emotions`. Aucun récit existant n’est modifié par cette migration. API protégée : GET/POST `/api/emotions`, PUT/DELETE `/api/emotions/:id`.
+- Vérifications : build, tests HTTP sur D1 locale (isolation des comptes, validation, conflits, ponctuation, filtres, renommage/suppression et rollback forcé), parcours navigateur mobile/ordinateur (radar, pagination, récit unique, émotions, réédition d’un ancien rêve sans perte), absence d’erreur JavaScript.

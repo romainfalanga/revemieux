@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { validateDreamEmotions } from './emotions'
 
 type Bindings = { DB: D1Database; JWT_SECRET: string }
 type Variables = { userId: number }
@@ -8,15 +9,28 @@ export const dreamRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }
 // Lister les rêves (avec pagination et filtres avancés: type, search, tags)
 dreamRoutes.get('/', async (c) => {
   const userId = c.get('userId')
-  const page = parseInt(c.req.query('page') || '1')
-  const limit = parseInt(c.req.query('limit') || '20')
+  const page = Math.max(1, parseInt(c.req.query('page') || '1') || 1)
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '20') || 20))
   const type = c.req.query('type')
   const search = c.req.query('search')
   const tagsParam = c.req.query('tags') // comma-separated tag IDs
   const emotionParam = c.req.query('emotion') // emotion name e.g. 'joy'
+  let emotionNames: string[] = []
+  const emotionsParam = c.req.query('emotions')
+  if (emotionsParam !== undefined) {
+    try {
+      const parsed = JSON.parse(emotionsParam)
+      if (!Array.isArray(parsed) || parsed.length > 100 || parsed.some(e => typeof e !== 'string' || !e.trim() || e.trim().length > 60)) throw new Error('invalid')
+      emotionNames = [...new Set<string>(parsed.map(e => e.trim()))]
+    } catch { return c.json({ error: 'Filtre émotions invalide' }, 400) }
+  } else if (emotionParam) {
+    emotionNames = c.req.query('emotionExact') === '1' ? [emotionParam] : emotionParam.split(',').map(e => e.trim()).filter(Boolean)
+  }
   const minIntensity = c.req.query('minIntensity') // min intensity for emotion filter
   const maxIntensity = c.req.query('maxIntensity') // max intensity for emotion filter
   const favorites = c.req.query('favorites')
+  const period = c.req.query('period')
+  if (period && !['week', 'month', 'year'].includes(period)) return c.json({ error: 'Période invalide' }, 400)
   const offset = (page - 1) * limit
 
   // Parse tag IDs
@@ -27,6 +41,10 @@ dreamRoutes.get('/', async (c) => {
   // Build the WHERE clause for the base dream selection
   let where = 'WHERE d.user_id = ?'
   const params: any[] = [userId]
+  if (period) {
+    where += ` AND d.dream_date >= date('now', '-' || ? || ' days')`
+    params.push(period === 'week' ? 7 : period === 'year' ? 365 : 30)
+  }
 
   if (type && type !== 'all') {
     where += ' AND d.dream_type = ?'
@@ -42,8 +60,8 @@ dreamRoutes.get('/', async (c) => {
 
   // Emotion filter: find dreams with specific emotion(s) at a given intensity range
   // Supports multiple emotions (comma-separated): dreams must have AT LEAST ONE of the selected emotions
-  if (emotionParam) {
-    const emotions = emotionParam.split(',').map((e: string) => e.trim()).filter((e: string) => e)
+  if (emotionNames.length) {
+    const emotions = emotionNames
     if (emotions.length === 1) {
       let emotionSubquery = ` AND d.id IN (
         SELECT de_filter.dream_id FROM dream_emotions de_filter
@@ -88,29 +106,22 @@ dreamRoutes.get('/', async (c) => {
 
   const queryParams = [...params, limit, offset]
   const dreams = await c.env.DB.prepare(`
-    SELECT d.*, 
-      GROUP_CONCAT(DISTINCT de.emotion || ':' || de.intensity) as emotions,
-      GROUP_CONCAT(DISTINCT t.name || ':' || t.category || ':' || t.color || ':' || t.id) as tags
+    SELECT d.*,
+      (SELECT json_group_array(DISTINCT json_object('emotion', de.emotion, 'intensity', de.intensity))
+       FROM dream_emotions de WHERE de.dream_id = d.id) as emotions,
+      (SELECT json_group_array(DISTINCT json_object('id', t.id, 'name', t.name, 'category', t.category, 'color', t.color))
+       FROM dream_tags dt JOIN tags t ON t.id = dt.tag_id
+       WHERE dt.dream_id = d.id AND t.user_id = d.user_id) as tags
     FROM dreams d
-    LEFT JOIN dream_emotions de ON de.dream_id = d.id
-    LEFT JOIN dream_tags dt ON dt.dream_id = d.id
-    LEFT JOIN tags t ON t.id = dt.tag_id
     ${fullWhere}
-    GROUP BY d.id
     ORDER BY d.dream_date DESC, d.created_at DESC
     LIMIT ? OFFSET ?
   `).bind(...queryParams).all<any>()
 
   const parsed = dreams.results.map(d => ({
     ...d,
-    emotions: d.emotions ? d.emotions.split(',').map((e: string) => {
-      const [emotion, intensity] = e.split(':')
-      return { emotion, intensity: parseInt(intensity) }
-    }) : [],
-    tags: d.tags ? d.tags.split(',').map((t: string) => {
-      const [name, category, color, id] = t.split(':')
-      return { id: parseInt(id), name, category, color }
-    }) : []
+    emotions: JSON.parse(d.emotions || '[]'),
+    tags: JSON.parse(d.tags || '[]')
   }))
 
   return c.json({
@@ -186,7 +197,8 @@ dreamRoutes.get('/:id', async (c) => {
 // Créer un rêve
 dreamRoutes.post('/', async (c) => {
   const userId = c.get('userId')
-  const body = await c.req.json()
+  const body = await c.req.json().catch(() => null)
+  if (!body || !validateDreamEmotions(body)) return c.json({ error: 'Émotions invalides : nom de 1 à 60 caractères et intensité entière de 1 à 5 requis.' }, 400)
   const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, sleepPeriod, emotions, tags, phases, interpretations, wishedContinuation } = body
 
   if (!title || !content) {
@@ -212,7 +224,7 @@ dreamRoutes.post('/', async (c) => {
     for (const em of emotions) {
       await c.env.DB.prepare(
         'INSERT INTO dream_emotions (dream_id, emotion, intensity) VALUES (?, ?, ?)'
-      ).bind(dreamId, em.emotion, em.intensity || 3).run()
+      ).bind(dreamId, em.emotion.trim(), em.intensity).run()
     }
   }
 
@@ -255,7 +267,7 @@ dreamRoutes.post('/', async (c) => {
         for (const em of phase.emotions) {
           await c.env.DB.prepare(
             'INSERT INTO phase_emotions (phase_id, emotion, intensity) VALUES (?, ?, ?)'
-          ).bind(phaseId, em.emotion, em.intensity || 3).run()
+          ).bind(phaseId, em.emotion.trim(), em.intensity).run()
         }
       }
 
@@ -286,7 +298,8 @@ dreamRoutes.post('/', async (c) => {
 dreamRoutes.put('/:id', async (c) => {
   const userId = c.get('userId')
   const id = parseInt(c.req.param('id'))
-  const body = await c.req.json()
+  const body = await c.req.json().catch(() => null)
+  if (!body || !validateDreamEmotions(body)) return c.json({ error: 'Émotions invalides : nom de 1 à 60 caractères et intensité entière de 1 à 5 requis.' }, 400)
 
   const existing = await c.env.DB.prepare(
     'SELECT id FROM dreams WHERE id = ? AND user_id = ?'
@@ -294,6 +307,54 @@ dreamRoutes.put('/:id', async (c) => {
   if (!existing) return c.json({ error: 'Rêve non trouvé' }, 404)
 
   const { title, content, dreamDate, dreamType, lucidityLevel, clarity, sleepQuality, sleepPeriod, isFavorite, emotions, tags, phases, interpretations, wishedContinuation } = body
+
+  // Unified editor: persist the complete conversion in one D1 transaction.
+  // A failed tag/interpretation write must never erase the original phases.
+  if (Array.isArray(phases) && phases.length === 0) {
+    const statements: D1PreparedStatement[] = [
+    c.env.DB.prepare(`
+    UPDATE dreams SET title = ?, content = ?, dream_date = ?, dream_type = ?,
+    lucidity_level = ?, clarity = ?, sleep_quality = ?, sleep_period = ?, is_favorite = ?,
+    wished_continuation = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?
+  `).bind(title, content, dreamDate, dreamType || 'normal', lucidityLevel || 0, clarity || 3, sleepQuality || 0, sleepPeriod === 'nap' ? 'nap' : 'night', isFavorite ? 1 : 0, wishedContinuation || null, id, userId)
+    ]
+    if (emotions !== undefined) {
+      statements.push(c.env.DB.prepare('DELETE FROM dream_emotions WHERE dream_id = ?').bind(id))
+      for (const em of emotions) statements.push(c.env.DB.prepare(
+        'INSERT INTO dream_emotions (dream_id, emotion, intensity) VALUES (?, ?, ?)'
+      ).bind(id, em.emotion.trim(), em.intensity))
+    }
+    if (tags !== undefined) {
+      if (!Array.isArray(tags) || tags.some((tag: any) => !tag || typeof tag.name !== 'string' || !tag.name.trim())) {
+        return c.json({ error: 'Tags invalides' }, 400)
+      }
+      statements.push(c.env.DB.prepare('DELETE FROM dream_tags WHERE dream_id = ?').bind(id))
+      for (const tag of tags) {
+        const category = tag.category || 'custom'
+        statements.push(c.env.DB.prepare(
+          'INSERT OR IGNORE INTO tags (user_id, name, category, color) VALUES (?, ?, ?, ?)'
+        ).bind(userId, tag.name, category, tag.color || '#6366f1'))
+        statements.push(c.env.DB.prepare(`
+          INSERT OR IGNORE INTO dream_tags (dream_id, tag_id)
+          SELECT ?, id FROM tags WHERE user_id = ? AND name = ? AND category = ?
+        `).bind(id, userId, tag.name, category))
+      }
+    }
+    statements.push(
+      c.env.DB.prepare('DELETE FROM phase_emotions WHERE phase_id IN (SELECT id FROM dream_phases WHERE dream_id = ?)').bind(id),
+      c.env.DB.prepare('DELETE FROM dream_interpretations WHERE dream_id = ? AND phase_id IS NOT NULL').bind(id),
+      c.env.DB.prepare('DELETE FROM dream_phases WHERE dream_id = ?').bind(id)
+    )
+    if (interpretations !== undefined) {
+      if (!Array.isArray(interpretations)) return c.json({ error: 'Interprétations invalides' }, 400)
+      statements.push(c.env.DB.prepare('DELETE FROM dream_interpretations WHERE dream_id = ? AND phase_id IS NULL').bind(id))
+      for (const interp of interpretations) statements.push(c.env.DB.prepare(
+        'INSERT INTO dream_interpretations (dream_id, phase_id, content) VALUES (?, NULL, ?)'
+      ).bind(id, interp?.content || interp))
+    }
+    await c.env.DB.batch(statements)
+    return c.json({ message: 'Rêve mis à jour' })
+  }
 
   await c.env.DB.prepare(`
     UPDATE dreams SET title = ?, content = ?, dream_date = ?, dream_type = ?,
@@ -307,7 +368,7 @@ dreamRoutes.put('/:id', async (c) => {
     for (const em of emotions) {
       await c.env.DB.prepare(
         'INSERT INTO dream_emotions (dream_id, emotion, intensity) VALUES (?, ?, ?)'
-      ).bind(id, em.emotion, em.intensity || 3).run()
+      ).bind(id, em.emotion.trim(), em.intensity).run()
     }
   }
 
@@ -359,7 +420,7 @@ dreamRoutes.put('/:id', async (c) => {
           for (const em of phase.emotions) {
             await c.env.DB.prepare(
               'INSERT INTO phase_emotions (phase_id, emotion, intensity) VALUES (?, ?, ?)'
-            ).bind(phaseId, em.emotion, em.intensity || 3).run()
+            ).bind(phaseId, em.emotion.trim(), em.intensity).run()
           }
         }
 

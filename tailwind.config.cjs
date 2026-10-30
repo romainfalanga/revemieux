@@ -21,5 +21,5 @@ module.exports = {
         }
       }
     ,
-  content: ['./src/**/*.{ts,tsx}', './public/static/app.js']
+  content: ['./src/**/*.{ts,tsx}', './public/static/app.js', './public/static/emotions.js']
 };

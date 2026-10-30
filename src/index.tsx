@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { authRoutes, authMiddleware } from './routes/auth'
 import { dreamRoutes } from './routes/dreams'
+import { emotionRoutes } from './routes/emotions'
 import { tagRoutes } from './routes/tags'
 import { connectionRoutes } from './routes/connections'
 import { seriesRoutes } from './routes/series'
@@ -28,6 +29,7 @@ app.route('/api/auth', authRoutes)
 app.use('/api/*', authMiddleware)
 app.route('/api/dreams', dreamRoutes)
 app.route('/api/tags', tagRoutes)
+app.route('/api/emotions', emotionRoutes)
 app.route('/api/connections', connectionRoutes)
 app.route('/api/series', seriesRoutes)
 app.route('/api/stats', statsRoutes)

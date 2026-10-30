@@ -37,6 +37,7 @@ export function renderApp(): string {
       </div>
     </div>
   </div>
+  <script defer src="/static/emotions.js?v=${ASSET_VERSION}"></script>
   <script id="app-script" defer src="/static/app.js?v=${ASSET_VERSION}" data-chart-src="/static/chart.umd.js?v=${ASSET_VERSION}"></script>
 </body>
 </html>`

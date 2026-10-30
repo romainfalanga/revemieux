@@ -156,7 +156,7 @@ html, body {
   inset: 0;
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(4px);
-  z-index: 50;
+  z-index: 10000; /* Above floating actions and mobile navigation. */
   display: flex;
   align-items: center;
   justify-content: center;
