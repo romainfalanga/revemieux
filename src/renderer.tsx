@@ -1,3 +1,6 @@
+declare const __ASSET_VERSION__: string
+const ASSET_VERSION = __ASSET_VERSION__
+
 export function renderApp(): string {
   return `<!DOCTYPE html>
 <html lang="fr" class="dark">
@@ -8,36 +11,10 @@ export function renderApp(): string {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Rêve Mieux</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            dream: {
-              50: '#f0e7ff', 100: '#d9c5ff', 200: '#b68aff', 300: '#9455ff',
-              400: '#7c3aed', 500: '#6d28d9', 600: '#5b21b6', 700: '#4c1d95',
-              800: '#3b0f7a', 900: '#2e0a5e', 950: '#1a0536'
-            },
-            night: {
-              50: '#e8eaf6', 100: '#c5cae9', 200: '#9fa8da', 300: '#7986cb',
-              400: '#5c6bc0', 500: '#3f51b5', 600: '#303f9f', 700: '#283593',
-              800: '#1a237e', 900: '#0f1547', 950: '#0a0d2e'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-            display: ['Outfit', 'Inter', 'sans-serif']
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="/static/tailwind.css?v=${ASSET_VERSION}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="/static/style.css?v=${Date.now()}">
+  <link rel="stylesheet" href="/static/style.css?v=${ASSET_VERSION}">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/static/favicon-v2.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16-v2.png">
@@ -60,7 +37,7 @@ export function renderApp(): string {
       </div>
     </div>
   </div>
-  <script src="/static/app.js?v=${Date.now()}"></script>
+  <script id="app-script" defer src="/static/app.js?v=${ASSET_VERSION}" data-chart-src="/static/chart.umd.js?v=${ASSET_VERSION}"></script>
 </body>
 </html>`
 }

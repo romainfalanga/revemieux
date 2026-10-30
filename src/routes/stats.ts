@@ -118,7 +118,7 @@ statsRoutes.get('/dashboard', async (c) => {
   const days = period === 'week' ? 7 : period === 'year' ? 365 : 30
 
   // --- Compteurs principaux sur la période ---
-  const periodDreams = await c.env.DB.prepare(
+  const periodDreamsStatement = c.env.DB.prepare(
     `SELECT COUNT(*) as total,
        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid,
        SUM(CASE WHEN dream_type = 'nightmare' THEN 1 ELSE 0 END) as nightmares,
@@ -129,28 +129,19 @@ statsRoutes.get('/dashboard', async (c) => {
        AVG(clarity) as avg_clarity,
        SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) as favorites
      FROM dreams WHERE user_id = ? AND dream_date >= date('now', '-' || ? || ' days')`
-  ).bind(userId, days).first<any>()
+  ).bind(userId, days)
 
   // Compteurs all-time
-  const allTimeDreams = await c.env.DB.prepare(
+  const allTimeDreamsStatement = c.env.DB.prepare(
     `SELECT COUNT(*) as total,
        SUM(CASE WHEN dream_type = 'lucid' THEN 1 ELSE 0 END) as lucid
      FROM dreams WHERE user_id = ?`
-  ).bind(userId).first<any>()
+  ).bind(userId)
 
   // --- Streak ---
-  const recentDates = await c.env.DB.prepare(
+  const recentDatesStatement = c.env.DB.prepare(
     `SELECT DISTINCT dream_date FROM dreams WHERE user_id = ? ORDER BY dream_date DESC LIMIT 90`
-  ).bind(userId).all<any>()
-  let streak = 0
-  const today = new Date()
-  for (let i = 0; i < recentDates.results.length; i++) {
-    const expected = new Date(today)
-    expected.setDate(expected.getDate() - i)
-    const expectedStr = expected.toISOString().split('T')[0]
-    if (recentDates.results[i].dream_date === expectedStr) streak++
-    else break
-  }
+  ).bind(userId)
 
   // --- Evolution temporelle (barres / courbe) ---
   // On genere la GRILLE COMPLETE de la periode (tous les jours/semaines/mois, meme vides)
@@ -214,56 +205,49 @@ statsRoutes.get('/dashboard', async (c) => {
       GROUP BY label ORDER BY label ASC`
     timelineLabel = 'month'
   }
-  const timeline = await c.env.DB.prepare(timelineQuery).bind(userId).all<any>()
+  const timelineStatement = c.env.DB.prepare(timelineQuery).bind(userId)
 
   // --- Emotions (toutes, sur la période) ---
-  const emotions = await c.env.DB.prepare(`
+  const emotionsStatement = c.env.DB.prepare(`
     SELECT de.emotion, COUNT(*) as count, ROUND(AVG(de.intensity), 1) as avg_intensity
     FROM dream_emotions de JOIN dreams d ON d.id = de.dream_id
     WHERE d.user_id = ? AND d.dream_date >= date('now', '-' || ? || ' days')
     GROUP BY de.emotion ORDER BY count DESC
-  `).bind(userId, days).all<any>()
+  `).bind(userId, days)
 
   // --- Types de reves ---
-  const types = await c.env.DB.prepare(`
+  const typesStatement = c.env.DB.prepare(`
     SELECT dream_type, COUNT(*) as count FROM dreams
     WHERE user_id = ? AND dream_date >= date('now', '-' || ? || ' days')
     GROUP BY dream_type ORDER BY count DESC
-  `).bind(userId, days).all<any>()
+  `).bind(userId, days)
 
   // --- Tags par catégorie ---
-  const tagsByCategory = await c.env.DB.prepare(`
+  const tagsByCategoryStatement = c.env.DB.prepare(`
     SELECT t.category, t.name, t.color, COUNT(*) as count
     FROM tags t JOIN dream_tags dt ON dt.tag_id = t.id JOIN dreams d ON d.id = dt.dream_id
     WHERE t.user_id = ? AND d.dream_date >= date('now', '-' || ? || ' days')
     GROUP BY t.category, t.id ORDER BY t.category, count DESC
-  `).bind(userId, days).all<any>()
-
-  // Grouper par catégorie
-  const tagCategories: Record<string, any[]> = {}
-  for (const tag of tagsByCategory.results) {
-    if (!tagCategories[tag.category]) tagCategories[tag.category] = []
-    tagCategories[tag.category].push(tag)
-  }
+  `).bind(userId, days)
 
   // --- Reality Checks ---
-  const rcTotal = await c.env.DB.prepare(
+  const rcTotalStatement = c.env.DB.prepare(
     'SELECT COUNT(*) as count FROM reality_checks WHERE user_id = ?'
-  ).bind(userId).first<any>()
+  ).bind(userId)
 
-  const rcPeriod = await c.env.DB.prepare(
+  const rcPeriodStatement = c.env.DB.prepare(
     `SELECT COUNT(*) as count FROM reality_checks WHERE user_id = ? AND created_at >= datetime('now', '-' || ? || ' days')`
-  ).bind(userId, days).first<any>()
+  ).bind(userId, days)
 
-  const rcToday = await c.env.DB.prepare(
+  const rcTodayStatement = c.env.DB.prepare(
     `SELECT COUNT(*) as count FROM reality_checks WHERE user_id = ? AND date(created_at) = date('now')`
-  ).bind(userId).first<any>()
+  ).bind(userId)
 
-  const rcByType = await c.env.DB.prepare(`
+  const rcByTypeStatement = c.env.DB.prepare(`
     SELECT check_type, COUNT(*) as count FROM reality_checks
     WHERE user_id = ? AND created_at >= datetime('now', '-' || ? || ' days')
     GROUP BY check_type ORDER BY count DESC
-  `).bind(userId, days).all<any>()
+  `).bind(userId, days)
 
   // RC timeline
   let rcTimelineQuery = ''
@@ -274,33 +258,96 @@ statsRoutes.get('/dashboard', async (c) => {
   } else {
     rcTimelineQuery = `SELECT strftime('%Y-%m', created_at) as label, COUNT(*) as count FROM reality_checks WHERE user_id = ? AND created_at >= datetime('now', '-365 days') GROUP BY label ORDER BY label ASC`
   }
-  const rcTimeline = await c.env.DB.prepare(rcTimelineQuery).bind(userId).all<any>()
+  const rcTimelineStatement = c.env.DB.prepare(rcTimelineQuery).bind(userId)
 
   // --- Intentions ---
-  const intentionStats = await c.env.DB.prepare(`
+  const intentionStatsStatement = c.env.DB.prepare(`
     SELECT status, COUNT(*) as count FROM dream_intentions WHERE user_id = ?
     GROUP BY status
-  `).bind(userId).all<any>()
+  `).bind(userId)
+
+  // Intentions créées dans la période
+  const intentionsPeriodStatement = c.env.DB.prepare(
+    `SELECT COUNT(*) as count FROM dream_intentions WHERE user_id = ? AND created_at >= datetime('now', '-' || ? || ' days')`
+  ).bind(userId, days)
+
+  // --- Séries ---
+  const seriesCountStatement = c.env.DB.prepare(
+    'SELECT COUNT(*) as count FROM dream_series WHERE user_id = ?'
+  ).bind(userId)
+
+  // --- Connexions ---
+  const connectionsCountStatement = c.env.DB.prepare(
+    `SELECT COUNT(*) as count FROM dream_connections WHERE user_id = ?`
+  ).bind(userId)
+
+  // Toutes les lectures indépendantes partagent un seul aller-retour D1.
+  const [
+    periodDreamsResult,
+    allTimeDreamsResult,
+    recentDates,
+    timeline,
+    emotions,
+    types,
+    tagsByCategory,
+    rcTotalResult,
+    rcPeriodResult,
+    rcTodayResult,
+    rcByType,
+    rcTimeline,
+    intentionStats,
+    intentionsPeriodResult,
+    seriesCountResult,
+    connectionsCountResult,
+  ] = await c.env.DB.batch<any>([
+    periodDreamsStatement,
+    allTimeDreamsStatement,
+    recentDatesStatement,
+    timelineStatement,
+    emotionsStatement,
+    typesStatement,
+    tagsByCategoryStatement,
+    rcTotalStatement,
+    rcPeriodStatement,
+    rcTodayStatement,
+    rcByTypeStatement,
+    rcTimelineStatement,
+    intentionStatsStatement,
+    intentionsPeriodStatement,
+    seriesCountStatement,
+    connectionsCountStatement,
+  ])
+
+  const periodDreams = periodDreamsResult.results[0] ?? null
+  const allTimeDreams = allTimeDreamsResult.results[0] ?? null
+  const rcTotal = rcTotalResult.results[0] ?? null
+  const rcPeriod = rcPeriodResult.results[0] ?? null
+  const rcToday = rcTodayResult.results[0] ?? null
+  const intentionsPeriod = intentionsPeriodResult.results[0] ?? null
+  const seriesCount = seriesCountResult.results[0] ?? null
+  const connectionsCount = connectionsCountResult.results[0] ?? null
+
+  let streak = 0
+  const today = new Date()
+  for (let i = 0; i < recentDates.results.length; i++) {
+    const expected = new Date(today)
+    expected.setDate(expected.getDate() - i)
+    const expectedStr = expected.toISOString().split('T')[0]
+    if (recentDates.results[i].dream_date === expectedStr) streak++
+    else break
+  }
+
+  // Grouper par catégorie
+  const tagCategories: Record<string, any[]> = {}
+  for (const tag of tagsByCategory.results) {
+    if (!tagCategories[tag.category]) tagCategories[tag.category] = []
+    tagCategories[tag.category].push(tag)
+  }
 
   const intentionCounts: Record<string, number> = {}
   for (const row of intentionStats.results) {
     intentionCounts[row.status] = row.count
   }
-
-  // Intentions créées dans la période
-  const intentionsPeriod = await c.env.DB.prepare(
-    `SELECT COUNT(*) as count FROM dream_intentions WHERE user_id = ? AND created_at >= datetime('now', '-' || ? || ' days')`
-  ).bind(userId, days).first<any>()
-
-  // --- Séries ---
-  const seriesCount = await c.env.DB.prepare(
-    'SELECT COUNT(*) as count FROM dream_series WHERE user_id = ?'
-  ).bind(userId).first<any>()
-
-  // --- Connexions ---
-  const connectionsCount = await c.env.DB.prepare(
-    `SELECT COUNT(*) as count FROM dream_connections WHERE user_id = ?`
-  ).bind(userId).first<any>()
 
   // Taux de lucidité
   const lucidRate = periodDreams?.total > 0

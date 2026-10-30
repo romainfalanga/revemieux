@@ -32,12 +32,16 @@ async function api(path, options = {}) {
     if (res.status === 401 && !isAuthRoute) { logout(); throw new Error('Session expirée, reconnectez-vous'); }
     throw new Error(data.error || 'Erreur serveur');
   }
+  if (options.method && !['GET', 'HEAD'].includes(options.method.toUpperCase()) && !path.startsWith('/auth/')) invalidateDashboardCache();
   return data;
 }
 
 // ========== Auth ==========
 function logout() {
   state.token = null; state.user = null;
+  invalidateDashboardCache();
+  _destroyDashboardCharts();
+  _recurringData = null;
   localStorage.removeItem('ds_token');
   renderAuth();
 }
@@ -289,6 +293,7 @@ document.addEventListener('click', function(e) {
 });
 
 window.navigate = function(view) {
+  if (state.currentView === 'lucidity' && view !== 'lucidity') _destroyDashboardCharts();
   state.currentView = view;
   // Highlight nav: lucidity-level1 and lucidity-level2 highlight the lucidity tab
   const navView = (view === 'lucidity-level2' || view === 'lucidity-level1') ? 'lucidity' : view;
@@ -2248,11 +2253,28 @@ window.saveContinuationIntention = async function(e, dreamId) {
 // ========== DASHBOARD "RÊVE MIEUX" ==========
 let dashboardPeriod = 'week'; // 'week', 'month', 'year'
 let _dashboardCharts = []; // keep references to destroy before re-render
-let _dashboardCache = {}; // { week: data, month: data, year: data }
+let _dashboardCache = {}; // Cache en mémoire, lié à la session et invalidé après modification.
+let _dashboardRequest = 0;
+let _dashboardGeneration = 0;
+let _chartLibraryPromise;
+function ensureChartLibrary() {
+  if (window.Chart) return Promise.resolve();
+  if (!_chartLibraryPromise) {
+    _chartLibraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = document.getElementById('app-script').dataset.chartSrc;
+      script.onload = () => resolve();
+      script.onerror = () => { script.remove(); _chartLibraryPromise = null; reject(new Error('Impossible de charger les graphiques. Réessayez.')); };
+      document.head.appendChild(script);
+    });
+  }
+  return _chartLibraryPromise;
+}
 
 function _destroyDashboardCharts() {
   _dashboardCharts.forEach(c => { try { c.destroy(); } catch {} });
   _dashboardCharts = [];
+  _recurringChart = null;
 }
 
 function _createLineChart(canvasId, labels, datasets, yTitle) {
@@ -2285,26 +2307,72 @@ const RADAR_CAT_CONFIG = {
   place:  { label: 'Lieux',       color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.7)' },
   object: { label: 'Objets',      color: '#ef4444', bg: 'rgba(239,68,68,0.15)',  border: 'rgba(239,68,68,0.7)' },
   theme:  { label: 'Th\u00e8mes',      color: '#ec4899', bg: 'rgba(236,72,153,0.15)', border: 'rgba(236,72,153,0.7)' },
-  custom: { label: 'Personnalis\u00e9', color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.7)' }
+  custom: { label: 'Éléments personnalisés', color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.7)' }
 };
 const RADAR_CAT_ORDER = ['person', 'place', 'object', 'theme', 'custom'];
 
-// Fallback pour afficher les tags sans radar (moins de 3 tags)
-function _buildRadarFallbackTags(labels, datasets) {
-  let html = '<div class="flex flex-wrap gap-1.5 py-2">';
-  labels.forEach((name, i) => {
-    let tagCat = 'custom';
-    for (const ds of datasets) { if (ds.indices.includes(i)) { tagCat = ds.cat; break; } }
-    const clr = RADAR_CAT_CONFIG[tagCat].color;
-    let cnt = 0;
-    for (const ds of datasets) {
-      const pos = ds.indices.indexOf(i);
-      if (pos !== -1) { cnt = ds.values[pos]; break; }
-    }
-    html += `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:${clr}20;color:${clr};border:1px solid ${clr}30;">${escapeHtml(name)} <span class="opacity-60">x${cnt}</span></span>`;
-  });
-  html += '</div>';
-  return html;
+const RECURRING_PAGE_SIZE = 12;
+let _recurringCategory = 'person';
+let _recurringPage = 0;
+let _recurringQuery = '';
+let _recurringData = null;
+let _recurringChart = null;
+
+function recurringPageData() {
+  const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
+  const query = normalize(_recurringQuery.trim());
+  const all = (_recurringData?.[_recurringCategory] || [])
+    .filter(tag => normalize(tag.name).includes(query))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'fr'));
+  const pages = Math.max(1, Math.ceil(all.length / RECURRING_PAGE_SIZE));
+  _recurringPage = Math.min(_recurringPage, pages - 1);
+  const start = _recurringPage * RECURRING_PAGE_SIZE;
+  return { all, pages, start, tags: all.slice(start, start + RECURRING_PAGE_SIZE) };
+}
+
+window.selectRecurringCategory = function(category) {
+  if (!RADAR_CAT_ORDER.includes(category)) return;
+  _recurringCategory = category;
+  _recurringPage = 0;
+  renderRecurringElements();
+};
+window.searchRecurringElements = function(query) {
+  _recurringQuery = query;
+  _recurringPage = 0;
+  renderRecurringElements();
+};
+window.changeRecurringPage = function(delta) {
+  const { pages } = recurringPageData();
+  _recurringPage = Math.max(0, Math.min(pages - 1, _recurringPage + delta));
+  renderRecurringElements();
+};
+
+function renderRecurringElements() {
+  const container = document.getElementById('recurring-content');
+  if (!container || !_recurringData) return;
+  if (_recurringChart) {
+    _recurringChart.destroy();
+    _dashboardCharts = _dashboardCharts.filter(chart => chart !== _recurringChart);
+    _recurringChart = null;
+  }
+  document.getElementById('recurring-categories').innerHTML = RADAR_CAT_ORDER.map(cat => {
+    const cfg = RADAR_CAT_CONFIG[cat];
+    return `<button type="button" onclick="selectRecurringCategory('${cat}')" aria-pressed="${cat === _recurringCategory}" class="px-3 py-2 rounded-lg text-xs border transition-colors" style="color:${cfg.color};border-color:${cat === _recurringCategory ? cfg.color : 'transparent'};background:${cat === _recurringCategory ? cfg.bg : 'transparent'}">${cfg.label} (${(_recurringData[cat] || []).length})</button>`;
+  }).join('');
+  const { all, pages, start, tags } = recurringPageData();
+  const cfg = RADAR_CAT_CONFIG[_recurringCategory];
+  container.innerHTML = `
+    <p class="text-xs text-gray-400 my-3" role="status">${all.length ? `${start + 1}–${start + tags.length} sur ${all.length} éléments` : 'Aucun élément'}</p>
+    ${tags.length >= 3 ? '<div style="height:320px"><canvas id="chart-radar" role="img" aria-label="Fréquence des éléments récurrents, détaillée dans la liste ci-dessous"></canvas></div>' : ''}
+    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2 mt-3">${tags.map(tag => `<li class="flex items-start justify-between gap-3 text-xs border-b border-dream-700/20 py-2"><span class="min-w-0 break-words">${escapeHtml(tag.name)}</span><span class="shrink-0 font-semibold" style="color:${cfg.color}">${tag.count} rêve${tag.count > 1 ? 's' : ''}</span></li>`).join('')}</ul>
+    ${!tags.length ? `<p class="text-sm text-gray-400 py-4">${_recurringQuery.trim() ? 'Aucun résultat pour cette recherche.' : 'Aucun élément de ce type sur cette période.'}</p>` : ''}
+    ${pages > 1 ? `<div class="flex items-center justify-between gap-2 mt-4"><button type="button" onclick="changeRecurringPage(-1)" ${_recurringPage === 0 ? 'disabled' : ''} class="px-3 py-2 rounded-lg bg-night-800 text-xs disabled:opacity-40">Précédent</button><span class="text-xs text-gray-400">Page ${_recurringPage + 1} / ${pages}</span><button type="button" onclick="changeRecurringPage(1)" ${_recurringPage === pages - 1 ? 'disabled' : ''} class="px-3 py-2 rounded-lg bg-night-800 text-xs disabled:opacity-40">Suivant</button></div>` : ''}`;
+  if (tags.length >= 3 && window.Chart) {
+    _recurringChart = _createRadarChart('chart-radar', {
+      labels: tags.map(tag => tag.name),
+      datasets: [{ cat: _recurringCategory, indices: tags.map((_, i) => i), values: tags.map(tag => tag.count) }]
+    });
+  }
 }
 
 function _createRadarChart(canvasId, radarData) {
@@ -2343,48 +2411,50 @@ function _createRadarChart(canvasId, radarData) {
             usePointStyle: true, pointStyle: 'circle'
           }
         },
-        tooltip: { enabled: false }
+        tooltip: { enabled: true }
       },
       scales: {
         r: {
           beginAtZero: true,
           grid: { color: 'rgba(139,92,246,0.12)' },
           angleLines: { color: 'rgba(139,92,246,0.12)' },
-          pointLabels: { color: '#d1d5db', font: { size: 9 } },
+          pointLabels: { color: '#d1d5db', font: { size: 10 }, callback: label => label.length > 22 ? label.slice(0, 21) + '…' : label },
           ticks: { display: false, stepSize: 1 }
         }
       }
     }
   });
   _dashboardCharts.push(chart);
+  return chart;
 }
 
 // Invalider le cache dashboard (appeler apres ajout/modif de reve, RC, intention, etc.)
-function invalidateDashboardCache() { _dashboardCache = {}; }
+function invalidateDashboardCache() { _dashboardCache = {}; _dashboardGeneration++; _dashboardRequest++; }
 
 async function renderDashboard() {
   const main = document.getElementById('main-content');
-  const cached = _dashboardCache[dashboardPeriod];
+  const period = dashboardPeriod;
+  const token = state.token;
+  const generation = _dashboardGeneration;
+  const request = ++_dashboardRequest;
+  const cached = _dashboardCache[period];
+  const isCurrent = () => request === _dashboardRequest && generation === _dashboardGeneration &&
+    token === state.token && state.currentView === 'lucidity' && dashboardPeriod === period;
+  const render = data => { _destroyDashboardCharts(); _renderDashboardHTML(data, main); };
 
-  // Afficher instantanement depuis le cache s'il existe
-  if (cached) {
-    _destroyDashboardCharts();
-    _renderDashboardHTML(cached, main);
-  }
+  if (cached) render(cached.data);
+  else main.innerHTML = '<div class="text-center py-12 text-dream-200" role="status">Chargement du tableau de bord…</div>';
 
-  // Fetch en background (ou en premier plan si pas de cache)
+  // Pas de nouvelle requête pour une visite récente sans modification des données.
+  if (cached && Date.now() - cached.loadedAt < 60000) return;
   try {
-    const data = await api(`/stats/dashboard?period=${dashboardPeriod}`);
-    _dashboardCache[dashboardPeriod] = data;
-    // Si on a deja affiche le cache, ne re-render que si la vue est toujours le dashboard
-    if (state.currentView === 'lucidity') {
-      _destroyDashboardCharts();
-      _renderDashboardHTML(data, main);
-    }
+    const data = await api(`/stats/dashboard?period=${period}`);
+    if (token !== state.token || generation !== _dashboardGeneration) return;
+    _dashboardCache[period] = { data, loadedAt: Date.now() };
+    if (isCurrent()) render(data);
   } catch (err) {
-    // Si pas de cache, afficher l'erreur
-    if (!cached) {
-      main.innerHTML = `<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>${err.message}</div>`;
+    if (!cached && isCurrent()) {
+      main.innerHTML = `<div class="text-center py-12 text-red-400">${escapeHtml(err.message)}<button onclick="renderDashboard()" class="block mx-auto mt-3 underline">Réessayer</button></div>`;
     }
   }
 }
@@ -2423,48 +2493,6 @@ function _renderDashboardHTML(data, main) {
         <span class="text-[10px] text-gray-400 w-12 text-right">\u2300 ${em.avg_intensity}/5</span>
       </div>`;
     }).join('') || '<p class="text-xs text-gray-500 italic text-center py-3">Pas encore d\'\u00e9motions enregistr\u00e9es</p>';
-
-    // Tags radar : max 4 par categorie, groupes par zone
-    // Si pas assez de tags (< 3 total), on prend jusqu'a 4 par categorie pour compenser
-    const radarLabels = [];
-    const radarDatasets = [];
-    let labelIdx = 0;
-    // Premier passage : 4 par categorie
-    const usedPerCat = {};
-    for (const cat of RADAR_CAT_ORDER) {
-      const tags = (data.tagCategories[cat] || []).slice(0, 4);
-      usedPerCat[cat] = tags.length;
-      if (tags.length === 0) continue;
-      const indices = [];
-      const values = [];
-      for (const t of tags) {
-        radarLabels.push(t.name);
-        indices.push(labelIdx);
-        values.push(t.count);
-        labelIdx++;
-      }
-      radarDatasets.push({ cat, indices, values });
-    }
-    // Second passage si < 3 : ajouter des tags supplementaires
-    if (radarLabels.length < 3) {
-      for (const cat of RADAR_CAT_ORDER) {
-        const allCatTags = data.tagCategories[cat] || [];
-        const already = usedPerCat[cat] || 0;
-        const extra = allCatTags.slice(already, already + 3);
-        for (const t of extra) {
-          if (radarLabels.length >= 3) break;
-          radarLabels.push(t.name);
-          let ds = radarDatasets.find(d => d.cat === cat);
-          if (!ds) { ds = { cat, indices: [], values: [] }; radarDatasets.push(ds); }
-          ds.indices.push(labelIdx);
-          ds.values.push(t.count);
-          labelIdx++;
-        }
-        if (radarLabels.length >= 3) break;
-      }
-    }
-    const radarReady = radarLabels.length >= 3;
-    const radarChartData = { labels: radarLabels, datasets: radarDatasets };
 
     // Intentions
     const intActive = int.active || 0;
@@ -2581,7 +2609,10 @@ function _renderDashboardHTML(data, main) {
       <!-- ===== GRAPHIQUE RADAR : \u00c9L\u00c9MENTS R\u00c9CURRENTS ===== -->
       <div class="glass rounded-xl p-4 mb-5">
         <h3 class="text-sm font-display font-bold text-dream-100 mb-3"><i class="fas fa-spider mr-1.5 text-amber-400"></i>\u00c9l\u00e9ments r\u00e9currents</h3>
-        ${radarReady ? '<div style="height:280px;"><canvas id="chart-radar"></canvas></div>' : radarLabels.length > 0 ? _buildRadarFallbackTags(radarLabels, radarDatasets) : '<p class="text-xs text-gray-500 italic text-center py-3">Pas assez de tags sur cette p\u00e9riode</p>'}
+        <div id="recurring-categories" class="flex flex-wrap gap-1" role="group" aria-label="Type d'élément récurrent"></div>
+        <label for="recurring-search" class="sr-only">Rechercher dans cette catégorie</label>
+        <input id="recurring-search" type="search" oninput="searchRecurringElements(this.value)" placeholder="Rechercher dans cette catégorie…" class="w-full mt-3 px-3 py-2 bg-night-900/60 border border-dream-700/30 rounded-lg text-sm">
+        <div id="recurring-content"></div>
       </div>
 
       <!-- ===== \u00c9MOTIONS ===== -->
@@ -2614,8 +2645,13 @@ function _renderDashboardHTML(data, main) {
       </div>
     </div>`;
 
-    // --- Render Chart.js graphs after DOM is ready ---
-    setTimeout(() => {
+    document.getElementById('recurring-search').value = _recurringQuery;
+    _recurringData = data.tagCategories || {};
+    renderRecurringElements();
+    // Charger Chart.js uniquement pour le tableau de bord, sans bloquer les compteurs.
+    const renderedContent = main.firstElementChild;
+    ensureChartLibrary().then(() => {
+      if (state.currentView !== 'lucidity' || main.firstElementChild !== renderedContent) return;
       // Graphique evolution des reves : 5 courbes CUMULATIVES (dans la fenetre affichee)
       // Le cumul demarre a 0 au debut de la periode selectionnee : chaque point additionne
       // les reves enregistres depuis le debut de la fenetre jusqu'a cette tranche.
@@ -2639,11 +2675,12 @@ function _renderDashboardHTML(data, main) {
           { label: 'Reality checks', data: rcTlData.map(d => d.count), borderColor: 'rgba(16,185,129,0.8)', backgroundColor: 'rgba(16,185,129,0.1)', fill: true }
         ]);
       }
-      // Graphique Radar : elements recurrents (5 zones par categorie)
-      if (radarReady) {
-        _createRadarChart('chart-radar', radarChartData);
+      renderRecurringElements();
+    }).catch(() => {
+      if (main.firstElementChild === renderedContent && state.currentView === 'lucidity') {
+        document.getElementById('recurring-content')?.insertAdjacentHTML('beforeend', '<p class="text-xs text-gray-400 mt-3">Graphiques indisponibles. Les valeurs restent consultables ci-dessus. <button onclick="renderDashboard()" class="underline">Réessayer</button></p>');
       }
-    }, 50);
+    });
 }
 
 // ========== LUCIDITY VIEW (NIVEAU 1) ==========

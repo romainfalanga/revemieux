@@ -50,7 +50,7 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 
 ## URLs
 - **Production** : https://www.revemieux.app
-- **Cloudflare Pages** : https://reve-mieux.pages.dev
+- **Cloudflare Pages** : https://revemieux.pages.dev
 - **GitHub** : https://github.com/romainfalanga/revemieux
 
 ## Architecture Technique
@@ -58,7 +58,7 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 ### Stack
 - **Backend** : Hono (TypeScript) sur Cloudflare Workers/Pages
 - **Base de données** : Cloudflare D1 (SQLite distribué)
-- **Frontend** : SPA vanilla JS + Tailwind CSS (CDN) + D3.js + Chart.js
+- **Frontend** : SPA vanilla JS + Tailwind CSS précompilé + Chart.js chargé à la demande
 - **Auth** : JWT custom avec Web Crypto API
 - **Voix** : Web Speech API (SpeechRecognition)
 
@@ -136,3 +136,11 @@ Rêve Mieux est une plateforme web complète dédiée à l'optimisation du rappe
 - **Graphique d'évolution des rêves corrigé** : les courbes (Total, Lucides, Normaux, Cauchemars, Récurrents) sont désormais **cumulatives, dans la fenêtre affichée uniquement**. Le cumul démarre à 0 au début de la période sélectionnée (semaine/mois/année) : chaque vue ne montre QUE ce qui s'est passé sur sa propre période, sans historique antérieur fantôme. (Correction d'un 1er essai où une baseline faisait apparaître des rêves antérieurs à la fenêtre, ex: un cauchemar fantôme en vue semaine.)
 - **Radar des éléments récurrents** : passage de 2 à **4 tags max par catégorie**.
 - **Nouveau type de tag « Objet » (📦)** : disponible à la création/édition de rêve, dans la visualisation, le filtre du journal et le radar des éléments récurrents du dashboard. Couleur **rouge `#ef4444`** (bien distincte de l'ambre des Personnages). Les tags Objet existants en base ont été migrés vers cette nouvelle couleur.
+
+## Mise à jour du tableau de bord (2026-10-30)
+
+- Éléments récurrents : une catégorie à la fois (personnages, lieux, objets, thèmes, éléments personnalisés), recherche et pagination de 12 éléments, sans plafond total. Les valeurs et noms complets sont disponibles sous le radar.
+- Chargement : styles Tailwind compilés lors du build, Chart.js local chargé à la demande et versions des assets calculées à partir de leur contenu. Les URL restent stables entre deux chargements.
+- Statistiques : 16 lectures regroupées dans un seul batch D1. Cache navigateur en mémoire de 60 secondes, invalidé après les mutations et à la déconnexion. Les réponses obsolètes après changement de période/session sont ignorées.
+- Développement : `npm ci`, puis `npm run dev` ; compilation : `npm run build` (prépare aussi les styles et Chart.js).
+- Production confirmée via Cloudflare : projet Pages `revemieux`, GitHub `romainfalanga/revemieux`, branche `main`, commande `npm run build`, sortie `dist`, liaison D1 `DB` vers `revemieux-production`. Aucune migration nécessaire pour cette modification.
